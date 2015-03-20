@@ -98,6 +98,7 @@ class QGOVPlugin(SingletonPlugin):
     def before_map(self, routeMap):
         """ Use our custom controller, and disable some unwanted URLs
         """
+        routeMap.connect('/static-content/{path:[-_a-zA-Z0-9/]+}', controller='ckanext.qgov.data.controller:QGOVController', action='static_content')
         routeMap.connect('/storage/upload_handle', controller='ckanext.qgov.common.controller:QGOVController', action='upload_handle')
         routeMap.connect('/user/logged_in', controller='ckanext.qgov.common.controller:QGOVController', action='logged_in')
 

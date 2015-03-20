@@ -10,6 +10,15 @@ from ckanext.qgov.common.authenticator import QGOVUser
 ALLOWED_EXTENSIONS = re.compile(r'.*((\.csv)|(\.xls)|(\.txt)|(\.kmz)|(\.xlsx)|(\.pdf)|(\.shp)|(\.tab)|(\.jp2)|(\.esri)|(\.gdb)|(\.jpg)|(\.tif)|(\.tiff)|(\.jpeg)|(\.xml)|(\.kml)|(\.doc)|(\.docx)|(\.rtf))$', re.I)
 class QGOVController(BaseController):
 
+    def static_content(self, path):
+        from ckan.lib.render import TemplateNotFound
+        try:
+            return render('static-content/'+path+'/index.html')
+        except TemplateNotFound:
+            from pylons import tmpl_context as c
+            c.code = ['404']
+            return render('error_document_template.html')
+
     def upload_handle(self):
         params = dict(request.params.items())
         originalFilename = params.get('file').filename
