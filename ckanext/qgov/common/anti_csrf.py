@@ -11,8 +11,9 @@ RAW_RENDER = base.render
 RAW_RENDER_JINJA = base.render_jinja2
 RAW_BEFORE = base.BaseController.__before__
 
-POST_FORM = re.compile(r'(<form [^>]*method="post"[^>]*>)([^<]*\s<)', IGNORECASE | MULTILINE)
-FORM_TOKEN = re.compile(r'<input type="hidden" name="token" value="([0-9a-f]+)"/>')
+POST_FORM = re.compile(r'(<form [^>]*method=["\']post["\'][^>]*>)([^<]*\s<)', IGNORECASE | MULTILINE)
+TOKEN_PATTERN = r'<input type="hidden" class="confirm-action" name="token" value="{token}"/>'
+TOKEN_SEARCH_PATTERN = re.compile(TOKEN_PATTERN.format(token=r'([0-9a-f]+)'))
 API_URL = re.compile(r'^/api\b.*')
 
 def is_logged_in():
@@ -32,14 +33,14 @@ def apply_token(html):
     if not is_logged_in() or not POST_FORM.search(html):
         return html
 
-    token_match = FORM_TOKEN.search(html)
+    token_match = TOKEN_SEARCH_PATTERN.search(html)
     if token_match:
         token = token_match.group(1)
     else:
         token = get_server_token()
 
     def insert_form_token(form_match):
-        return form_match.group(1) + '<input type="hidden" name="token" value="'+token+'"/>' + form_match.group(2)
+        return form_match.group(1) + TOKEN_PATTERN.format(token=token) + form_match.group(2)
 
     return POST_FORM.sub(insert_form_token, html)
 
