@@ -11,8 +11,11 @@ RAW_RENDER = base.render
 RAW_RENDER_JINJA = base.render_jinja2
 RAW_BEFORE = base.BaseController.__before__
 
+TOKEN_FIELD_NAME = 'token'
+CONFIRM_LINK = re.compile(r'(<a [^>]*data-module=["\']confirm-action["\'][^>]*href=["\'][^"\'?]+)(["\'])', IGNORECASE | MULTILINE)
+CONFIRM_LINK_REVERSED = re.compile(r'(<a [^>]*href=["\'][^"\'?]+)(["\'][^>]*data-module=["\']confirm-action["\'])', IGNORECASE | MULTILINE)
 POST_FORM = re.compile(r'(<form [^>]*method=["\']post["\'][^>]*>)([^<]*\s<)', IGNORECASE | MULTILINE)
-TOKEN_PATTERN = r'<input type="hidden" class="confirm-action" name="token" value="{token}"/>'
+TOKEN_PATTERN = r'<input type="hidden" name="' + TOKEN_FIELD_NAME + '" value="{token}"/>'
 TOKEN_SEARCH_PATTERN = re.compile(TOKEN_PATTERN.format(token=r'([0-9a-f]+)'))
 API_URL = re.compile(r'^/api\b.*')
 
@@ -42,17 +45,20 @@ def apply_token(html):
     def insert_form_token(form_match):
         return form_match.group(1) + TOKEN_PATTERN.format(token=token) + form_match.group(2)
 
-    return POST_FORM.sub(insert_form_token, html)
+    def insert_link_token(link_match):
+        return link_match.group(1) + '?' + TOKEN_FIELD_NAME + '=' + token + link_match.group(2)
+
+    return CONFIRM_LINK_REVERSED.sub(insert_link_token, CONFIRM_LINK.sub(insert_link_token, POST_FORM.sub(insert_form_token, html)))
 
 def get_server_token():
     if request.environ['webob.adhoc_attrs'].has_key('server_token'):
         token = request.server_token
-    elif request.cookies.has_key("token"):
-        token = request.cookies.pop("token")
+    elif request.cookies.has_key(TOKEN_FIELD_NAME):
+        token = request.cookies.pop(TOKEN_FIELD_NAME)
     else:
         import binascii, os
         token = binascii.hexlify(os.urandom(32))
-        response.set_cookie("token", token, max_age=600, httponly=True)
+        response.set_cookie(TOKEN_FIELD_NAME, token, max_age=600, httponly=True)
 
     if token is None or token.strip() == "":
         csrf_fail("Server token is blank")
@@ -77,21 +83,28 @@ def csrf_fail(message):
     abort(403, "Your form submission could not be validated")
 
 def get_post_token():
-    if request.environ['webob.adhoc_attrs'].has_key('token'):
+    if request.environ['webob.adhoc_attrs'].has_key(TOKEN_FIELD_NAME):
         return request.token
 
-    postTokens = request.POST.getall('token')
+    # handle query string token if there are no other parameters
+    # this is needed for the 'confirm-action' JavaScript module
+    if not request.POST and len(request.GET) == 1 and len(request.GET.getall(TOKEN_FIELD_NAME)) == 1:
+        request.token = request.GET.getone(TOKEN_FIELD_NAME)
+        del request.GET[TOKEN_FIELD_NAME]
+        return request.token
+
+    postTokens = request.POST.getall(TOKEN_FIELD_NAME)
     if not postTokens:
         csrf_fail("Missing CSRF token in form submission")
     elif len(postTokens) > 1:
         csrf_fail("More than one CSRF token in form submission")
     else:
-        request.token = postTokens[0]
+        request[TOKEN_FIELD_NAME] = postTokens[0]
 
     # drop token from request so it doesn't populate resource extras
-    del request.POST['token']
+    del request.POST[TOKEN_FIELD_NAME]
 
-    return request.token
+    return request[TOKEN_FIELD_NAME]
 
 def intercept_csrf():
     base.render = anti_csrf_render
