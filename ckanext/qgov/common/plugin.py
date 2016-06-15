@@ -62,26 +62,10 @@ class QGOVPlugin(SingletonPlugin):
     def __init__(self, **kwargs):
         import ckan.logic.validators as validators
         validators.user_password_validator = user_password_validator
-        import anti_csrf, authenticator
+        import anti_csrf, authenticator, urlm
         anti_csrf.intercept_csrf()
         authenticator.intercept_authenticator()
-
-    def get_helpers(self):
-        """ A dictionary of extra helpers that will be available
-        to provide QGOV-specific helpers to the templates.
-        """
-
-        helper_dict = {}
-        helper_dict['random_tags'] = random_tags
-        helper_dict['group_id_for'] = group_id_for
-        helper_dict['format_resource_filesize'] = format_resource_filesize
-        helper_dict['top_organisations'] = Stats.top_organisations
-        helper_dict['top_categories'] = Stats.top_categories
-        helper_dict['resource_count'] = Stats.resource_count
-        helper_dict['resource_report'] = Stats.resource_report
-        helper_dict['resource_org_count'] = Stats.resource_org_count
-
-        return helper_dict
+        urlm.intercept_404()
 
     def update_config(self, config):
         """Use our custom list of licences, and disable some unwanted features
@@ -93,6 +77,8 @@ class QGOVPlugin(SingletonPlugin):
 
         # block unwanted content
         config['openid_enabled'] = False
+        import urlm
+        urlm.configure_for_environment(config.get('ckan.site_url', ''))
         return config
 
     def before_map(self, routeMap):
