@@ -99,12 +99,12 @@ def get_post_token():
     elif len(postTokens) > 1:
         csrf_fail("More than one CSRF token in form submission")
     else:
-        request[TOKEN_FIELD_NAME] = postTokens[0]
+        request.token = postTokens[0]
 
     # drop token from request so it doesn't populate resource extras
     del request.POST[TOKEN_FIELD_NAME]
 
-    return request[TOKEN_FIELD_NAME]
+    return request.token
 
 def intercept_csrf():
     base.render = anti_csrf_render
