@@ -1,17 +1,17 @@
-import os
+import os, random, re
 from logging import getLogger
 
+from ckan.lib.base import h
+import ckan.lib.formatters as formatters
+import ckan.logic.validators as validators
 from ckan.plugins import implements, SingletonPlugin, IConfigurer, IRoutes, ITemplateHelpers
+
 from ckanext.qgov.common.stats import Stats
+import anti_csrf, authenticator, urlm
 
 LOG = getLogger(__name__)
 
-from ckan.lib.base import h
-
-import ckan.lib.formatters as formatters
-
 def random_tags():
-    import random
     tags = h.unselected_facet_items('tags', limit=15)
     random.shuffle(tags)
     return tags
@@ -33,7 +33,6 @@ def user_password_validator(key, data, errors, context):
     from ckan.lib.navl.dictization_functions import Missing
     from pylons import config
     from pylons.i18n import _
-    import re
 
     password_min_length = int(config.get('password_min_length', '10'))
     password_patterns = config.get('password_patterns', r'.*[0-9].*,.*[a-z].*,.*[A-Z].*,.*[-`~!@#$%^&*()_+=|\\/ ].*').split(',')
@@ -43,7 +42,7 @@ def user_password_validator(key, data, errors, context):
     if value is None or value == '' or isinstance(value, Missing):
         raise ValueError(_('You must provide a password'))
     if not len(value) >= password_min_length:
-        errors[('password',)].append(_('Your password must be %s characters or longer' % password_min_length))
+        errors[('password',)].append(_('Your password must be {min} characters or longer'.format(min=password_min_length)))
     for policy in password_patterns:
         if not re.search(policy, value):
             errors[('password',)].append(_('Must contain at least one number, lowercase letter, capital letter, and symbol'))
@@ -57,12 +56,9 @@ class QGOVPlugin(SingletonPlugin):
     """
     implements(IConfigurer, inherit=True)
     implements(IRoutes, inherit=True)
-    #~ implements(ITemplateHelpers, inherit=True)
 
     def __init__(self, **kwargs):
-        import ckan.logic.validators as validators
         validators.user_password_validator = user_password_validator
-        import anti_csrf, authenticator, urlm
         anti_csrf.intercept_csrf()
         authenticator.intercept_authenticator()
         urlm.intercept_404()
@@ -77,16 +73,23 @@ class QGOVPlugin(SingletonPlugin):
 
         # block unwanted content
         config['openid_enabled'] = False
-        import urlm
-        urlm.configure_for_environment(config.get('ckan.site_url', ''))
+
+        # configure URL Management system
+        urlm_path = config.get('urlm.app_path', None)
+        if urlm_path:
+            urlm_proxy = config.get('urlm.proxy', None)
+            urlm.configure_urlm(urlm_path, urlm_proxy)
+        else:
+            urlm.configure_for_environment(config.get('ckan.site_url', ''))
         return config
 
     def before_map(self, routeMap):
         """ Use our custom controller, and disable some unwanted URLs
         """
-        routeMap.connect('/static-content/{path:[-_a-zA-Z0-9/]+}', controller='ckanext.qgov.data.controller:QGOVController', action='static_content')
-        routeMap.connect('/storage/upload_handle', controller='ckanext.qgov.common.controller:QGOVController', action='upload_handle')
-        routeMap.connect('/user/logged_in', controller='ckanext.qgov.common.controller:QGOVController', action='logged_in')
+        controller = 'ckanext.qgov.common.controller:QGOVController'
+        routeMap.connect('/storage/upload_handle', controller=controller, action='upload_handle')
+        routeMap.connect('/user/logged_in', controller=controller, action='logged_in')
+        routeMap.connect('/static-content/{path:[-_a-zA-Z0-9/]+}', controller=controller, action='static_content')
 
         # block unwanted content
         routeMap.connect('/user', controller='error', action='404')
