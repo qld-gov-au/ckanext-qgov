@@ -5,12 +5,12 @@ version='@BUILD-LABEL@'
 setup(
     name='ckanext-qgov',
     version=version,
-    description='Adds Queensland Government custom content',
+    description='Customises CKAN behavior for Queensland Government portals',
     long_description='',
     classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
     keywords='',
-    author='Online Enabling Solutions',
-    author_email='osidt@smartservice.qld.gov.au',
+    author='Digital Applications',
+    author_email='osidt@dsiti.qld.gov.au',
     url='',
     license='',
     packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
