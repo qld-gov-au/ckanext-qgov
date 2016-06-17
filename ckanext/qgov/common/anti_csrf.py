@@ -1,3 +1,9 @@
+"""Provides a self-contained filter to prevent Cross-Site Request Forgery,
+based on the Double Submit Cookie pattern,
+www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)_Prevention_Cheat_Sheet#Double_Submit_Cookie
+
+The filter can be enabled simply by invoking 'intercept_csrf()'.
+"""
 import ckan.lib.base as base
 import re
 from re import DOTALL, IGNORECASE, MULTILINE
@@ -11,10 +17,24 @@ RAW_RENDER = base.render
 RAW_RENDER_JINJA = base.render_jinja2
 RAW_BEFORE = base.BaseController.__before__
 
+""" Used as the cookie name and input field name.
+"""
 TOKEN_FIELD_NAME = 'token'
+
+# We need to edit confirm-action links, which get intercepted by JavaScript,
+#regardless of which order their 'data-module' and 'href' attributes appear.
 CONFIRM_LINK = re.compile(r'(<a [^>]*data-module=["\']confirm-action["\'][^>]*href=["\'][^"\'?]+)(["\'])', IGNORECASE | MULTILINE)
 CONFIRM_LINK_REVERSED = re.compile(r'(<a [^>]*href=["\'][^"\'?]+)(["\'][^>]*data-module=["\']confirm-action["\'])', IGNORECASE | MULTILINE)
+
+"""
+This will match a POST form that has whitespace after the opening tag (which all existing forms do).
+Once we have injected a token immediately after the opening tag,
+it won't match any more, which avoids redundant injection.
+"""
 POST_FORM = re.compile(r'(<form [^>]*method=["\']post["\'][^>]*>)([^<]*\s<)', IGNORECASE | MULTILINE)
+
+"""The format of the token HTML field.
+"""
 TOKEN_PATTERN = r'<input type="hidden" name="' + TOKEN_FIELD_NAME + '" value="{token}"/>'
 TOKEN_SEARCH_PATTERN = re.compile(TOKEN_PATTERN.format(token=r'([0-9a-f]+)'))
 API_URL = re.compile(r'^/api\b.*')
@@ -22,8 +42,8 @@ API_URL = re.compile(r'^/api\b.*')
 def is_logged_in():
     return request.cookies.get("auth_tkt")
 
-# Insert token into applicable responses
-
+""" Rewrite HTML to insert tokens if applicable.
+"""
 def anti_csrf_render(template_name, extra_vars=None, cache_key=None, cache_type=None, cache_expire=None, method='xhtml', loader_class=MarkupTemplate, cache_force=None, renderer=None):
     html = apply_token(RAW_RENDER(template_name, extra_vars, cache_key, cache_type, cache_expire, method, loader_class, cache_force, renderer))
     return html
@@ -51,6 +71,15 @@ def apply_token(html):
     return CONFIRM_LINK_REVERSED.sub(insert_link_token, CONFIRM_LINK.sub(insert_link_token, POST_FORM.sub(insert_form_token, html)))
 
 def get_server_token():
+    """Retrieve the token expected by the server.
+
+    This will be retrieved from the 'token' cookie, if it exists.
+    If not, a new token will be generated and a new cookie set.
+
+    This can be used either to populate a new form on a GET request, or to validate a POST request
+    (since a missing cookie would result in a new token, which would certainly not match the submitted form).
+    """
+    # ensure that the same token is used when a page is assembled from pieces
     if request.environ['webob.adhoc_attrs'].has_key('server_token'):
         token = request.server_token
     elif request.cookies.has_key(TOKEN_FIELD_NAME):
@@ -83,6 +112,13 @@ def csrf_fail(message):
     abort(403, "Your form submission could not be validated")
 
 def get_post_token():
+    """Retrieve the token provided by the client.
+
+    This is normally a single 'token' parameter in the POST body.
+    However, for compatibility with 'confirm-action' links,
+    it is also acceptable to provide the token as a query string parameter,
+    if it is the *only* parameter of either kind.
+    """
     if request.environ['webob.adhoc_attrs'].has_key(TOKEN_FIELD_NAME):
         return request.token
 
