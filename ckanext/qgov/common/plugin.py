@@ -5,9 +5,10 @@ from ckan.lib.base import h
 import ckan.lib.formatters as formatters
 import ckan.logic.validators as validators
 from ckan.plugins import implements, SingletonPlugin, IConfigurer, IRoutes, ITemplateHelpers
+import datetime
 
 from ckanext.qgov.common.stats import Stats
-import anti_csrf, authenticator, urlm
+import anti_csrf, authenticator, urlm, intercepts
 
 LOG = getLogger(__name__)
 
@@ -28,6 +29,12 @@ def group_id_for(group_name):
     else:
         LOG.error("%s group was not found or not active", group_name)
         return None
+
+def format_attribution_date(date_string=None):
+    if date_string:
+        return datetime.datetime.strptime(date_string.split('T')[0],'%Y-%m-%d').strftime('%d %B %Y')
+    else:
+        return datetime.datetime.now().strftime('%d %B %Y')
 
 def user_password_validator(key, data, errors, context):
     from ckan.lib.navl.dictization_functions import Missing
@@ -52,16 +59,17 @@ class QGOVPlugin(SingletonPlugin):
 
     ``IConfigurer`` allows us to add/modify configuration options.
     ``IRoutes`` allows us to add new URLs, or override existing URLs.
-    ``ITemplateHelpers`` allows us to provide helper functions to templates.
     """
     implements(IConfigurer, inherit=True)
     implements(IRoutes, inherit=True)
+    implements(ITemplateHelpers, inherit=True)
 
     def __init__(self, **kwargs):
         validators.user_password_validator = user_password_validator
         anti_csrf.intercept_csrf()
         authenticator.intercept_authenticator()
         urlm.intercept_404()
+        intercepts.set_intercepts()
 
     def update_config(self, config):
         """Use our custom list of licences, and disable some unwanted features
@@ -88,12 +96,23 @@ class QGOVPlugin(SingletonPlugin):
         """
         controller = 'ckanext.qgov.common.controller:QGOVController'
         routeMap.connect('/storage/upload_handle', controller=controller, action='upload_handle')
-        routeMap.connect('/user/logged_in', controller=controller, action='logged_in')
         routeMap.connect('/static-content/{path:[-_a-zA-Z0-9/]+}', controller=controller, action='static_content')
 
-        # block unwanted content
-        routeMap.connect('/user', controller='error', action='404')
-        routeMap.connect('/user/register', controller='error', action='404')
-        routeMap.connect('/user/followers/{username:.*}', controller='error', action='404')
-        routeMap.connect('/api/action/follow{action:.*}', controller='error', action='404')
         return routeMap
+
+    def get_helpers(self):
+        """ A dictionary of extra helpers that will be available
+        to provide QGOV-specific helpers to the templates.
+        """
+        helper_dict = {}
+        helper_dict['top_organisations'] = Stats.top_organisations
+        helper_dict['top_categories'] = Stats.top_categories
+        helper_dict['resource_count'] = Stats.resource_count
+        helper_dict['resource_report'] = Stats.resource_report
+        helper_dict['resource_org_count'] = Stats.resource_org_count
+        helper_dict['random_tags'] = random_tags
+        helper_dict['format_resource_filesize'] = format_resource_filesize
+        helper_dict['group_id_for'] = group_id_for
+        helper_dict['format_attribution_date'] = format_attribution_date
+
+        return helper_dict
