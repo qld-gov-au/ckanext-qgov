@@ -3,10 +3,13 @@ from ckan.controllers.package import PackageController
 from ckan.model import Session
 from ckan.lib.base import BaseController, c, render, request
 from ckanext.qgov.common.authenticator import QGOVUser
+import re
 
 PERFORM_RESET = UserController.perform_reset
 LOGGED_IN = UserController.logged_in
 PACKAGE_EDIT = PackageController._save_edit
+
+EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
 
 def set_intercepts():
     UserController.perform_reset = perform_reset
@@ -42,7 +45,12 @@ def save_edit(self, name_or_id, context, package_type=None):
     Intercept save_edit
     Replace author,maintainer,maintainer_email
     '''
-    author_email = request.POST.getone('author_email')
+    try:
+        author_email = request.POST.getone('author_email')
+        if not EMAIL_REGEX.match(author_email):
+            abort(400, _('Invalid email.'))
+    except:
+        abort(400, _('No author email or multiple author emails provided'))
 
     if request.POST.has_key('author'):
         request.POST.__delitem__('author')
