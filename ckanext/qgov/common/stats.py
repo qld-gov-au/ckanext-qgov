@@ -36,17 +36,11 @@ class Stats(object):
     @classmethod
     def resource_count(cls):
         resource = table('resource')
-        #gav The resource_group table has been removed in CKAN 2.4 and there is now
-        # just a FK to package_id in resource table
-        #resource_group = table('resource_group')
         package = table('package')
-
         query = select([func.count(resource.c.id)]). \
             where(and_(resource.c.package_id == package.c.id,
                        resource.c.state == 'active',
                        package.c.state == 'active'
-                       #resource_group.c.id == resource.c.resource_group_id,
-                       #package.c.id == resource_group.c.package_id
                        ))
 
         res_count = model.Session.execute(query).fetchall()
@@ -57,13 +51,9 @@ class Stats(object):
         resource = table('resource')
         group = table('group')
         package = table('package')
-        #resource_group = table('resource_group')
-
         query = select([group.c.title, package.c.title, resource.c.name, resource.c.url, resource.c.created, resource.c.last_modified, resource.c.format, resource.c.webstore_url, resource.c.resource_type]). \
             where(and_(resource.c.package_id == package.c.id,
                        resource.c.state == 'active',
-                       #resource_group.c.id == resource.c.resource_group_id,
-                       #package.c.id == resource_group.c.package_id,
                        group.c.id == package.c.owner_org))
 
         res_report = model.Session.execute(query).fetchall()
@@ -73,13 +63,9 @@ class Stats(object):
     def resource_org_count(cls, org_id):
         resource = table('resource')
         package = table('package')
-        #resource_group = table('resource_group')
-
         query = select([func.count(resource.c.id)]). \
             where(and_(resource.c.state == 'active',
                        package.c.state == 'active',
-                       #resource_group.c.id == resource.c.resource_group_id,
-                       #package.c.id == resource_group.c.package_id,
                        resource.c.package_id == package.c.id,
                        package.c.owner_org == org_id,
                        # Don't count priv datasets
