@@ -1,14 +1,16 @@
 import os, random, re
 from logging import getLogger
-
 from ckan.lib.base import h
 import ckan.lib.formatters as formatters
 import ckan.logic.validators as validators
 from ckan.plugins import implements, SingletonPlugin, IConfigurer, IRoutes, ITemplateHelpers
+from ckan.lib.navl.dictization_functions import Missing
+from pylons import config
+from pylons.i18n import _
 import datetime
-
 from ckanext.qgov.common.stats import Stats
 import anti_csrf, authenticator, urlm, intercepts
+import ckan.model as model
 
 LOG = getLogger(__name__)
 
@@ -21,7 +23,7 @@ def format_resource_filesize(size):
     return formatters.localised_filesize(int(size))
 
 def group_id_for(group_name):
-    import ckan.model as model
+
     group = model.Group.get(group_name)
 
     if group and group.is_active():
@@ -37,10 +39,6 @@ def format_attribution_date(date_string=None):
         return datetime.datetime.now().strftime('%d %B %Y')
 
 def user_password_validator(key, data, errors, context):
-    from ckan.lib.navl.dictization_functions import Missing
-    from pylons import config
-    from pylons.i18n import _
-
     password_min_length = int(config.get('password_min_length', '10'))
     password_patterns = config.get('password_patterns', r'.*[0-9].*,.*[a-z].*,.*[A-Z].*,.*[-`~!@#$%^&*()_+=|\\/ ].*').split(',')
 
@@ -71,25 +69,25 @@ class QGOVPlugin(SingletonPlugin):
         urlm.intercept_404()
         intercepts.set_intercepts()
 
-    def update_config(self, config):
+    def update_config(self, ckan_config):
         """Use our custom list of licences, and disable some unwanted features
         """
 
         here = os.path.dirname(__file__)
-        config['licenses_group_url'] = 'file://'+os.path.join(here, 'resources', 'qgov-licences.json')
-        config['ckan.template_title_deliminater'] = '|'
+        ckan_config['licenses_group_url'] = 'file://'+os.path.join(here, 'resources', 'qgov-licences.json')
+        ckan_config['ckan.template_title_deliminater'] = '|'
 
         # block unwanted content
-        config['openid_enabled'] = False
+        ckan_config['openid_enabled'] = False
 
         # configure URL Management system
-        urlm_path = config.get('urlm.app_path', None)
+        urlm_path = ckan_config.get('urlm.app_path', None)
         if urlm_path:
-            urlm_proxy = config.get('urlm.proxy', None)
+            urlm_proxy = ckan_config.get('urlm.proxy', None)
             urlm.configure_urlm(urlm_path, urlm_proxy)
         else:
-            urlm.configure_for_environment(config.get('ckan.site_url', ''))
-        return config
+            urlm.configure_for_environment(ckan_config.get('ckan.site_url', ''))
+        return ckan_config
 
     def before_map(self, routeMap):
         """ Use our custom controller, and disable some unwanted URLs

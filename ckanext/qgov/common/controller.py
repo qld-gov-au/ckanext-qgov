@@ -1,7 +1,8 @@
 import re
-import ckan.lib.base
+import ckan.lib.base as base
 from ckan.lib.base import BaseController, c, render, request
 from ckan.controllers.storage import StorageController
+from ckan.lib.render import TemplateNotFound
 
 from logging import getLogger
 LOG = getLogger(__name__)
@@ -11,7 +12,6 @@ ALLOWED_EXTENSIONS = re.compile(r'.*((\.csv)|(\.xls)|(\.txt)|(\.kmz)|(\.xlsx)|(\
 class QGOVController(BaseController):
 
     def static_content(self, path):
-        from ckan.lib.render import TemplateNotFound
         try:
             return render('static-content/{path}/index.html'.format(path=path))
         except TemplateNotFound:
