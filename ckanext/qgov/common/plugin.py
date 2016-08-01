@@ -96,7 +96,7 @@ class QGOVPlugin(SingletonPlugin):
         """
         controller = 'ckanext.qgov.common.controller:QGOVController'
         routeMap.connect('/storage/upload_handle', controller=controller, action='upload_handle')
-        routeMap.connect('/static-content/{path:[-_a-zA-Z0-9/]+}', controller=controller, action='static_content')
+        routeMap.connect('/article/{path:[-_a-zA-Z0-9/]+}', controller=controller, action='static_content')
 
         return routeMap
 
