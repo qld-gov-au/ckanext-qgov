@@ -1,1 +1,2 @@
 recursive-include ckanext/qgov/common/resources *
+recursive-include ckanext/qgov/common/theme *

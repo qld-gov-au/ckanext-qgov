@@ -4,6 +4,7 @@ from ckan.lib.base import h
 import ckan.lib.formatters as formatters
 import ckan.logic.validators as validators
 from ckan.plugins import implements, SingletonPlugin, IConfigurer, IRoutes, ITemplateHelpers
+import ckan.plugins.toolkit as toolkit
 from ckan.lib.navl.dictization_functions import Missing
 from pylons import config
 from pylons.i18n import _
@@ -76,6 +77,14 @@ class QGOVPlugin(SingletonPlugin):
         here = os.path.dirname(__file__)
         ckan_config['licenses_group_url'] = 'file://'+os.path.join(here, 'resources', 'qgov-licences.json')
         ckan_config['ckan.template_title_deliminater'] = '|'
+
+        #Theme Inclusions of public and templates
+        possible_public_path = os.path.join(here, 'theme/public')
+        if(os.path.isdir(possible_public_path)):
+            toolkit.add_public_directory(ckan_config, possible_public_path)
+        possible_template_path = os.path.join(here, 'theme/templates')
+        if(os.path.isdir(possible_template_path)):
+            toolkit.add_template_directory(ckan_config, possible_template_path)
 
         # block unwanted content
         ckan_config['openid_enabled'] = False
