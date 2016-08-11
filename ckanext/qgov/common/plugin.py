@@ -53,6 +53,52 @@ def user_password_validator(key, data, errors, context):
         if not re.search(policy, value):
             errors[('password',)].append(_('Must contain at least one number, lowercase letter, capital letter, and symbol'))
 
+@toolkit.side_effect_free
+def submit_feedback(context,data_dict=None):
+    controller = 'ckanext.qgov.data.controller:QGOVDataController'
+    protocol, host = h.get_site_protocol_and_host()
+    full_current_url = h.full_current_url()
+
+    if protocol is not None and host is not None and host in full_current_url:
+        url = config.get('contact_form_url', '')
+        if url.strip() != '':
+            package = package_show(context,data_dict)
+            if 'error' not in package:
+                if 'name' not in data_dict:
+                    data_dict['name'] = 'Not provided'
+                if 'email' not in data_dict:
+                    data_dict['email'] = 'Not provided'
+                if 'comments' not in data_dict:
+                    data_dict['comments'] = 'Not provided'
+
+                form_data = {
+                    'feedback_email' : package['maintainer_email'],
+                    'feedback_organisation' : package['organization']['title'],
+                    'feedback_dataset' : package['title'],
+                    'feedback_origins' : full_current_url,
+                    'name' : data_dict['name'],
+                    'email' : data_dict['email'],
+                    'comments' : data_dict['comments']
+                }
+
+                if '/resource/' in full_current_url:
+                    form_data['feedback_resource'] = full_current_url.split('/resource/')[1]
+
+                r = requests.post(url, data=form_data)
+                if r.status_code == requests.codes.ok:
+                    try:
+                        h.url_for(controller=controller,action='thanks')
+                        h.redirect_to(controller=controller, action='thanks')
+                    except:
+                        h.redirect_to('/')
+                else:
+                    abort(404, 'This form submission is invalid.')
+            return package
+        else:
+            abort(404,'No URL provided')
+    else:
+        abort(404, 'Invalid request source')
+
 class QGOVPlugin(SingletonPlugin):
     """Apply custom functions for Queensland Government portals.
 
@@ -77,7 +123,6 @@ class QGOVPlugin(SingletonPlugin):
         here = os.path.dirname(__file__)
         ckan_config['licenses_group_url'] = 'file://'+os.path.join(here, 'resources', 'qgov-licences.json')
         ckan_config['ckan.template_title_deliminater'] = '|'
-
         #Theme Inclusions of public and templates
         possible_public_path = os.path.join(here, 'theme/public')
         if(os.path.isdir(possible_public_path)):
@@ -123,3 +168,10 @@ class QGOVPlugin(SingletonPlugin):
         helper_dict['format_attribution_date'] = format_attribution_date
 
         return helper_dict
+
+    def get_actions(self):
+        """Extend actions API
+        """
+        return {
+            'submit_feedback' : submit_feedback
+        }
