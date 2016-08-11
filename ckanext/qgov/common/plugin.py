@@ -3,7 +3,7 @@ from logging import getLogger
 from ckan.lib.base import h
 import ckan.lib.formatters as formatters
 import ckan.logic.validators as validators
-from ckan.plugins import implements, SingletonPlugin, IConfigurer, IRoutes, ITemplateHelpers
+from ckan.plugins import implements, SingletonPlugin, IConfigurer, IRoutes, ITemplateHelpers,IActions 
 import ckan.plugins.toolkit as toolkit
 from ckan.lib.navl.dictization_functions import Missing
 from pylons import config
@@ -12,6 +12,9 @@ import datetime
 from ckanext.qgov.common.stats import Stats
 import anti_csrf, authenticator, urlm, intercepts
 import ckan.model as model
+import requests
+from ckan.logic.action.get import package_show
+from pylons.controllers.util import abort
 
 LOG = getLogger(__name__)
 
@@ -108,6 +111,7 @@ class QGOVPlugin(SingletonPlugin):
     implements(IConfigurer, inherit=True)
     implements(IRoutes, inherit=True)
     implements(ITemplateHelpers, inherit=True)
+    implements(IActions, inherit=True)
 
     def __init__(self, **kwargs):
         validators.user_password_validator = user_password_validator
