@@ -11,6 +11,7 @@ Queensland Government has developed this plugin to be used with data.qld.gov.au 
 * Custom feedback route
 * Password Strength validator
 * Account locking on incorrect password
+* Custom 404 Handler
 
 # H2 Requirements
 * None
@@ -19,7 +20,10 @@ Queensland Government has developed this plugin to be used with data.qld.gov.au 
 ```
 ckan.plugins = qgov
 contact_form_url = https://my_feedback_service.com
+urlm.app_path = https://www.404redirect.qld.gov.au/services/url
+urlm.proxy = proxy:3128
 
+#QGOVONLY
+extra_public_paths = /srv/data/public
+extra_template_paths = /srv/data/templates
 ```
-
-
