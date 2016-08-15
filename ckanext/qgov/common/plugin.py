@@ -123,16 +123,20 @@ class QGOVPlugin(SingletonPlugin):
     def update_config(self, ckan_config):
         """Use our custom list of licences, and disable some unwanted features
         """
-
-        here = os.path.dirname(__file__)
-        ckan_config['licenses_group_url'] = 'file://'+os.path.join(here, 'resources', 'qgov-licences.json')
         ckan_config['ckan.template_title_deliminater'] = '|'
+        here = os.path.dirname(__file__)
+
+        #If path to qgov-licences exists add to path
+        possible_licences_path = os.path.join(here, 'resources', 'qgov-licences.json')
+        if os.path.isfile(possible_licences_path):
+            ckan_config['licenses_group_url'] = 'file://'+ possible_licences_path
+
         #Theme Inclusions of public and templates
         possible_public_path = os.path.join(here, 'theme/public')
-        if(os.path.isdir(possible_public_path)):
+        if os.path.isdir(possible_public_path):
             toolkit.add_public_directory(ckan_config, possible_public_path)
         possible_template_path = os.path.join(here, 'theme/templates')
-        if(os.path.isdir(possible_template_path)):
+        if os.path.isdir(possible_template_path):
             toolkit.add_template_directory(ckan_config, possible_template_path)
 
         # block unwanted content
