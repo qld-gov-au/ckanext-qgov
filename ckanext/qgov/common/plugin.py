@@ -134,10 +134,10 @@ class QGOVPlugin(SingletonPlugin):
         #Theme Inclusions of public and templates
         possible_public_path = os.path.join(here, 'theme/public')
         if os.path.isdir(possible_public_path):
-            toolkit.add_public_directory(ckan_config, possible_public_path)
+            ckan_config['extra_public_paths'] = possible_public_path + ',' + ckan_config['extra_public_paths']
         possible_template_path = os.path.join(here, 'theme/templates')
         if os.path.isdir(possible_template_path):
-            toolkit.add_template_directory(ckan_config, possible_template_path)
+            ckan_config['extra_template_paths'] = possible_template_path + ',' + ckan_config['extra_template_paths']
 
         # block unwanted content
         ckan_config['openid_enabled'] = False
