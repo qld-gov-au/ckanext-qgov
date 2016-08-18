@@ -15,6 +15,16 @@ import ckan.model as model
 import requests
 from ckan.logic.action.get import package_show
 from pylons.controllers.util import abort
+import cgi
+import smtplib
+from time import time
+from ckan import __version__
+from email.mime.text import MIMEText
+from email.header import Header
+from email import Utils
+from ckan.common import _ as __, g
+import paste.deploy.converters
+from ckan.lib.mailer import add_msg_niceties
 
 LOG = getLogger(__name__)
 
@@ -63,44 +73,124 @@ def submit_feedback(context,data_dict=None):
     full_current_url = h.full_current_url()
 
     if protocol is not None and host is not None and host in full_current_url:
-        url = config.get('contact_form_url', '')
-        if url.strip() != '':
-            package = package_show(context,data_dict)
-            if 'error' not in package:
-                if 'name' not in data_dict:
-                    data_dict['name'] = 'Not provided'
-                if 'email' not in data_dict:
-                    data_dict['email'] = 'Not provided'
-                if 'comments' not in data_dict:
-                    data_dict['comments'] = 'Not provided'
+        package = package_show(context,data_dict)
+        if 'error' not in package:
+            not_provided = 'Not provided'
+            if 'name' not in data_dict:
+                data_dict['name'] = not_provided
+            if 'email' not in data_dict:
+                data_dict['email'] = not_provided
+            if 'comments' not in data_dict:
+                data_dict['comments'] = not_provided
+            data_dict['resource_id'] = data_dict.get('resource_id','')
 
-                form_data = {
-                    'feedback_email' : package['maintainer_email'],
-                    'feedback_organisation' : package['organization']['title'],
-                    'feedback_dataset' : package['title'],
-                    'feedback_origins' : full_current_url,
-                    'name' : data_dict['name'],
-                    'email' : data_dict['email'],
-                    'comments' : data_dict['comments']
-                }
+            feedback_email = package.get('maintainer_email','')
+            feedback_organisation = package['organization'].get('title','')
+            feedback_origins = "{0}/dataset/{1}".format(host,package['name'])
+            feedback_resource_name = ''
+            if data_dict['resource_id'] != '':
+                feedback_origins = "{0}/resource/{1}".format(feedback_origins,data_dict['resource_id'])
+                package_resources = package.get('resources',[])
+                for resource in package_resources:
+                    if data_dict['resource_id'] == resource.get('id'):
+                        feedback_resource_name = resource.get('name')
+            feedback_dataset = package.get('title','')
 
-                if '/resource/' in full_current_url:
-                    form_data['feedback_resource'] = full_current_url.split('/resource/')[1]
+            email_subject = '{0} Feedback {1} {2}'.format(host,feedback_dataset,feedback_resource_name)
+            email_recipient_name = 'All'
 
-                r = requests.post(url, data=form_data)
+            email_to = (config.get('feedback_form_recipients','')).split(',')
+            if feedback_email != '':
+                email_to.append(feedback_email)
+
+            email_to = [i.strip() for i in email_to if i.strip() != '']
+            LOG.error(email_to)
+            if len(email_to) != 0:
+                email_body = "Name: {0}\nEmail: {1}\nComments: {2}\nFeedback Organisation: {3}\nFeedback Email: {4}\nFeedback Dataset: {5}\nFeedback Resource: {6}\nFeedback URL: {7}".format(
+                    cgi.escape(data_dict['name']),
+                    cgi.escape(data_dict['email']),
+                    cgi.escape(data_dict['comments']),
+                    cgi.escape(feedback_organisation),
+                    cgi.escape(feedback_email),
+                    cgi.escape(feedback_dataset),
+                    cgi.escape(feedback_resource_name),
+                    cgi.escape(feedback_origins)
+                )
+                try:
+                    feedback_mail_recipient(
+                        email_recipient_name,
+                        email_to,
+                        g.site_title,
+                        g.site_url,
+                        email_subject,
+                        email_body
+                    )
+                except:
+                    abort(404, 'This form submission is invalid or CKAN mail is not configured.')
+
+                #Redirect to home page if no thanks page is found
+                success_redirect = config.get('feedback_redirection','/')
+                r = requests.get(protocol + '://' + host + success_redirect,verify=False)
                 if r.status_code == requests.codes.ok:
-                    try:
-                        h.url_for(controller=controller,action='thanks')
-                        h.redirect_to(controller=controller, action='thanks')
-                    except:
-                        h.redirect_to('/')
+                    h.redirect_to(success_redirect)
                 else:
-                    abort(404, 'This form submission is invalid.')
-            return package
-        else:
-            abort(404,'No URL provided')
+                    h.redirect_to('/')
+            else:
+                abort(404, 'Form submission is invalid no recipients.')
+        return package
     else:
         abort(404, 'Invalid request source')
+
+def feedback_mail_recipient(recipient_name, recipient_email, sender_name, sender_url, subject, body, headers={}):
+    mail_from = config.get('smtp.mail_from')
+    body = add_msg_niceties(recipient_name, body, sender_name, sender_url)
+    msg = MIMEText(body.encode('utf-8'), 'plain', 'utf-8')
+    for k, v in headers.items(): msg[k] = v
+    subject = Header(subject.encode('utf-8'), 'utf-8')
+    msg['Subject'] = subject
+    msg['From'] = __("%s <%s>") % (sender_name, mail_from)
+    recipient = u"%s <%s>" % (recipient_name, recipient_email)
+    msg['To'] = Header(recipient, 'utf-8')
+    msg['Date'] = Utils.formatdate(time())
+    msg['X-Mailer'] = "CKAN %s" % __version__
+
+    # Send the email using Python's smtplib.
+    smtp_connection = smtplib.SMTP()
+    smtp_server = config.get('smtp.server', 'localhost')
+    smtp_starttls = paste.deploy.converters.asbool(
+        config.get('smtp.starttls'))
+    smtp_user = config.get('smtp.user')
+    smtp_password = config.get('smtp.password')
+    smtp_connection.connect(smtp_server)
+    try:
+        # Identify ourselves and prompt the server for supported features.
+        smtp_connection.ehlo()
+
+        # If 'smtp.starttls' is on in CKAN config, try to put the SMTP
+        # connection into TLS mode.
+        if smtp_starttls:
+            if smtp_connection.has_extn('STARTTLS'):
+                smtp_connection.starttls()
+                # Re-identify ourselves over TLS connection.
+                smtp_connection.ehlo()
+            else:
+                raise MailerException("SMTP server does not support STARTTLS")
+
+        # If 'smtp.user' is in CKAN config, try to login to SMTP server.
+        if smtp_user:
+            assert smtp_password, ("If smtp.user is configured then "
+                                   "smtp.password must be configured as well.")
+            smtp_connection.login(smtp_user, smtp_password)
+
+        smtp_connection.sendmail(mail_from, recipient_email, msg.as_string())
+        LOG.info("Sent email to {0}".format(','.join(recipient_email)))
+
+    except smtplib.SMTPException, e:
+        msg = '%r' % e
+        LOG.exception(msg)
+        raise MailerException(msg)
+    finally:
+        smtp_connection.quit()
 
 class QGOVPlugin(SingletonPlugin):
     """Apply custom functions for Queensland Government portals.

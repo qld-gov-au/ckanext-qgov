@@ -19,9 +19,11 @@ Queensland Government has developed this plugin to be used with data.qld.gov.au 
 # H2 Configuration
 ```
 ckan.plugins = qgov
-contact_form_url = https://my_feedback_service.com
+
 urlm.app_path = https://www.404redirect.qld.gov.au/services/url
 urlm.proxy = proxy:3128
+feedback_form_recipients = myemail@gmail.com,otheremail@gov.au
+feedback_redirection = /article/thanks
 
 #QGOVONLY
 extra_public_paths = /srv/data/public
