@@ -66,6 +66,11 @@ def user_password_validator(key, data, errors, context):
         if not re.search(policy, value):
             errors[('password',)].append(_('Must contain at least one number, lowercase letter, capital letter, and symbol'))
 
+def strip_non_ascii(string):
+    ''' Returns the string without non ASCII characters'''
+    stripped = (c for c in string if 0 < ord(c) < 127)
+    return ''.join(stripped)
+
 @toolkit.side_effect_free
 def submit_feedback(context,data_dict=None):
     controller = 'ckanext.qgov.data.controller:QGOVDataController'
@@ -78,15 +83,22 @@ def submit_feedback(context,data_dict=None):
             not_provided = 'Not provided'
             if 'name' not in data_dict:
                 data_dict['name'] = not_provided
+            else:
+                data_dict['name'] = data_dict['name'].encode('utf8')
             if 'email' not in data_dict:
                 data_dict['email'] = not_provided
+            else:
+                data_dict['email'] = data_dict['email'].encode('utf8')
             if 'comments' not in data_dict:
                 data_dict['comments'] = not_provided
+            else:
+                data_dict['comments'] = data_dict['comments'].encode('utf8')
+
             data_dict['resource_id'] = data_dict.get('resource_id','')
 
             feedback_email = package.get('maintainer_email','')
             feedback_organisation = package['organization'].get('title','')
-            feedback_origins = "{0}/dataset/{1}".format(host,package['name'])
+            feedback_origins = "{0}/dataset/{1}".format(host,package.get('name',''))
             feedback_resource_name = ''
             if data_dict['resource_id'] != '':
                 feedback_origins = "{0}/resource/{1}".format(feedback_origins,data_dict['resource_id'])
@@ -104,17 +116,18 @@ def submit_feedback(context,data_dict=None):
                 email_to.append(feedback_email)
 
             email_to = [i.strip() for i in email_to if i.strip() != '']
-            LOG.error(email_to)
             if len(email_to) != 0:
-                email_body = "Name: {0}\nEmail: {1}\nComments: {2}\nFeedback Organisation: {3}\nFeedback Email: {4}\nFeedback Dataset: {5}\nFeedback Resource: {6}\nFeedback URL: {7}".format(
-                    cgi.escape(data_dict['name']),
-                    cgi.escape(data_dict['email']),
-                    cgi.escape(data_dict['comments']),
-                    cgi.escape(feedback_organisation),
-                    cgi.escape(feedback_email),
-                    cgi.escape(feedback_dataset),
-                    cgi.escape(feedback_resource_name),
-                    cgi.escape(feedback_origins)
+                email_body = "Name: {0} \r\nEmail: {1} \r\nComments: {2} \r\nFeedback Organisation: {3} \r\n" \
+                             "Feedback Email: {4} \r\nFeedback Dataset: {5} \r\nFeedback Resource: {6} \r\n" \
+                             "Feedback URL: {7}".format(
+                    cgi.escape(strip_non_ascii(data_dict['name'])),
+                    cgi.escape(strip_non_ascii(data_dict['email'])),
+                    cgi.escape(strip_non_ascii(data_dict['comments'])),
+                    cgi.escape(strip_non_ascii(feedback_organisation)),
+                    cgi.escape(strip_non_ascii(feedback_email)),
+                    cgi.escape(strip_non_ascii(feedback_dataset)),
+                    cgi.escape(strip_non_ascii(feedback_resource_name)),
+                    cgi.escape(strip_non_ascii(feedback_origins))
                 )
                 try:
                     feedback_mail_recipient(
