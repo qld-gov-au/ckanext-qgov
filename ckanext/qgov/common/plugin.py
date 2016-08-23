@@ -97,16 +97,19 @@ def submit_feedback(context,data_dict=None):
             data_dict['resource_id'] = data_dict.get('resource_id','')
 
             feedback_email = package.get('maintainer_email','')
-            feedback_organisation = package['organization'].get('title','')
-            feedback_origins = "{0}/dataset/{1}".format(host,package.get('name',''))
+            feedback_organisation = strip_non_ascii(package['organization'].get('title',''))
             feedback_resource_name = ''
+            feedback_dataset = strip_non_ascii(package.get('title',''))
+
+            package_name = strip_non_ascii(package.get('name',''))
+            feedback_origins = "{0}/dataset/{1}".format(host,package_name)
+
             if data_dict['resource_id'] != '':
                 feedback_origins = "{0}/resource/{1}".format(feedback_origins,data_dict['resource_id'])
                 package_resources = package.get('resources',[])
                 for resource in package_resources:
                     if data_dict['resource_id'] == resource.get('id'):
-                        feedback_resource_name = resource.get('name')
-            feedback_dataset = package.get('title','')
+                        feedback_resource_name = strip_non_ascii(resource.get('name',''))
 
             email_subject = '{0} Feedback {1} {2}'.format(host,feedback_dataset,feedback_resource_name)
             email_recipient_name = 'All'
@@ -123,11 +126,11 @@ def submit_feedback(context,data_dict=None):
                     cgi.escape(strip_non_ascii(data_dict['name'])),
                     cgi.escape(strip_non_ascii(data_dict['email'])),
                     cgi.escape(strip_non_ascii(data_dict['comments'])),
-                    cgi.escape(strip_non_ascii(feedback_organisation)),
+                    cgi.escape(feedback_organisation),
                     cgi.escape(strip_non_ascii(feedback_email)),
-                    cgi.escape(strip_non_ascii(feedback_dataset)),
-                    cgi.escape(strip_non_ascii(feedback_resource_name)),
-                    cgi.escape(strip_non_ascii(feedback_origins))
+                    cgi.escape(feedback_dataset),
+                    cgi.escape(feedback_resource_name),
+                    cgi.escape(feedback_origins)
                 )
                 try:
                     feedback_mail_recipient(
