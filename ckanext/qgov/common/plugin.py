@@ -24,7 +24,6 @@ from email.header import Header
 from email import Utils
 from ckan.common import _ as __, g
 import paste.deploy.converters
-from ckan.lib.mailer import add_msg_niceties
 
 LOG = getLogger(__name__)
 
@@ -70,6 +69,14 @@ def strip_non_ascii(string):
     ''' Returns the string without non ASCII characters'''
     stripped = (c for c in string if 0 < ord(c) < 127)
     return ''.join(stripped)
+
+def add_msg_niceties(recipient_name, body, sender_name, sender_url):
+    return _(u"Dear %s,") % recipient_name \
+           + u"\r\n\r\n%s\r\n\r\n" % body \
+           + u"--\r\n%s (%s)" % (sender_name, sender_url)
+
+class MailerException(Exception):
+    pass
 
 @toolkit.side_effect_free
 def submit_feedback(context,data_dict=None):
