@@ -7,29 +7,13 @@ LOG = getLogger(__name__)
 
 RAW_ABORT = base.abort
 
-def configure_for_environment(site_url):
-    if 'staging' in site_url:
-        endpoint = 'https://test.smartservice.qld.gov.au/services/url'
-    elif site_url.endswith('-tst'):
-        endpoint = 'https://test.smartservice.qld.gov.au/services/url'
-        proxy = 'proxy:3128'
-    elif site_url.endswith('-local'):
-        endpoint = 'http://localhost:8091/url'
-        proxy = 'proxy:3128'
-    else:
-        endpoint = 'https://www.smartservice.qld.gov.au/services/url'
-
-    configure_urlm(endpoint, proxy)
-
 def configure_urlm(app_path, proxy):
     """
-    app_path: The path to the URL Management system, eg
-    https://www.smartservice.qld.gov.au/services/url
-
+    app_path: The path to the URL Management system
     proxy: The proxy, if any, to be used in contacting the URL Management system.
     """
     global URLM_ENDPOINT, URLM_PROXY
-    URLM_ENDPOINT = app_path + '/translate/v3.json?sourceurl={source}'
+    URLM_ENDPOINT = app_path
     URLM_PROXY = proxy
 
     LOG.info("Using URL Management system at {endpoint} via proxy {proxy}".format(endpoint=URLM_ENDPOINT, proxy=URLM_PROXY))
