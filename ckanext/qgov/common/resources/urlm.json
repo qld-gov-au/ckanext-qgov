@@ -1,0 +1,38 @@
+{
+  "default" : {
+    "url" : "https://www.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",
+    "proxy" : null
+  },
+  "data.qld.gov.au" : {
+    "url" : "https://www.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",
+    "proxy" : null
+  },
+  "publications.qld.gov.au" : {
+    "url" : "https://www.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",
+    "proxy" : null
+  },
+  "staging.data.qld.gov.au" : {
+      "url" : "https://test.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",
+      "proxy" : null
+  },
+  "staging.publications.qld.gov.au" : {
+    "url" : "https://test.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",
+    "proxy" : null
+  },
+  "data-tst" : {
+    "url" : "https://test.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",
+    "proxy" : "proxy:3128"
+  },
+  "epub-tst" : {
+    "url" : "https://test.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",
+    "proxy" : "proxy:3128"
+  },
+  "data-local" : {
+    "url" : "https://test.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",
+    "proxy" : "proxy:3128"
+  },
+  "epub-local" : {
+    "url" : "https://test.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",
+    "proxy" : "proxy:3128"
+  }
+}

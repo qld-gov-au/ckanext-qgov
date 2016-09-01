@@ -26,6 +26,7 @@ from email.header import Header
 from email import Utils
 from ckan.common import _ as __, g
 import paste.deploy.converters
+import json
 
 LOG = getLogger(__name__)
 
@@ -328,13 +329,24 @@ class QGOVPlugin(SingletonPlugin):
         # block unwanted content
         ckan_config['openid_enabled'] = False
 
-        # configure URL Management system
+        #configure URL Management system through Config or JSON
         urlm_path = ckan_config.get('urlm.app_path', None)
         if urlm_path:
             urlm_proxy = ckan_config.get('urlm.proxy', None)
             urlm.configure_urlm(urlm_path, urlm_proxy)
         else:
-            urlm.configure_for_environment(ckan_config.get('ckan.site_url', ''))
+            possible_urlm_path = os.path.join(here, 'resources', 'urlm.json')
+            if os.path.isfile(possible_urlm_path):
+                with open(possible_urlm_path) as urlm_file:
+                    urlm_json = json.load(urlm_file)
+                hostname = h.get_site_protocol_and_host()[1]
+                if hostname not in urlm_json:
+                    hostname = 'default'
+
+                if hostname in urlm_json:
+                    urlm_url = urlm_json[hostname].get('url','')
+                    urlm_proxy = urlm_json[hostname].get('proxy',None)
+                    urlm.configure_urlm(urlm_url,urlm_proxy)
         return ckan_config
 
     def before_map(self, routeMap):
