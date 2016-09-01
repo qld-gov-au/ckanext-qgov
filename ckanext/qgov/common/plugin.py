@@ -1,9 +1,10 @@
 import os, random, re
 from logging import getLogger
 from ckan.lib.base import h
+import ckan.authz as authz
 import ckan.lib.formatters as formatters
 import ckan.logic.validators as validators
-from ckan.plugins import implements, SingletonPlugin, IConfigurer, IRoutes, ITemplateHelpers,IActions 
+from ckan.plugins import implements, SingletonPlugin, IConfigurer, IRoutes, ITemplateHelpers,IActions,IAuthFunctions
 import ckan.plugins.toolkit as toolkit
 from ckan.lib.navl.dictization_functions import Missing
 from pylons import config
@@ -24,6 +25,7 @@ from email.header import Header
 from email import Utils
 from ckan.common import _ as __, g
 import paste.deploy.converters
+import ckan.logic.auth as logic_auth
 
 LOG = getLogger(__name__)
 
@@ -215,6 +217,75 @@ def feedback_mail_recipient(recipient_name, recipient_email, sender_name, sender
     finally:
         smtp_connection.quit()
 
+def related_create(context, data_dict=None):
+    '''
+    Override default related_create so;
+    - Users must be logged-in to create related items
+    - Related item must be created for an associated dataset
+    - User must be able to create datasets (proves privilege)
+    '''
+    model = context['model']
+    user = context['user']
+    userobj = model.User.get( user )
+
+    check1 = all(authz.check_config_permission(p) for p in (
+        'create_dataset_if_not_in_organization',
+        'create_unowned_dataset',
+    )) or authz.has_user_permission_for_some_org(
+        user, 'create_dataset')
+
+    if userobj and check1:
+        if data_dict is not None and len(data_dict) != 0:
+            dataset_id = data_dict.get('dataset_id',None)
+            if dataset_id is None or dataset_id == '':
+                return {'success': False,
+                    'msg': _('Related item must have an associated dataset')}
+            # check authentication against package
+            pkg = model.Package.get(dataset_id)
+            if not pkg:
+                return {'success': False,
+                    'msg': _('No package found, cannot check auth.')}
+
+            pkg_dict = {'id': dataset_id}
+            authorised = authz.is_authorized('package_update', context, pkg_dict).get('success')
+            if not authorised:
+                return {'success': False,
+                        'msg': _('Not authorised to add a related item to this package.')}
+
+        return {'success': True}
+
+    return {'success': False, 'msg': _('You must be logged in to add a related item')}
+
+def related_update(context, data_dict):
+    '''
+    Override default related_create so;
+    - Users must be logged-in to create related items
+    - User can update if they are able to create datasets for housed package
+    '''
+    model = context['model']
+    user = context['user']
+
+    check1 = all(authz.check_config_permission(p) for p in (
+        'create_dataset_if_not_in_organization',
+        'create_unowned_dataset',
+    )) or authz.has_user_permission_for_some_org(
+        user, 'create_dataset')
+
+    if user and check1:
+        related = logic_auth.get_related_object(context, data_dict)
+        if related.datasets:
+            for package in related.datasets:
+                pkg_dict = {'id': package.id}
+                authorised = authz.is_authorized('package_update', context, pkg_dict).get('success')
+                if authorised:
+                    return {'success': True}
+
+            return {'success': False,
+                    'msg': _('You do not have permission to update this related item')}
+    return {'success': False,
+            'msg': _('You must be logged in to update a related item')}
+
+
 class QGOVPlugin(SingletonPlugin):
     """Apply custom functions for Queensland Government portals.
 
@@ -225,6 +296,7 @@ class QGOVPlugin(SingletonPlugin):
     implements(IRoutes, inherit=True)
     implements(ITemplateHelpers, inherit=True)
     implements(IActions, inherit=True)
+    implements(IAuthFunctions, inherit=True)
 
     def __init__(self, **kwargs):
         validators.user_password_validator = user_password_validator
@@ -294,4 +366,10 @@ class QGOVPlugin(SingletonPlugin):
         """
         return {
             'submit_feedback' : submit_feedback
+        }
+
+    def get_auth_functions(self):
+        return {
+            'related_create': related_create,
+            'related_update' : related_update
         }
