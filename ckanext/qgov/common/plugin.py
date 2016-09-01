@@ -4,6 +4,7 @@ from ckan.lib.base import h
 import ckan.authz as authz
 import ckan.lib.formatters as formatters
 import ckan.logic.validators as validators
+import ckan.logic.auth as logic_auth
 from ckan.plugins import implements, SingletonPlugin, IConfigurer, IRoutes, ITemplateHelpers,IActions,IAuthFunctions
 import ckan.plugins.toolkit as toolkit
 from ckan.lib.navl.dictization_functions import Missing
@@ -25,7 +26,6 @@ from email.header import Header
 from email import Utils
 from ckan.common import _ as __, g
 import paste.deploy.converters
-import ckan.logic.auth as logic_auth
 
 LOG = getLogger(__name__)
 
@@ -223,6 +223,8 @@ def related_create(context, data_dict=None):
     - Users must be logged-in to create related items
     - Related item must be created for an associated dataset
     - User must be able to create datasets (proves privilege)
+
+    Note: This function is used to both gain entry to the 'Create' form and validate the 'Create' form
     '''
     model = context['model']
     user = context['user']
@@ -258,7 +260,7 @@ def related_create(context, data_dict=None):
 
 def related_update(context, data_dict):
     '''
-    Override default related_create so;
+    Override default related_update so;
     - Users must be logged-in to create related items
     - User can update if they are able to create datasets for housed package
     '''
@@ -283,7 +285,7 @@ def related_update(context, data_dict):
             return {'success': False,
                     'msg': _('You do not have permission to update this related item')}
     return {'success': False,
-            'msg': _('You must be logged in to update a related item')}
+            'msg': _('You must be logged in and permission to create datasets to update a related item')}
 
 
 class QGOVPlugin(SingletonPlugin):
