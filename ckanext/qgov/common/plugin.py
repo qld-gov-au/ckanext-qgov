@@ -329,7 +329,7 @@ class QGOVPlugin(SingletonPlugin):
         # block unwanted content
         ckan_config['openid_enabled'] = False
 
-        #configure URL Management system eiter through Config or JSON
+        #configure URL Management system through Config or JSON
         urlm_path = ckan_config.get('urlm.app_path', None)
         if urlm_path:
             urlm_proxy = ckan_config.get('urlm.proxy', None)
