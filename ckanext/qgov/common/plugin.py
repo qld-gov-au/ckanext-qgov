@@ -316,12 +316,14 @@ def get_resource_name(data_dict):
 def generate_download_url(package_id,resource_id):
     context = {'ignore_auth': False, 'model': model,
                'user': c.user or c.author}
-    resource = resource_show(context, {
-        "id":resource_id
-    })
-    if 'error' not in resource:
-        return resource.get('url')
-    return resource
+    try:
+        resource = resource_show(context, {
+            "id":resource_id
+        })
+        if 'error' not in resource:
+            return resource.get('url')
+    except:
+        return ''
 
 
 class QGOVPlugin(SingletonPlugin):
