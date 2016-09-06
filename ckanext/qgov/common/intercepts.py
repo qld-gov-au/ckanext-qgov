@@ -1,14 +1,18 @@
 from ckan.controllers.user import UserController
 from ckan.controllers.package import PackageController
 from ckan.model import Session
-from ckan.lib.base import BaseController, c, render, request, abort
+from ckan.lib.base import BaseController, c, render, request, abort, h
 from pylons.i18n import _
 from ckanext.qgov.common.authenticator import QGOVUser
+import plugin
 import re
+import requests
+import json
 
 PERFORM_RESET = UserController.perform_reset
 LOGGED_IN = UserController.logged_in
 PACKAGE_EDIT = PackageController._save_edit
+RESOURCE_EDIT = PackageController.resource_edit
 
 EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
 
@@ -16,6 +20,7 @@ def set_intercepts():
     UserController.perform_reset = perform_reset
     UserController.logged_in = logged_in
     PackageController._save_edit = save_edit
+    PackageController.resource_edit = validate_resource_edit
 
 def perform_reset(self, id):
     '''
@@ -65,3 +70,26 @@ def save_edit(self, name_or_id, context, package_type=None):
     request.POST.add('maintainer_email',author_email)
 
     return PACKAGE_EDIT(self, name_or_id, context, package_type=None)
+
+def validate_resource_edit(self, id, resource_id, data=None, errors=None, error_summary=None):
+    '''
+    Intercept save_edit
+    Replace author,maintainer,maintainer_email
+    '''
+    if request.POST.has_key('validation_schema') and request.POST.has_key('format'):
+        resource_format = request.POST.getone('format')
+        validation_schema = request.POST.getone('validation_schema')
+        if resource_format == 'CSV' and validation_schema and validation_schema != '':
+            schema_url = plugin.generate_download_url(id,validation_schema)
+            data_url = plugin.generate_download_url(id,resource_id)
+
+            validation_url = "http://goodtables.okfnlabs.org/api/run?format=csv&schema={0}&data={1}&row_limit=100000&report_limit=1000&report_type=grouped".format(schema_url,data_url)
+            r = requests.get(validation_url,verify=False)
+            if r.status_code == requests.codes.ok:
+                response_text = json.loads(r.text)
+                if response_text['success'] == True:
+                    h.flash_success("CSV was validated successfully against the selected schema")
+                else:
+                    h.flash_error("CSV was NOT validated against the selected schema")
+
+    return RESOURCE_EDIT(self, id, resource_id, data, errors, error_summary)
