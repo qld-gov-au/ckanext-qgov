@@ -15,7 +15,7 @@ from ckanext.qgov.common.stats import Stats
 import anti_csrf, authenticator, urlm, intercepts
 import ckan.model as model
 import requests
-from ckan.logic.action.get import package_show
+from ckan.logic.action.get import package_show, resource_show
 from pylons.controllers.util import abort
 import cgi
 import smtplib
@@ -314,8 +314,16 @@ def get_resource_name(data_dict):
     return None
 
 def generate_download_url(package_id,resource_id):
-    protocol, host = h.get_site_protocol_and_host()
-    return "{0}://{1}/dataset/{2}/resource/{3}/download/".format(protocol,host,package_id,resource_id)
+    context = {'ignore_auth': False, 'model': model,
+               'user': c.user or c.author}
+    try:
+        resource = resource_show(context, {
+            "id":resource_id
+        })
+        if 'error' not in resource:
+            return resource.get('url')
+    except:
+        return ''
 
 
 class QGOVPlugin(SingletonPlugin):
