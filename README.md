@@ -1,9 +1,9 @@
-# H1 ckanext-qgov - Queensland Government CKAN Extensions
+#ckanext-qgov - Queensland Government CKAN Extensions
 
-# H2 About
+#About
 Queensland Government has developed this plugin to be used with data.qld.gov.au and publications.qld.gov.au. The plugin has had Queensland Government site specific functionality removed from it.
 
-# H2 Features
+#Features
 * Static Routing on all index.html found in static-content directory
 * CSRF Protection
 * File upload known type verification
@@ -13,10 +13,10 @@ Queensland Government has developed this plugin to be used with data.qld.gov.au 
 * Account locking on incorrect password
 * Custom 404 Handler
 
-# H2 Requirements
+#Requirements
 * None
 
-# H2 Configuration
+#Configuration
 ```
 ckan.plugins = qgov
 

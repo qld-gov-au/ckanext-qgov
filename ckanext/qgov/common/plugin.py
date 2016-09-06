@@ -24,7 +24,7 @@ from ckan import __version__
 from email.mime.text import MIMEText
 from email.header import Header
 from email import Utils
-from ckan.common import _ as __, g
+from ckan.common import _ as __, g, c
 import paste.deploy.converters
 import json
 
@@ -288,6 +288,35 @@ def related_update(context, data_dict):
     return {'success': False,
             'msg': _('You must be logged in and permission to create datasets to update a related item')}
 
+def get_validation_resources(data_dict):
+    context = {'ignore_auth': False, 'model': model,
+               'user': c.user or c.author}
+    package = package_show(context, data_dict)
+    if 'error' not in package:
+        resources = package.get('resources',[])
+        validation_schemas = []
+        for resource in resources:
+            if resource['format'].upper() == 'CSV VALIDATION SCHEMA':
+                validation_schemas.append(resource['id'])
+        return validation_schemas
+    return package
+
+def get_resource_name(data_dict):
+    context = {'ignore_auth': False, 'model': model,
+               'user': c.user or c.author}
+    package = package_show(context, data_dict)
+    if 'error' not in package:
+        resources = package.get('resources',[])
+        for resource in resources:
+            if data_dict['resource_id'] == resource['id']:
+                return resource['name']
+        return None
+    return None
+
+def generate_download_url(package_id,resource_id):
+    protocol, host = h.get_site_protocol_and_host()
+    return "{0}://{1}/dataset/{2}/resource/{3}/download/".format(protocol,host,package_id,resource_id)
+
 
 class QGOVPlugin(SingletonPlugin):
     """Apply custom functions for Queensland Government portals.
@@ -372,6 +401,9 @@ class QGOVPlugin(SingletonPlugin):
         helper_dict['format_resource_filesize'] = format_resource_filesize
         helper_dict['group_id_for'] = group_id_for
         helper_dict['format_attribution_date'] = format_attribution_date
+        helper_dict['get_validation_resources'] = get_validation_resources
+        helper_dict['get_resource_name'] = get_resource_name
+        helper_dict['generate_download_url'] = generate_download_url
 
         return helper_dict
 
