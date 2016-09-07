@@ -1,5 +1,6 @@
 from ckan.controllers.user import UserController
 from ckan.controllers.package import PackageController
+import ckan.logic.schema as schemas
 from ckan.model import Session
 from ckan.lib.base import BaseController, c, render, request, abort, h
 from pylons.i18n import _
@@ -14,6 +15,11 @@ LOGGED_IN = UserController.logged_in
 PACKAGE_EDIT = PackageController._save_edit
 RESOURCE_EDIT = PackageController.resource_edit
 
+DEFAULT_USER_SCHEMA = schemas.default_user_schema()
+USER_NEW_FORM_SCHEMA = schemas.user_new_form_schema()
+USER_EDIT_FORM_SCHEMA = schemas.user_edit_form_schema()
+DEFAULT_UPDATE_USER_SCHEMA = schemas.default_update_user_schema()
+
 EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
 
 def set_intercepts():
@@ -21,6 +27,53 @@ def set_intercepts():
     UserController.logged_in = logged_in
     PackageController._save_edit = save_edit
     PackageController.resource_edit = validate_resource_edit
+
+    schemas.default_user_schema = default_user_schema
+    schemas.user_new_form_schema = user_new_form_schema
+    schemas.user_edit_form_schema = user_edit_form_schema
+    schemas.default_update_user_schema = default_update_user_schema
+
+def default_user_schema():
+    user_schema = DEFAULT_USER_SCHEMA
+    if 'password' in user_schema:
+        for idx, user_schema_func in enumerate(user_schema['password']):
+            if user_schema_func.__name__ == 'user_password_validator':
+                user_schema['password'][idx] = plugin.user_password_validator
+    return user_schema
+
+def user_new_form_schema():
+    user_schema = USER_NEW_FORM_SCHEMA
+    if 'password' in user_schema:
+        for idx, user_schema_func in enumerate(user_schema['password']):
+            if user_schema_func.__name__ == 'user_password_validator':
+                user_schema['password'][idx] = plugin.user_password_validator
+
+    if 'password1' in user_schema:
+        for idx, user_schema_func in enumerate(user_schema['password1']):
+            if user_schema_func.__name__ == 'user_password_validator':
+                user_schema['password1'][idx] = plugin.user_password_validator
+
+    return user_schema
+
+def user_edit_form_schema():
+    user_schema = USER_EDIT_FORM_SCHEMA
+    if 'password' in user_schema:
+        for idx, user_schema_func in enumerate(user_schema['password']):
+            if user_schema_func.__name__ == 'user_password_validator':
+                user_schema['password'][idx] = plugin.user_password_validator
+    if 'password1' in user_schema:
+        for idx, user_schema_func in enumerate(user_schema['password1']):
+            if user_schema_func.__name__ == 'user_password_validator':
+                user_schema['password1'][idx] = plugin.user_password_validator
+    return user_schema
+
+def default_update_user_schema():
+    user_schema = DEFAULT_UPDATE_USER_SCHEMA
+    if 'password' in user_schema:
+        for idx, user_schema_func in enumerate(user_schema['password']):
+            if user_schema_func.__name__ == 'user_password_validator':
+                user_schema['password'][idx] = plugin.user_password_validator
+    return user_schema
 
 def perform_reset(self, id):
     '''

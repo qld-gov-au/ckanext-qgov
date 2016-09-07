@@ -60,13 +60,41 @@ def user_password_validator(key, data, errors, context):
 
     value = data[key]
 
-    if value is None or value == '' or isinstance(value, Missing):
-        raise ValueError(_('You must provide a password'))
-    if not len(value) >= password_min_length:
-        errors[('password',)].append(_('Your password must be {min} characters or longer'.format(min=password_min_length)))
-    for policy in password_patterns:
-        if not re.search(policy, value):
-            errors[('password',)].append(_('Must contain at least one number, lowercase letter, capital letter, and symbol'))
+    passwords = [
+        {
+            "key": key,
+            "value" : value
+        }
+    ]
+
+    if isinstance(value, Missing):
+        passwords = []
+        if ('password1',) in data and not isinstance(data.get(('password1',)), Missing):
+            passwords.append({
+                'key' : ('password1',),
+                'value' : data.get(('password1',))
+            })
+        if ('password2',) in data and not isinstance(data.get(('password2',)), Missing):
+            passwords.append({
+                'key' : ('password2',),
+                'value' : data.get(('password2',))
+            })
+
+    password_one = data.get(('password1',),None)
+    password_two = data.get(('password2',),None)
+    password = data.get(('password',),None)
+
+    if not password and not password_one and not password_two:
+        errors[key].append(__('Missing value'))
+
+    for password in passwords:
+        if password['value'] is None or password['value'] == '' or isinstance(password['value'], Missing):
+            errors[password['key']].append(__('Password is missing'))
+        if not len(password['value']) >= password_min_length:
+            errors[password['key']].append(__('Your password must be {min} characters or longer'.format(min=password_min_length)))
+        for policy in password_patterns:
+            if not re.search(policy, password['value']):
+                errors[password['key']].append(__('Must contain at least one number, lowercase letter, capital letter, and symbol'))
 
 def strip_non_ascii(string):
     ''' Returns the string without non ASCII characters'''
