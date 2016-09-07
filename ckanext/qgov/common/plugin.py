@@ -175,8 +175,7 @@ def feedback_mail_recipient(recipient_name, recipient_email, sender_name, sender
     subject = Header(subject.encode('utf-8'), 'utf-8')
     msg['Subject'] = subject
     msg['From'] = __("%s <%s>") % (sender_name, mail_from)
-    recipient = u"%s <%s>" % (recipient_name, recipient_email)
-    msg['To'] = Header(recipient, 'utf-8')
+    msg['To'] = ", ".join(recipient_email)
     msg['Date'] = Utils.formatdate(time())
     msg['X-Mailer'] = "CKAN %s" % __version__
 
