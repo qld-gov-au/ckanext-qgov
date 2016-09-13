@@ -135,67 +135,69 @@ def submit_feedback(context,data_dict=None):
             data_dict['resource_id'] = data_dict.get('resource_id','')
             data_dict['captcha'] = data_dict.get('captcha','')
 
-            if data_dict.get('captcha','') == '':
-                feedback_email = package.get('maintainer_email','')
-                feedback_organisation = strip_non_ascii(package['organization'].get('title',''))
-                feedback_resource_name = ''
-                feedback_dataset = strip_non_ascii(package.get('title',''))
-
-                package_name = strip_non_ascii(package.get('name',''))
-                feedback_origins = "{0}/dataset/{1}".format(host,package_name)
-
-                if data_dict['resource_id'] != '':
-                    feedback_origins = "{0}/resource/{1}".format(feedback_origins,data_dict['resource_id'])
-                    package_resources = package.get('resources',[])
-                    for resource in package_resources:
-                        if data_dict['resource_id'] == resource.get('id'):
-                            feedback_resource_name = strip_non_ascii(resource.get('name',''))
-
-                email_subject = '{0} Feedback {1} {2}'.format(host,feedback_dataset,feedback_resource_name)
-                email_recipient_name = 'All'
-
-                email_to = (config.get('feedback_form_recipients','')).split(',')
-                if feedback_email != '':
-                    email_to.append(feedback_email)
-
-                email_to = [i.strip() for i in email_to if i.strip() != '']
-                if len(email_to) != 0:
-                    email_body = "Name: {0} \r\nEmail: {1} \r\nComments: {2} \r\nFeedback Organisation: {3} \r\n" \
-                                 "Feedback Email: {4} \r\nFeedback Dataset: {5} \r\nFeedback Resource: {6} \r\n" \
-                                 "Feedback URL: {7}".format(
-                        cgi.escape(strip_non_ascii(data_dict['name'])),
-                        cgi.escape(strip_non_ascii(data_dict['email'])),
-                        cgi.escape(strip_non_ascii(data_dict['comments'])),
-                        cgi.escape(feedback_organisation),
-                        cgi.escape(strip_non_ascii(feedback_email)),
-                        cgi.escape(feedback_dataset),
-                        cgi.escape(feedback_resource_name),
-                        cgi.escape(feedback_origins)
-                    )
-                    try:
-                        feedback_mail_recipient(
-                            email_recipient_name,
-                            email_to,
-                            g.site_title,
-                            g.site_url,
-                            email_subject,
-                            email_body
-                        )
-                    except:
-                        abort(404, 'This form submission is invalid or CKAN mail is not configured.')
-
-                    #Redirect to home page if no thanks page is found
-                    success_redirect = config.get('feedback_redirection','/')
-                    r = requests.get(protocol + '://' + host + success_redirect,verify=False)
-                    if r.status_code == requests.codes.ok:
-                        h.redirect_to(success_redirect)
-                    else:
-                        h.redirect_to('/')
-                else:
-                    abort(404, 'Form submission is invalid no recipients.')
-            else:
+            if data_dict.get('captcha','') != '':
                 #Do not indicate failure or success since captcha was filled likely bot
                 h.redirect_to('/')
+                return package
+
+            feedback_email = package.get('maintainer_email','')
+            feedback_organisation = strip_non_ascii(package['organization'].get('title',''))
+            feedback_resource_name = ''
+            feedback_dataset = strip_non_ascii(package.get('title',''))
+
+            package_name = strip_non_ascii(package.get('name',''))
+            feedback_origins = "{0}/dataset/{1}".format(host,package_name)
+
+            if data_dict['resource_id'] != '':
+                feedback_origins = "{0}/resource/{1}".format(feedback_origins,data_dict['resource_id'])
+                package_resources = package.get('resources',[])
+                for resource in package_resources:
+                    if data_dict['resource_id'] == resource.get('id'):
+                        feedback_resource_name = strip_non_ascii(resource.get('name',''))
+
+            email_subject = '{0} Feedback {1} {2}'.format(host,feedback_dataset,feedback_resource_name)
+            email_recipient_name = 'All'
+
+            email_to = (config.get('feedback_form_recipients','')).split(',')
+            if feedback_email != '':
+                email_to.append(feedback_email)
+
+            email_to = [i.strip() for i in email_to if i.strip() != '']
+            if len(email_to) != 0:
+                email_body = "Name: {0} \r\nEmail: {1} \r\nComments: {2} \r\nFeedback Organisation: {3} \r\n" \
+                            "Feedback Email: {4} \r\nFeedback Dataset: {5} \r\nFeedback Resource: {6} \r\n" \
+                            "Feedback URL: {7}".format(
+                    cgi.escape(strip_non_ascii(data_dict['name'])),
+                    cgi.escape(strip_non_ascii(data_dict['email'])),
+                    cgi.escape(strip_non_ascii(data_dict['comments'])),
+                    cgi.escape(feedback_organisation),
+                    cgi.escape(strip_non_ascii(feedback_email)),
+                    cgi.escape(feedback_dataset),
+                    cgi.escape(feedback_resource_name),
+                    cgi.escape(feedback_origins)
+                )
+                try:
+                    feedback_mail_recipient(
+                        email_recipient_name,
+                        email_to,
+                        g.site_title,
+                        g.site_url,
+                        email_subject,
+                        email_body
+                    )
+                except:
+                    abort(404, 'This form submission is invalid or CKAN mail is not configured.')
+
+                #Redirect to home page if no thanks page is found
+                success_redirect = config.get('feedback_redirection','/')
+                r = requests.get(protocol + '://' + host + success_redirect,verify=False)
+                if r.status_code == requests.codes.ok:
+                    h.redirect_to(success_redirect)
+                else:
+                    h.redirect_to('/')
+            else:
+                abort(404, 'Form submission is invalid no recipients.')
+
         return package
     else:
         abort(404, 'Invalid request source')
