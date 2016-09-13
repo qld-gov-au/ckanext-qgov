@@ -133,6 +133,12 @@ def submit_feedback(context,data_dict=None):
                 data_dict['comments'] = data_dict['comments'].encode('utf8')
 
             data_dict['resource_id'] = data_dict.get('resource_id','')
+            data_dict['captcha'] = data_dict.get('captcha','')
+
+            if data_dict.get('captcha','') != '':
+                #Do not indicate failure or success since captcha was filled likely bot
+                h.redirect_to('/')
+                return package
 
             feedback_email = package.get('maintainer_email','')
             feedback_organisation = strip_non_ascii(package['organization'].get('title',''))
@@ -159,8 +165,8 @@ def submit_feedback(context,data_dict=None):
             email_to = [i.strip() for i in email_to if i.strip() != '']
             if len(email_to) != 0:
                 email_body = "Name: {0} \r\nEmail: {1} \r\nComments: {2} \r\nFeedback Organisation: {3} \r\n" \
-                             "Feedback Email: {4} \r\nFeedback Dataset: {5} \r\nFeedback Resource: {6} \r\n" \
-                             "Feedback URL: {7}".format(
+                            "Feedback Email: {4} \r\nFeedback Dataset: {5} \r\nFeedback Resource: {6} \r\n" \
+                            "Feedback URL: {7}".format(
                     cgi.escape(strip_non_ascii(data_dict['name'])),
                     cgi.escape(strip_non_ascii(data_dict['email'])),
                     cgi.escape(strip_non_ascii(data_dict['comments'])),
@@ -191,6 +197,7 @@ def submit_feedback(context,data_dict=None):
                     h.redirect_to('/')
             else:
                 abort(404, 'Form submission is invalid no recipients.')
+
         return package
     else:
         abort(404, 'Invalid request source')
