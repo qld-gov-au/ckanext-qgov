@@ -136,14 +136,18 @@ def submit_feedback(context,data_dict=None):
             email_recipient_name = 'All'
 
             email_to = (config.get('feedback_form_recipients','')).split(',')
-            if feedback_email != '':
+            if feedback_email != '' and feedback_email:
                 email_to.append(feedback_email)
+            else:
+                feedback_email = ''
+
+            email_to = [e for e in email_to if e is not None]
 
             email_to = [i.strip() for i in email_to if i.strip() != '']
             if len(email_to) != 0:
                 email_body = "Name: {0} \r\nEmail: {1} \r\nComments: {2} \r\nFeedback Organisation: {3} \r\n" \
                             "Feedback Email: {4} \r\nFeedback Dataset: {5} \r\nFeedback Resource: {6} \r\n" \
-                            "Feedback URL: {7}".format(
+                            "Feedback URL: {7}://{8}".format(
                     cgi.escape(strip_non_ascii(data_dict['name'])),
                     cgi.escape(strip_non_ascii(data_dict['email'])),
                     cgi.escape(strip_non_ascii(data_dict['comments'])),
@@ -151,6 +155,7 @@ def submit_feedback(context,data_dict=None):
                     cgi.escape(strip_non_ascii(feedback_email)),
                     cgi.escape(feedback_dataset),
                     cgi.escape(feedback_resource_name),
+                    cgi.escape(protocol),
                     cgi.escape(feedback_origins)
                 )
                 try:
