@@ -341,6 +341,16 @@ def generate_download_url(package_id,resource_id):
     except:
         return ''
 
+def generate_json_schema(package_id,validation_schema):
+    validation_schema_url = generate_download_url(package_id,validation_schema)
+    r = requests.get(validation_schema_url,verify=False)
+    if r.status_code == requests.codes.ok:
+        try:
+            return json.loads(r.text)
+        except:
+            return { "error": "Failed to parse json schema"}
+    else:
+        return { "error" : "Failed to retrieve json schema"}
 
 class QGOVPlugin(SingletonPlugin):
     """Apply custom functions for Queensland Government portals.
@@ -428,6 +438,7 @@ class QGOVPlugin(SingletonPlugin):
         helper_dict['get_validation_resources'] = get_validation_resources
         helper_dict['get_resource_name'] = get_resource_name
         helper_dict['generate_download_url'] = generate_download_url
+        helper_dict['generate_json_schema'] = generate_json_schema
 
         return helper_dict
 
