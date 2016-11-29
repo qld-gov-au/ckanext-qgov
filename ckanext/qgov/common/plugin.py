@@ -112,8 +112,8 @@ def submit_feedback(context,data_dict=None):
             data_dict['resource_id'] = data_dict.get('resource_id','')
             data_dict['captcha'] = data_dict.get('captcha','')
 
-            if data_dict.get('captcha','') != '':
-                #Do not indicate failure or success since captcha was filled likely bot
+            if (data_dict.get('captcha','') != '' or len(data_dict)>7 or not(data_dict.get('captchaCatch','none') == 'dev' or data_dict.get('captchaCatch','none') == 'prod')) :
+                #Do not indicate failure or success since captcha was filled likely bot; 7 is the expected aurguments in the query string; captchaCatch is serverside generated value hence can either be 'dev' or 'prod'
                 h.redirect_to('/')
                 return package
 
