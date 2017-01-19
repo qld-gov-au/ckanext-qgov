@@ -368,7 +368,7 @@ class QGOVPlugin(SingletonPlugin):
 
     def __init__(self, **kwargs):
         validators.user_password_validator = user_password_validator
-        anti_csrf.intercept_csrf()
+        #anti_csrf.intercept_csrf()
         authenticator.intercept_authenticator()
         urlm.intercept_404()
         intercepts.set_intercepts()
