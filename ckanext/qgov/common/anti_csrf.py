@@ -87,7 +87,7 @@ def get_server_token():
     else:
         import binascii, os
         token = binascii.hexlify(os.urandom(32))
-        response.set_cookie(TOKEN_FIELD_NAME, token, max_age=600, httponly=True)
+        response.set_cookie(TOKEN_FIELD_NAME, token, secure=True, httponly=True)
 
     if token is None or token.strip() == "":
         csrf_fail("Server token is blank")
