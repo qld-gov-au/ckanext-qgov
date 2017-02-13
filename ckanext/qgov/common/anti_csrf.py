@@ -20,6 +20,11 @@ RAW_BEFORE = base.BaseController.__before__
 """ Used as the cookie name and input field name.
 """
 TOKEN_FIELD_NAME = 'token'
+""" Used to rotate the token cookie periodically.
+If the freshness cookie doesn't appear, the token cookie is still OK,
+but we'll set a new one for next time.
+"""
+TOKEN_FRESHNESS_COOKIE_NAME = 'token-fresh'
 
 # We need to edit confirm-action links, which get intercepted by JavaScript,
 #regardless of which order their 'data-module' and 'href' attributes appear.
@@ -60,7 +65,7 @@ def apply_token(html):
     if token_match:
         token = token_match.group(1)
     else:
-        token = get_server_token()
+        token = get_response_token()
 
     def insert_form_token(form_match):
         return form_match.group(1) + TOKEN_PATTERN.format(token=token) + form_match.group(2)
@@ -70,29 +75,41 @@ def apply_token(html):
 
     return CONFIRM_LINK_REVERSED.sub(insert_link_token, CONFIRM_LINK.sub(insert_link_token, POST_FORM.sub(insert_form_token, html)))
 
-def get_server_token():
+def get_cookie_token():
     """Retrieve the token expected by the server.
 
     This will be retrieved from the 'token' cookie, if it exists.
-    If not, a new token will be generated and a new cookie set.
+    If not, an error will occur.
+    """
+    if request.cookies.has_key(TOKEN_FIELD_NAME):
+        LOG.debug("Obtaining token from cookie")
+        token = request.cookies.get(TOKEN_FIELD_NAME)
+    if token is None or token.strip() == "":
+        csrf_fail("CSRF token is blank")
 
-    This can be used either to populate a new form on a GET request, or to validate a POST request
-    (since a missing cookie would result in a new token, which would certainly not match the submitted form).
+    return token
+
+def get_response_token():
+    """Retrieve the token to be injected into pages.
+
+    This will be retrieved from the 'token' cookie, if it exists and is fresh.
+    If not, a new token will be generated and a new cookie set.
     """
     # ensure that the same token is used when a page is assembled from pieces
-    if request.environ['webob.adhoc_attrs'].has_key('server_token'):
-        token = request.server_token
-    elif request.cookies.has_key(TOKEN_FIELD_NAME):
-        token = request.cookies.pop(TOKEN_FIELD_NAME)
+    if request.environ['webob.adhoc_attrs'].has_key('response_token'):
+        LOG.debug("Reusing response token from request attributes")
+        token = request.response_token
+    elif request.cookies.has_key(TOKEN_FIELD_NAME) and request.cookies.has_key(TOKEN_FRESHNESS_COOKIE_NAME):
+        LOG.debug("Obtaining token from cookie")
+        token = request.cookies.get(TOKEN_FIELD_NAME)
     else:
+        LOG.debug("No fresh token found; making new token cookie")
         import binascii, os
         token = binascii.hexlify(os.urandom(32))
         response.set_cookie(TOKEN_FIELD_NAME, token, secure=True, httponly=True)
+        response.set_cookie(TOKEN_FRESHNESS_COOKIE_NAME, '1', max_age=600, secure=True, httponly=True)
+        request.response_token = token
 
-    if token is None or token.strip() == "":
-        csrf_fail("Server token is blank")
-
-    request.server_token = token
     return token
 
 # Check token on applicable requests
@@ -101,7 +118,7 @@ def is_request_exempt():
     return not is_logged_in() or API_URL.match(request.path) or request.method in {'GET', 'HEAD', 'OPTIONS'}
 
 def anti_csrf_before(obj, action, **params):
-    if not is_request_exempt() and get_server_token() != get_post_token():
+    if not is_request_exempt() and get_cookie_token() != get_post_token():
         csrf_fail("Could not match session token with form token")
 
     RAW_BEFORE(obj, action)
