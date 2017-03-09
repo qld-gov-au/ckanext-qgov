@@ -1,5 +1,57 @@
 [
   {
+    "domain_content": false,
+    "domain_data": false,
+    "domain_software": false,
+    "family": "",
+    "id": "cc-nc-4",
+    "is_okd_compliant": false,
+    "is_osi_compliant": false,
+    "maintainer": "",
+    "status": "active",
+    "title": "Creative Commons Attribution 4.0",
+    "url": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  {
+    "domain_content": true,
+    "domain_data": false,
+    "domain_software": false,
+    "family": "",
+    "id": "cc-by-sa-4",
+    "is_okd_compliant": true,
+    "is_osi_compliant": false,
+    "maintainer": "",
+    "status": "active",
+    "title": "Creative Commons Attribution Share-Alike 4.0",
+    "url": "https://creativecommons.org/licenses/by-sa/4.0/"
+  },
+  {
+    "domain_content": true,
+    "domain_data": false,
+    "domain_software": false,
+    "family": "",
+    "id": "cc-by-nc-4",
+    "is_okd_compliant": true,
+    "is_osi_compliant": false,
+    "maintainer": "",
+    "status": "active",
+    "title": "Creative Commons Attribution-NonCommercial 4.0",
+    "url": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  {
+    "domain_content": true,
+    "domain_data": false,
+    "domain_software": false,
+    "family": "",
+    "id": "cc-by-nd-4",
+    "is_okd_compliant": true,
+    "is_osi_compliant": false,
+    "maintainer": "",
+    "status": "active",
+    "title": "Creative Commons Attribution-NonCommercial-NoDerivatives 4.0",
+    "url": "https://creativecommons.org/licenses/by-nc-nd/4.0/"
+  },
+  {
     "domain_content": true,
     "domain_data": false,
     "domain_software": false,
@@ -9,8 +61,8 @@
     "is_osi_compliant": false,
     "maintainer": "",
     "status": "active",
-    "title": "Creative Commons Attribution",
-    "url": "http://creativecommons.org/licenses/by/3.0/au/"
+    "title": "Creative Commons Attribution 3.0",
+    "url": "https://creativecommons.org/licenses/by/3.0/au/"
   },
   {
     "domain_content": true,
@@ -22,8 +74,21 @@
     "is_osi_compliant": false,
     "maintainer": "",
     "status": "active",
-    "title": "Creative Commons Attribution Share-Alike",
-    "url": "http://creativecommons.org/licenses/by-sa/3.0/"
+    "title": "Creative Commons Attribution Share-Alike 3.0",
+    "url": "https://creativecommons.org/licenses/by-sa/3.0/au/"
+  },
+  {
+    "domain_content": false,
+    "domain_data": false,
+    "domain_software": false,
+    "family": "",
+    "id": "cc-nc",
+    "is_okd_compliant": false,
+    "is_osi_compliant": false,
+    "maintainer": "",
+    "status": "active",
+    "title": "Creative Commons Non-Commercial 3.0",
+    "url": "https://creativecommons.org/licenses/by-nc/3.0/au/"
   },
   {
     "domain_content": true,
@@ -38,18 +103,6 @@
     "status": "active",
     "title": "Other (Open)",
     "url": ""
-  },
-  {
-    "domain_content": false,
-    "domain_data": false,
-    "domain_software": false,
-    "family": "",
-    "id": "cc-nc",
-    "is_okd_compliant": false,
-    "is_osi_compliant": false,
-    "maintainer": "",
-    "status": "active",
-    "title": "Creative Commons Non-Commercial",
-    "url": "http://creativecommons.org/licenses/by-nc/3.0/"
   }
+  
 ]
