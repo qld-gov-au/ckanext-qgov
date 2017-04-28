@@ -40,7 +40,9 @@ class Stats(object):
         query = select([func.count(resource.c.id)]). \
             where(and_(resource.c.package_id == package.c.id,
                        resource.c.state == 'active',
-                       package.c.state == 'active'
+                       package.c.state == 'active',
+                       # Don't count priv datasets
+                       package.c.private != 'TRUE'
                        ))
 
         res_count = model.Session.execute(query).fetchall()
