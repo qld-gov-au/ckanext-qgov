@@ -12,7 +12,14 @@ class Stats(object):
         package = table('package')
         query = select([member.c.group_id, func.count(member.c.table_id)]). \
             group_by(member.c.group_id). \
-            where(and_(member.c.group_id != None, member.c.table_name == 'package', member.c.capacity == 'public', member.c.state == 'active', package.c.state == 'active', package.c.id == member.c.table_id)). \
+            where(and_(member.c.group_id != None,
+                       member.c.table_name == 'package',
+                       member.c.capacity == 'public',
+                       member.c.state == 'active',
+                       package.c.state == 'active',
+                       package.c.private != 'TRUE',
+                       package.c.id == member.c.table_id
+                       )). \
             order_by(func.count(member.c.table_id).desc()). \
             limit(limit)
 
