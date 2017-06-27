@@ -119,7 +119,16 @@ def submit_feedback(context,data_dict=None):
                 h.redirect_to('/')
                 return package
 
-            feedback_email = package.get('maintainer_email','')
+            # If there is value for either maintenance_email or author_email, use that. If both of them null then send the email to oss.products@dsiti.qld.gov.au
+            # Logic written to maintain legacy data
+            # Once all the records in database have 'maintainer_email', remove this and feedback_email = package.get('maintainer_email','')
+            if(not(package.get('maintainer_email')== '' or package.get('maintainer_email') is None)):
+                feedback_email = package.get('maintainer_email')
+            elif (not(package.get('author_email')== '' or package.get('author_email') is None)):
+                feedback_email = package.get('author_email')
+            else:
+                feedback_email = 'oss.products@dsiti.qld.gov.au'
+            #feedback_email = package.get('maintainer_email','')
             feedback_organisation = strip_non_ascii(package['organization'].get('title',''))
             feedback_resource_name = ''
             feedback_dataset = strip_non_ascii(package.get('title',''))
