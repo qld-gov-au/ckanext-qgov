@@ -1,10 +1,12 @@
 from ckan.controllers.user import UserController
 from ckan.controllers.package import PackageController
+import ckan.logic
 import ckan.logic.schema as schemas
 from ckan.model import Session
 from ckan.lib.base import BaseController, c, render, request, abort, h
 from pylons.i18n import _
 from ckanext.qgov.common.authenticator import QGOVUser
+from ckan.lib.uploader import *
 import plugin
 import re
 import requests
@@ -20,7 +22,12 @@ USER_NEW_FORM_SCHEMA = schemas.user_new_form_schema()
 USER_EDIT_FORM_SCHEMA = schemas.user_edit_form_schema()
 DEFAULT_UPDATE_USER_SCHEMA = schemas.default_update_user_schema()
 
+UPLOAD = Upload.upload
+RESOURCE_UPLOAD = ResourceUpload.upload
+
 EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
+
+ALLOWED_EXTENSIONS = re.compile(r'.*((\.csv)|(\.xls)|(\.txt)|(\.kmz)|(\.xlsx)|(\.pdf)|(\.shp)|(\.tab)|(\.jp2)|(\.esri)|(\.gdb)|(\.jpg)|(\.tif)|(\.tiff)|(\.jpeg)|(\.xml)|(\.kml)|(\.doc)|(\.docx)|(\.rtf))$', re.I)
 
 def set_intercepts():
     UserController.perform_reset = perform_reset
@@ -32,6 +39,9 @@ def set_intercepts():
     schemas.user_new_form_schema = user_new_form_schema
     schemas.user_edit_form_schema = user_edit_form_schema
     schemas.default_update_user_schema = default_update_user_schema
+
+    Upload.upload = upload_after_validation
+    ResourceUpload.upload = resource_upload_after_validation
 
 def default_user_schema():
     user_schema = DEFAULT_USER_SCHEMA
@@ -145,3 +155,17 @@ def validate_resource_edit(self, id, resource_id, data=None, errors=None, error_
                     h.flash_error("CSV was NOT validated against the selected schema")
 
     return RESOURCE_EDIT(self, id, resource_id, data, errors, error_summary)
+
+def upload_after_validation(self, max_size = 2):
+    if self.upload_field_storage and self.upload_field_storage.filename and not ALLOWED_EXTENSIONS.search(self.upload_field_storage.filename):
+        raise ckan.logic.ValidationError(
+            {self.file_field: ['This file type is not supported. If possible, upload the file in another format. If you continue to have problems, email One Stop Shop - oss.online@dsiti.qld.gov.au']}
+        )
+    UPLOAD(self, max_size)
+
+def resource_upload_after_validation(self, id, max_size = 2):
+    if self.filename and not ALLOWED_EXTENSIONS.search(self.filename):
+        raise ckan.logic.ValidationError(
+            {'upload': ['This file type is not supported. If possible, upload the file in another format. If you continue to have problems, email One Stop Shop - oss.online@dsiti.qld.gov.au']}
+        )
+    RESOURCE_UPLOAD(self, id, max_size)
