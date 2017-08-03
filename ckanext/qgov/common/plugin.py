@@ -427,7 +427,6 @@ class QGOVPlugin(SingletonPlugin):
         """ Use our custom controller, and disable some unwanted URLs
         """
         controller = 'ckanext.qgov.common.controller:QGOVController'
-        routeMap.connect('/storage/upload_handle', controller=controller, action='upload_handle')
         routeMap.connect('/article/{path:[-_a-zA-Z0-9/]+}', controller=controller, action='static_content')
 
         return routeMap
