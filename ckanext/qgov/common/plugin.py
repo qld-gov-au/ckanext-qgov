@@ -382,6 +382,12 @@ class QGOVPlugin(SingletonPlugin):
         urlm.intercept_404()
         intercepts.set_intercepts()
 
+    def update_config_schema(self, schema):
+        schema.pop('ckan.main_css', None)
+        schema.pop('ckan.site_custom_css', None)
+
+        return schema
+
     def update_config(self, ckan_config):
         """Use our custom list of licences, and disable some unwanted features
         """
