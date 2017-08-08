@@ -1,5 +1,6 @@
 from ckan.controllers.user import UserController
 from ckan.controllers.package import PackageController
+from ckan.controllers.storage import StorageController
 import ckan.logic
 import ckan.logic.schema as schemas
 from ckan.model import Session
@@ -24,6 +25,8 @@ DEFAULT_UPDATE_USER_SCHEMA = schemas.default_update_user_schema()
 
 UPLOAD = Upload.upload
 RESOURCE_UPLOAD = ResourceUpload.upload
+STORAGE_DOWNLOAD = StorageController.file
+RESOURCE_DOWNLOAD = PackageController.resource_download
 
 EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
 
@@ -42,6 +45,8 @@ def set_intercepts():
 
     Upload.upload = upload_after_validation
     ResourceUpload.upload = resource_upload_after_validation
+    StorageController.file = storage_download_with_headers
+    PackageController.resource_download = resource_download_with_headers
 
 def default_user_schema():
     user_schema = DEFAULT_USER_SCHEMA
@@ -169,3 +174,18 @@ def resource_upload_after_validation(self, id, max_size = 2):
             {'upload': ['This file type is not supported. If possible, upload the file in another format. If you continue to have problems, email One Stop Shop - oss.online@dsiti.qld.gov.au']}
         )
     RESOURCE_UPLOAD(self, id, max_size)
+
+def set_download_headers():
+    from ckan.common import response
+    response.headers['Content-Disposition'] = 'attachment'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+
+def storage_download_with_headers(self, label):
+    file_download = STORAGE_DOWNLOAD(self, label)
+    set_download_headers()
+    return file_download
+
+def resource_download_with_headers(self, id, resource_id, filename = None):
+    file_download = RESOURCE_DOWNLOAD(self, id, resource_id, filename)
+    set_download_headers()
+    return file_download
