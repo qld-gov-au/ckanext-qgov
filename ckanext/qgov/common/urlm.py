@@ -1,4 +1,8 @@
 import ckan.lib.base as base
+import ckan.controllers.group as group
+import ckan.controllers.package as package
+import ckan.controllers.related as related
+import ckan.controllers.user as user
 
 from pylons.controllers.util import redirect
 
@@ -20,6 +24,10 @@ def configure_urlm(app_path, proxy):
 
 def intercept_404():
     base.abort = abort_with_purl
+    group.abort = base.abort
+    package.abort = base.abort
+    related.abort = base.abort
+    user.abort = base.abort
 
 def abort_with_purl(status_code=None, detail='', headers=None, comment=None):
     if status_code == 404:
