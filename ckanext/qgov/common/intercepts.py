@@ -30,7 +30,7 @@ RESOURCE_DOWNLOAD = PackageController.resource_download
 
 EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
 
-ALLOWED_EXTENSIONS = re.compile(r'.*((\.csv)|(\.xls)|(\.txt)|(\.kmz)|(\.xlsx)|(\.pdf)|(\.shp)|(\.tab)|(\.jp2)|(\.esri)|(\.gdb)|(\.jpg)|(\.tif)|(\.tiff)|(\.jpeg)|(\.xml)|(\.kml)|(\.doc)|(\.docx)|(\.rtf)|(\.json))$', re.I)
+ALLOWED_EXTENSIONS = re.compile(r'.*((\.csv)|(\.xls)|(\.txt)|(\.kmz)|(\.xlsx)|(\.pdf)|(\.shp)|(\.tab)|(\.jp2)|(\.esri)|(\.gdb)|(\.jpg)|(\.tif)|(\.tiff)|(\.jpeg)|(\.xml)|(\.kml)|(\.doc)|(\.docx)|(\.rtf)|(\.json)|(\.accdb)|(\.geojson)|(\.geotiff)|(\.topojson)|(\.gpx)|(\.html)|(\.mtl)|(\.obj)|(\.ppt)|(\.pptx)|(\.wfs)|(\.wmts)|(\.zip))$', re.I)
 
 def set_intercepts():
     UserController.perform_reset = perform_reset
