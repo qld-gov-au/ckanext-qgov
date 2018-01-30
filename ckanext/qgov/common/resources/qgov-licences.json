@@ -48,6 +48,19 @@
     "is_osi_compliant": false,
     "maintainer": "",
     "status": "active",
+    "title": "Creative Commons Attribution-NoDerivatives 4.0",
+    "url": "https://creativecommons.org/licenses/by-nd/4.0/"
+  },
+  {
+    "domain_content": true,
+    "domain_data": false,
+    "domain_software": false,
+    "family": "",
+    "id": "cc-by-nc-nd-4",
+    "is_okd_compliant": true,
+    "is_osi_compliant": false,
+    "maintainer": "",
+    "status": "active",
     "title": "Creative Commons Attribution-NonCommercial-NoDerivatives 4.0",
     "url": "https://creativecommons.org/licenses/by-nc-nd/4.0/"
   },
