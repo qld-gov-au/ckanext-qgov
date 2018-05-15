@@ -120,7 +120,7 @@ def anti_csrf_before(obj, action, **params):
     RAW_BEFORE(obj, action)
 
 def csrf_fail(message):
-    from pylons.controllers.util import abort
+    from flask import abort
     LOG.error(message)
     abort(403, "Your form submission could not be validated")
 

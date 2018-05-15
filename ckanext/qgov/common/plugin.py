@@ -1,5 +1,6 @@
 import os, random, re
 from logging import getLogger
+import ckan.lib.base as base
 from ckan.lib.base import h
 import ckan.authz as authz
 import ckan.lib.formatters as formatters
@@ -9,15 +10,14 @@ from ckan.plugins import implements, SingletonPlugin, IConfigurer, IBlueprint, I
 import ckan.plugins.toolkit as toolkit
 from ckan.lib.navl.dictization_functions import Missing
 from flask import Blueprint
-from pylons import config
-from pylons.i18n import _
+from ckan.common import config, _
 import datetime
 from ckanext.qgov.common.stats import Stats
 import anti_csrf, authenticator, urlm, intercepts
 import ckan.model as model
 import requests
 from ckan.logic.action.get import package_show, resource_show
-from pylons.controllers.util import abort
+from flask import abort
 import cgi
 import smtplib
 from time import time

@@ -42,7 +42,7 @@ clean () {
   babushka $INSTANCE
 
   echo "Creating test data..."
-  . /usr/lib/ckan/bin/activate
+  . /usr/lib/ckan/default/bin/activate
   paster --plugin=ckan create-test-data search -c /etc/ckan/$INSTANCE/$INSTANCE.ini
 
   echo "Rebuilding SOLR search index..."
@@ -51,13 +51,13 @@ clean () {
 
 install () {
     echo "Deploying $1 to local Apache instance..."
-    . /usr/lib/ckan/bin/activate
+    . /usr/lib/ckan/default/bin/activate
     easy_install "$1"
     sudo apachectl graceful
 }
 
 if [ "$1" = "check" ]; then
-    . /usr/lib/ckan/bin/activate
+    . /usr/lib/ckan/default/bin/activate
     pip install pyflakes pylint
     python -m pyflakes ckanext-qgov
     python -m pylint ckanext

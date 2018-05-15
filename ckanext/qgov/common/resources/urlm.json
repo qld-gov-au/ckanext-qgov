@@ -34,5 +34,9 @@
   "epub-local" : {
     "url" : "https://test.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",
     "proxy" : "proxy:3128"
+  },
+  "127.0.0.1:5000" : {
+    "url" : "https://test.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",
+    "proxy" : null
   }
 }
