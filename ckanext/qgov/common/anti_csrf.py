@@ -7,9 +7,8 @@ The filter can be enabled simply by invoking 'intercept_csrf()'.
 import ckan.lib.base as base
 import re
 from re import DOTALL, IGNORECASE, MULTILINE
-from genshi.template import MarkupTemplate
 from logging import getLogger
-from pylons import request, response
+from ckan.common import request, response
 
 LOG = getLogger(__name__)
 
@@ -49,9 +48,6 @@ def is_logged_in():
 
 """ Rewrite HTML to insert tokens if applicable.
 """
-def anti_csrf_render(template_name, extra_vars=None, cache_key=None, cache_type=None, cache_expire=None, method='xhtml', loader_class=MarkupTemplate, cache_force=None, renderer=None):
-    html = apply_token(RAW_RENDER(template_name, extra_vars, cache_key, cache_type, cache_expire, method, loader_class, cache_force, renderer))
-    return html
 
 def anti_csrf_render_jinja2(template_name, extra_vars=None):
     html = apply_token(RAW_RENDER_JINJA(template_name, extra_vars))
@@ -160,6 +156,5 @@ def get_post_token():
     return request.token
 
 def intercept_csrf():
-    base.render = anti_csrf_render
     base.render_jinja2 = anti_csrf_render_jinja2
     base.BaseController.__before__ = anti_csrf_before

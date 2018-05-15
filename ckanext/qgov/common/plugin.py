@@ -5,9 +5,10 @@ import ckan.authz as authz
 import ckan.lib.formatters as formatters
 import ckan.logic.validators as validators
 import ckan.logic.auth as logic_auth
-from ckan.plugins import implements, SingletonPlugin, IConfigurer, IRoutes, ITemplateHelpers,IActions,IAuthFunctions
+from ckan.plugins import implements, SingletonPlugin, IConfigurer, IBlueprint, ITemplateHelpers,IActions,IAuthFunctions
 import ckan.plugins.toolkit as toolkit
 from ckan.lib.navl.dictization_functions import Missing
+from flask import Blueprint
 from pylons import config
 from pylons.i18n import _
 import datetime
@@ -370,7 +371,7 @@ class QGOVPlugin(SingletonPlugin):
     ``IRoutes`` allows us to add new URLs, or override existing URLs.
     """
     implements(IConfigurer, inherit=True)
-    implements(IRoutes, inherit=True)
+    implements(IBlueprint, inherit=True)
     implements(ITemplateHelpers, inherit=True)
     implements(IActions, inherit=True)
     implements(IAuthFunctions, inherit=True)
@@ -429,13 +430,20 @@ class QGOVPlugin(SingletonPlugin):
                     urlm.configure_urlm(urlm_url,urlm_proxy)
         return ckan_config
 
-    def before_map(self, routeMap):
-        """ Use our custom controller, and disable some unwanted URLs
-        """
-        controller = 'ckanext.qgov.common.controller:QGOVController'
-        routeMap.connect('/article/{path:[-_a-zA-Z0-9/]+}', controller=controller, action='static_content')
+    def static_content(self, path):
+        try:
+            return render('static-content/{path}/index.html'.format(path=path))
+        except TemplateNotFound:
+            LOG.warn(path + " not found")
+            base.abort(404)
 
-        return routeMap
+    def get_blueprint(self):
+        """ Automatically render content under '/article'
+        """
+        blueprint = Blueprint('article', self.__module__)
+        blueprint.add_url_rule(*('/article/{path:[-_a-zA-Z0-9/]+}', 'static_content', self.static_content))
+
+        return blueprint
 
     def get_helpers(self):
         """ A dictionary of extra helpers that will be available
