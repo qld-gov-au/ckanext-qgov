@@ -3,10 +3,11 @@ from logging import getLogger
 import ckan.lib.base as base
 from ckan.lib.base import h
 import ckan.authz as authz
+from routes.mapper import SubMapper
 import ckan.lib.formatters as formatters
 import ckan.logic.validators as validators
 import ckan.logic.auth as logic_auth
-from ckan.plugins import implements, SingletonPlugin, IConfigurer, IBlueprint, ITemplateHelpers,IActions,IAuthFunctions
+from ckan.plugins import implements, SingletonPlugin, IConfigurer, IBlueprint, ITemplateHelpers,IActions,IAuthFunctions,IRoutes
 import ckan.plugins.toolkit as toolkit
 from ckan.lib.navl.dictization_functions import Missing
 from flask import Blueprint
@@ -371,10 +372,10 @@ class QGOVPlugin(SingletonPlugin):
     ``IRoutes`` allows us to add new URLs, or override existing URLs.
     """
     implements(IConfigurer, inherit=True)
-    implements(IBlueprint, inherit=True)
     implements(ITemplateHelpers, inherit=True)
     implements(IActions, inherit=True)
     implements(IAuthFunctions, inherit=True)
+    implements(IRoutes, inherit=True)
 
     def __init__(self, **kwargs):
         validators.user_password_validator = user_password_validator
@@ -437,13 +438,14 @@ class QGOVPlugin(SingletonPlugin):
             LOG.warn(path + " not found")
             base.abort(404)
 
-    def get_blueprint(self):
-        """ Automatically render content under '/article'
-        """
-        blueprint = Blueprint('article', self.__module__)
-        blueprint.add_url_rule(*('/article/{path:[-_a-zA-Z0-9/]+}', 'static_content', self.static_content))
+    def before_map(self, map):
+        # These named routes are used for custom dataset forms which will use
+        # the names below based on the dataset.type ('dataset' is the default
+        # type)
+        with SubMapper(map, controller='ckanext.qgov.common.controller:QGOVController') as m:
+             m.connect('article', '/article/{path:[-_a-zA-Z0-9/]+}', action='static_content')
+             return map
 
-        return blueprint
 
     def get_helpers(self):
         """ A dictionary of extra helpers that will be available
