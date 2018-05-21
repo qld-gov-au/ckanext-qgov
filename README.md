@@ -1,3 +1,4 @@
+Version 1.1
 #ckanext-qgov - Queensland Government CKAN Extensions
 
 #About
