@@ -40,6 +40,7 @@ POST_FORM = re.compile(r'(<form [^>]*method=["\']post["\'][^>]*>)([^<]*\s<)', IG
 
 """The format of the token HTML field.
 """
+HEX_PATTERN=re.compile(r'^[0-9a-z]+$')
 TOKEN_PATTERN = r'<input type="hidden" name="' + TOKEN_FIELD_NAME + '" value="{token}"/>'
 TOKEN_SEARCH_PATTERN = re.compile(TOKEN_PATTERN.format(token=r'([0-9a-f]+)'))
 API_URL = re.compile(r'^/api\b.*')
@@ -102,14 +103,22 @@ def get_response_token():
     elif request.cookies.has_key(TOKEN_FIELD_NAME) and request.cookies.has_key(TOKEN_FRESHNESS_COOKIE_NAME):
         LOG.debug("Obtaining token from cookie")
         token = request.cookies.get(TOKEN_FIELD_NAME)
+        if not HEX_PATTERN.match(token):
+            LOG.debug("Invalid cookie token; making new token cookie")
+            token = create_response_token()
+        request.response_token = token
     else:
         LOG.debug("No fresh token found; making new token cookie")
-        import binascii, os
-        token = binascii.hexlify(os.urandom(32))
-        response.set_cookie(TOKEN_FIELD_NAME, token, secure=True, httponly=True)
-        response.set_cookie(TOKEN_FRESHNESS_COOKIE_NAME, '1', max_age=600, secure=True, httponly=True)
+        token = create_response_token()
         request.response_token = token
 
+    return token
+
+def create_response_token():
+    import binascii, os
+    token = binascii.hexlify(os.urandom(32))
+    response.set_cookie(TOKEN_FIELD_NAME, token, secure=True, httponly=True)
+    response.set_cookie(TOKEN_FRESHNESS_COOKIE_NAME, '1', max_age=600, secure=True, httponly=True)
     return token
 
 # Check token on applicable requests
