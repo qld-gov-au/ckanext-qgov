@@ -42,7 +42,7 @@ clean () {
   babushka $INSTANCE
 
   echo "Creating test data..."
-  . /usr/lib/ckan/default/bin/activate
+  . /usr/lib/ckan/bin/activate
   paster --plugin=ckan create-test-data search -c /etc/ckan/$INSTANCE/$INSTANCE.ini
 
   echo "Rebuilding SOLR search index..."

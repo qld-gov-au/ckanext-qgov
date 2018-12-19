@@ -1,7 +1,6 @@
 import ckan.lib.base as base
 import ckan.controllers.group as group
 import ckan.controllers.package as package
-# import ckan.controllers.related as related
 import ckan.controllers.user as user
 
 import ckan.lib.helpers as helpers
