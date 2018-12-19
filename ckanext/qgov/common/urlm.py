@@ -1,10 +1,9 @@
 import ckan.lib.base as base
 import ckan.controllers.group as group
 import ckan.controllers.package as package
-import ckan.controllers.related as related
 import ckan.controllers.user as user
 
-from pylons.controllers.util import redirect
+import ckan.lib.helpers as helpers
 
 from logging import getLogger
 LOG = getLogger(__name__)
@@ -26,7 +25,7 @@ def intercept_404():
     base.abort = abort_with_purl
     group.abort = base.abort
     package.abort = base.abort
-    related.abort = base.abort
+    # related.abort = base.abort
     user.abort = base.abort
 
 def abort_with_purl(status_code=None, detail='', headers=None, comment=None):
@@ -44,11 +43,11 @@ def abort_with_purl(status_code=None, detail='', headers=None, comment=None):
             if response['Status'] == 301:
                 location = response['Headers']['location']
                 LOG.info("Found; redirecting to {location}".format(location=location))
-                redirect(location, 301)
+                helpers.redirect_to(location, 301)
                 return
             else:
                 LOG.warn("No match in URL Management system")
-        except urllib2.URLError, e:
+        except urllib2.URLError as e:
             LOG.error("Failed to contact URL Management system: {error}".format(error=e))
             pass
     return RAW_ABORT(status_code, detail, headers, comment)

@@ -5,7 +5,7 @@ import ckan.logic
 import ckan.logic.schema as schemas
 from ckan.model import Session
 from ckan.lib.base import BaseController, c, render, request, abort, h
-from pylons.i18n import _
+from ckan.common import _
 from ckanext.qgov.common.authenticator import QGOVUser
 from ckan.lib.uploader import *
 import plugin
