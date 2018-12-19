@@ -1,6 +1,7 @@
 Version 1.1
 #ckanext-qgov - Queensland Government CKAN Extensions
 
+
 #About
 Queensland Government has developed this plugin to be used with data.qld.gov.au and publications.qld.gov.au. The plugin has had Queensland Government site specific functionality removed from it.
 
