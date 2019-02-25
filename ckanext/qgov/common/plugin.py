@@ -1,22 +1,24 @@
 import os, random, re
 from logging import getLogger
+import ckan.lib.base as base
 from ckan.lib.base import h
 import ckan.authz as authz
+from routes.mapper import SubMapper
 import ckan.lib.formatters as formatters
 import ckan.logic.validators as validators
 import ckan.logic.auth as logic_auth
-from ckan.plugins import implements, SingletonPlugin, IConfigurer, IRoutes, ITemplateHelpers,IActions,IAuthFunctions
+from ckan.plugins import implements, SingletonPlugin, IConfigurer, IBlueprint, ITemplateHelpers,IActions,IAuthFunctions,IRoutes
 import ckan.plugins.toolkit as toolkit
 from ckan.lib.navl.dictization_functions import Missing
-from pylons import config
-from pylons.i18n import _
+from flask import Blueprint
+from ckan.common import config, _
 import datetime
 from ckanext.qgov.common.stats import Stats
 import anti_csrf, authenticator, urlm, intercepts
 import ckan.model as model
 import requests
 from ckan.logic.action.get import package_show, resource_show
-from pylons.controllers.util import abort
+from flask import abort
 import cgi
 import smtplib
 from time import time
@@ -119,7 +121,7 @@ def submit_feedback(context,data_dict=None):
                 h.redirect_to('/')
                 return package
 
-            # If there is value for either maintenance_email or author_email, use that. If both of them null then send the email to oss.products@dsiti.qld.gov.au
+            # If there is value for either maintenance_email or author_email, use that. If both of them null then send the email to online@qld.gov.au
             # Logic written to maintain legacy data
             # Once all the records in database have 'maintainer_email', remove this and feedback_email = package.get('maintainer_email','')
             if(not(package.get('maintainer_email')== '' or package.get('maintainer_email') is None)):
@@ -127,7 +129,7 @@ def submit_feedback(context,data_dict=None):
             elif (not(package.get('author_email')== '' or package.get('author_email') is None)):
                 feedback_email = package.get('author_email')
             else:
-                feedback_email = 'oss.products@dsiti.qld.gov.au'
+                feedback_email = 'online@qld.gov.au'
             #feedback_email = package.get('maintainer_email','')
             feedback_organisation = strip_non_ascii(package['organization'].get('title',''))
             feedback_resource_name = ''
@@ -370,10 +372,10 @@ class QGOVPlugin(SingletonPlugin):
     ``IRoutes`` allows us to add new URLs, or override existing URLs.
     """
     implements(IConfigurer, inherit=True)
-    implements(IRoutes, inherit=True)
     implements(ITemplateHelpers, inherit=True)
     implements(IActions, inherit=True)
     implements(IAuthFunctions, inherit=True)
+    implements(IRoutes, inherit=True)
 
     def __init__(self, **kwargs):
         validators.user_password_validator = user_password_validator
@@ -429,13 +431,21 @@ class QGOVPlugin(SingletonPlugin):
                     urlm.configure_urlm(urlm_url,urlm_proxy)
         return ckan_config
 
-    def before_map(self, routeMap):
-        """ Use our custom controller, and disable some unwanted URLs
-        """
-        controller = 'ckanext.qgov.common.controller:QGOVController'
-        routeMap.connect('/article/{path:[-_a-zA-Z0-9/]+}', controller=controller, action='static_content')
+    def static_content(self, path):
+        try:
+            return render('static-content/{path}/index.html'.format(path=path))
+        except TemplateNotFound:
+            LOG.warn(path + " not found")
+            base.abort(404)
 
-        return routeMap
+    def before_map(self, map):
+        # These named routes are used for custom dataset forms which will use
+        # the names below based on the dataset.type ('dataset' is the default
+        # type)
+        with SubMapper(map, controller='ckanext.qgov.common.controller:QGOVController') as m:
+             m.connect('article', '/article/{path:[-_a-zA-Z0-9/]+}', action='static_content')
+             return map
+
 
     def get_helpers(self):
         """ A dictionary of extra helpers that will be available
