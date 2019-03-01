@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 
 def intercept_authenticator():
     meta = MetaData(bind = Session.get_bind(), reflect = True)
-    if not 'login_attempts' in meta.tables['user'].columns:
+    if 'user' in meta.tables and not 'login_attempts' in meta.tables['user'].columns:
         log.warn("'login_attempts' field does not exist, adding...")
         DDL("ALTER TABLE public.user ADD COLUMN login_attempts SMALLINT DEFAULT 0").execute(Session.get_bind())
     UsernamePasswordAuthenticator.authenticate = QGOVAuthenticator().authenticate
