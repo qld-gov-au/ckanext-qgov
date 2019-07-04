@@ -25,11 +25,6 @@ but we'll set a new one for next time.
 """
 TOKEN_FRESHNESS_COOKIE_NAME = 'token-fresh'
 
-# We need to edit confirm-action links, which get intercepted by JavaScript,
-#regardless of which order their 'data-module' and 'href' attributes appear.
-CONFIRM_LINK = re.compile(r'(<a [^>]*data-module=["\']confirm-action["\'][^>]*href=["\']([^"\']+))(["\'])', IGNORECASE | MULTILINE)
-CONFIRM_LINK_REVERSED = re.compile(r'(<a [^>]*href=["\']([^"\']+))(["\'][^>]*data-module=["\']confirm-action["\'])', IGNORECASE | MULTILINE)
-
 """
 This will match a POST form that has whitespace after the opening tag (which all existing forms do).
 Once we have injected a token immediately after the opening tag,
@@ -43,6 +38,13 @@ HEX_PATTERN=re.compile(r'^[0-9a-z]+$')
 TOKEN_PATTERN = r'<input type="hidden" name="' + TOKEN_FIELD_NAME + '" value="{token}"/>'
 TOKEN_SEARCH_PATTERN = re.compile(TOKEN_PATTERN.format(token=r'([0-9a-f]+)'))
 API_URL = re.compile(r'^/api\b.*')
+CONFIRM_MODULE_PATTERN = r'data-module=["\']confirm-action["\']'
+HREF_URL_PATTERN = r'href=["\']([^"\']+)'
+
+# We need to edit confirm-action links, which get intercepted by JavaScript,
+#regardless of which order their 'data-module' and 'href' attributes appear.
+CONFIRM_LINK = re.compile(r'(<a [^>]*' + CONFIRM_MODULE_PATTERN + '[^>]*' + HREF_URL_PATTERN + ')(["\'])', IGNORECASE | MULTILINE)
+CONFIRM_LINK_REVERSED = re.compile(r'(<a [^>]*' + HREF_URL_PATTERN + ')(["\'][^>]*' + CONFIRM_MODULE_PATTERN + ')', IGNORECASE | MULTILINE)
 
 def is_logged_in():
     return request.cookies.get("auth_tkt")
