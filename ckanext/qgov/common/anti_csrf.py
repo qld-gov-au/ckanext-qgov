@@ -57,7 +57,7 @@ def anti_csrf_render_jinja2(template_name, extra_vars=None):
     return html
 
 def apply_token(html):
-    if not is_logged_in() or not POST_FORM.search(html):
+    if not is_logged_in() or (not POST_FORM.search(html) and not re.search(CONFIRM_MODULE_PATTERN, html)):
         return html
 
     token_match = TOKEN_SEARCH_PATTERN.search(html)
