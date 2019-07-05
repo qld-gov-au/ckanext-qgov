@@ -105,7 +105,7 @@ def validate_token(token):
     # allow tokens up to 30 minutes old
     if now < timestamp or now - timestamp > 60 * 30:
         return False
-    if username != g.userobj.name:
+    if username != urllib.quote(g.userobj.name):
         return False
 
     return True
