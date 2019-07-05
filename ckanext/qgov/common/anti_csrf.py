@@ -60,14 +60,10 @@ def apply_token(html):
     if not is_logged_in() or (not POST_FORM.search(html) and not re.search(CONFIRM_MODULE_PATTERN, html)):
         return html
 
-    token_match = TOKEN_SEARCH_PATTERN.search(html)
-    if token_match:
-        token = token_match.group(1)
-    else:
-        token = get_response_token()
+    token = get_response_token()
 
     def insert_form_token(form_match):
-        return form_match.group(1) + TOKEN_PATTERN.format(token=token) + form_match.group(2)
+        return form_match.group(1) + '<input type="hidden" name="{}" value="{}"/>'.format(TOKEN_FIELD_NAME, token) + form_match.group(2)
 
     def insert_link_token(link_match):
         if '?' in link_match.group(2):
