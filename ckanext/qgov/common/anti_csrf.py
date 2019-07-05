@@ -8,7 +8,7 @@ import ckan.lib.base as base
 import re
 from re import DOTALL, IGNORECASE, MULTILINE
 from logging import getLogger
-from ckan.common import request, response
+from ckan.common import request, response, g
 
 LOG = getLogger(__name__)
 
@@ -34,9 +34,7 @@ POST_FORM = re.compile(r'(<form [^>]*method=["\']post["\'][^>]*>)([^<]*\s<)', IG
 
 """The format of the token HTML field.
 """
-HEX_PATTERN=re.compile(r'^[0-9a-z]+$')
-TOKEN_PATTERN = r'<input type="hidden" name="' + TOKEN_FIELD_NAME + '" value="{token}"/>'
-TOKEN_SEARCH_PATTERN = re.compile(TOKEN_PATTERN.format(token=r'([0-9a-f]+)'))
+HMAC_PATTERN=re.compile(r'^[0-9a-z]+![0-9]+/[0-9]+/[-_a-z0-9%]+$', IGNORECASE)
 API_URL = re.compile(r'^/api\b.*')
 CONFIRM_MODULE_PATTERN = r'data-module=["\']confirm-action["\']'
 HREF_URL_PATTERN = r'href=["\']([^"\']+)'
@@ -88,6 +86,35 @@ def get_cookie_token():
 
     return token
 
+def validate_token(token):
+    if not HMAC_PATTERN.match(token):
+        return false
+
+    import time, hmac, hashlib, urllib
+
+    now = int(time.time())
+
+    parts = token.split('!', 1)
+    provided_hmac = unicode(parts[0])
+    message = parts[1]
+
+    secret_key = _get_secret_key()
+    expected_hmac = unicode(hmac.HMAC(secret_key, message, hashlib.sha512).hexdigest())
+    if not hmac.compare_digest(expected_hmac, provided_hmac):
+        return False
+
+    message_parts = message.split('/', 2)
+    timestamp = int(message_parts[0])
+    username = message_parts[2]
+
+    # allow tokens up to 30 minutes old
+    if now < timestamp or now - timestamp > 60 * 30:
+        return False
+    if username != g.userobj.name:
+        return False
+
+    return True
+
 def get_response_token():
     """Retrieve the token to be injected into pages.
 
@@ -101,7 +128,7 @@ def get_response_token():
     elif request.cookies.has_key(TOKEN_FIELD_NAME) and request.cookies.has_key(TOKEN_FRESHNESS_COOKIE_NAME):
         LOG.debug("Obtaining token from cookie")
         token = request.cookies.get(TOKEN_FIELD_NAME)
-        if not HEX_PATTERN.match(token):
+        if not validate_token(token):
             LOG.debug("Invalid cookie token; making new token cookie")
             token = create_response_token()
         request.response_token = token
@@ -112,9 +139,21 @@ def get_response_token():
 
     return token
 
+def _get_secret_key():
+    from ckan.common import config
+
+    return config.get('beaker.session.secret')
+
 def create_response_token():
-    import binascii, os
-    token = binascii.hexlify(os.urandom(32))
+    import time, random, hmac, hashlib, urllib
+
+    secret_key = _get_secret_key()
+    username = urllib.quote(g.userobj.name)
+    timestamp = int(time.time())
+    nonce = random.randint(1, 999999)
+    message = "{}/{}/{}".format(timestamp, nonce, username)
+    token = "{}!{}".format(hmac.HMAC(secret_key, message, hashlib.sha512).hexdigest(), message)
+
     response.set_cookie(TOKEN_FIELD_NAME, token, secure=True, httponly=True)
     response.set_cookie(TOKEN_FRESHNESS_COOKIE_NAME, '1', max_age=600, secure=True, httponly=True)
     return token
@@ -163,6 +202,9 @@ def get_post_token():
 
     # drop token from request so it doesn't populate resource extras
     del request.POST[TOKEN_FIELD_NAME]
+
+    if not validate_token(request.token):
+        csrf_fail("Invalid token format")
 
     return request.token
 
