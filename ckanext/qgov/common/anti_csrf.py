@@ -125,10 +125,10 @@ def is_request_exempt():
     return not is_logged_in() or API_URL.match(request.path) or request.method in {'GET', 'HEAD', 'OPTIONS'}
 
 def anti_csrf_before(obj, action, **params):
+    RAW_BEFORE(obj, action)
+
     if not is_request_exempt() and get_cookie_token() != get_post_token():
         csrf_fail("Could not match session token with form token")
-
-    RAW_BEFORE(obj, action)
 
 def csrf_fail(message):
     from flask import abort
