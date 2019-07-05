@@ -19,11 +19,6 @@ RAW_BEFORE = base.BaseController.__before__
 """ Used as the cookie name and input field name.
 """
 TOKEN_FIELD_NAME = 'token'
-""" Used to rotate the token cookie periodically.
-If the freshness cookie doesn't appear, the token cookie is still OK,
-but we'll set a new one for next time.
-"""
-TOKEN_FRESHNESS_COOKIE_NAME = 'token-fresh'
 
 """
 This will match a POST form that has whitespace after the opening tag (which all existing forms do).
@@ -125,19 +120,35 @@ def get_response_token():
     if request.environ['webob.adhoc_attrs'].has_key('response_token'):
         LOG.debug("Reusing response token from request attributes")
         token = request.response_token
-    elif request.cookies.has_key(TOKEN_FIELD_NAME) and request.cookies.has_key(TOKEN_FRESHNESS_COOKIE_NAME):
+    elif request.cookies.has_key(TOKEN_FIELD_NAME):
         LOG.debug("Obtaining token from cookie")
         token = request.cookies.get(TOKEN_FIELD_NAME)
-        if not validate_token(token):
-            LOG.debug("Invalid cookie token; making new token cookie")
+        if not validate_token(token) or is_soft_expired(token):
+            LOG.debug("Invalid or expired cookie token; making new token cookie")
             token = create_response_token()
         request.response_token = token
     else:
-        LOG.debug("No fresh token found; making new token cookie")
+        LOG.debug("No valid token found; making new token cookie")
         token = create_response_token()
         request.response_token = token
 
     return token
+
+def is_soft_expired(token):
+    """Check whether the token is old enough to need rotation.
+    It may still be valid, but it's time to generate a new one.
+
+    The current rotation age is 10 minutes.
+    """
+    import time
+
+    now = int(time.time())
+    parts = token.split('!', 1)
+    message = parts[1]
+    message_parts = message.split('/', 2)
+    timestamp = int(message_parts[0])
+
+    return now - timestamp > 60 * 10
 
 def _get_secret_key():
     from ckan.common import config
@@ -155,7 +166,6 @@ def create_response_token():
     token = "{}!{}".format(hmac.HMAC(secret_key, message, hashlib.sha512).hexdigest(), message)
 
     response.set_cookie(TOKEN_FIELD_NAME, token, secure=True, httponly=True)
-    response.set_cookie(TOKEN_FRESHNESS_COOKIE_NAME, '1', max_age=600, secure=True, httponly=True)
     return token
 
 # Check token on applicable requests
