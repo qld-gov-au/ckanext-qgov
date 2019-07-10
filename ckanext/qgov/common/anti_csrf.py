@@ -59,6 +59,8 @@ def apply_token(html):
         return form_match.group(1) + '<input type="hidden" name="{}" value="{}"/>'.format(TOKEN_FIELD_NAME, token) + form_match.group(2)
 
     def insert_link_token(link_match):
+        if TOKEN_FIELD_NAME + '=' in link_match.group(1):
+            return link_match.group(0)
         if '?' in link_match.group(2):
             separator = '&'
         else:
