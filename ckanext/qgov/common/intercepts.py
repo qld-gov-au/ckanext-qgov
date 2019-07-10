@@ -1,7 +1,9 @@
+from logging import getLogger
 from ckan.controllers.user import UserController
 from ckan.controllers.package import PackageController
 from ckan.controllers.storage import StorageController
 import ckan.logic
+import ckan.logic.action.update
 import ckan.logic.schema as schemas
 from ckan.model import Session
 from ckan.lib.base import BaseController, c, render, request, abort, h
@@ -13,7 +15,10 @@ import re
 import requests
 import json
 
+LOG = getLogger(__name__)
+
 PERFORM_RESET = UserController.perform_reset
+USER_UPDATE = ckan.logic.action.update.user_update
 LOGGED_IN = UserController.logged_in
 PACKAGE_EDIT = PackageController._save_edit
 RESOURCE_EDIT = PackageController.resource_edit
@@ -90,6 +95,15 @@ def default_update_user_schema():
                 user_schema['password'][idx] = plugin.user_password_validator
     return user_schema
 
+def unlock_account(id):
+    qgovUser = Session.query(QGOVUser).filter(QGOVUser.id == id).first()
+    if qgovUser:
+        LOG.debug("Clearing failed login attempts for {}".format(id))
+        qgovUser.login_attempts = 0
+        Session.commit()
+    else:
+        LOG.debug("Account {} not found".format(id))
+
 def perform_reset(self, id):
     '''
     Extending Reset to include login_attempts
@@ -97,11 +111,18 @@ def perform_reset(self, id):
     Set login_attempts to 0
     '''
     to_render = PERFORM_RESET(self, id)
-    qgovUser = Session.query(QGOVUser).filter(QGOVUser.id == id).first()
-    if qgovUser:
-        qgovUser.login_attempts = 0
-        Session.commit()
+    unlock_account(id)
     return to_render
+
+def user_update(context, data_dict):
+    '''
+    Unlock an account when the password is reset.
+    '''
+    return_value = USER_UPDATE(context, data_dict)
+    if u'reset_key' in data_dict:
+        id = ckan.logic.get_or_bust(data_dict, 'id')
+        unlock_account(id)
+    return return_value
 
 def logged_in(self):
     if not c.user:
