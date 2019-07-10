@@ -1,3 +1,4 @@
+# encoding: utf-8
 import os, random, re
 from logging import getLogger
 import ckan.lib.base as base
@@ -365,6 +366,16 @@ def generate_json_schema(package_id,validation_schema):
     else:
         return { "error" : "Failed to retrieve json schema"}
 
+def legacy_pager(self, *args, **kwargs):
+    kwargs.update(
+        format=u"<div class='pagination-wrapper pagination'><ul>"
+        "$link_previous ~2~ $link_next</ul></div>",
+        symbol_previous=u'«', symbol_next=u'»',
+        curpage_attr={'class': 'active'}, link_attr={}
+    )
+    from ckan.lib.helpers import Page
+    return super(Page, self).pager(*args, **kwargs)
+
 class QGOVPlugin(SingletonPlugin):
     """Apply custom functions for Queensland Government portals.
 
@@ -429,6 +440,10 @@ class QGOVPlugin(SingletonPlugin):
                     urlm_url = urlm_json[hostname].get('url','')
                     urlm_proxy = urlm_json[hostname].get('proxy',None)
                     urlm.configure_urlm(urlm_url,urlm_proxy)
+
+        if 'ckan.base_templates_folder' in ckan_config and ckan_config['ckan.base_templates_folder'] == 'templates-bs2':
+            from ckan.lib.helpers import Page
+            Page.pager = legacy_pager
         return ckan_config
 
     def static_content(self, path):
