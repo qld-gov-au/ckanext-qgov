@@ -17,7 +17,6 @@ import json
 
 LOG = getLogger(__name__)
 
-PERFORM_RESET = UserController.perform_reset
 USER_UPDATE = ckan.logic.action.update.user_update
 LOGGED_IN = UserController.logged_in
 PACKAGE_EDIT = PackageController._save_edit
@@ -38,7 +37,6 @@ EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
 ALLOWED_EXTENSIONS = re.compile(r'.*((\.csv)|(\.xls)|(\.txt)|(\.kmz)|(\.xlsx)|(\.pdf)|(\.shp)|(\.tab)|(\.jp2)|(\.esri)|(\.gdb)|(\.jpg)|(\.tif)|(\.tiff)|(\.jpeg)|(\.xml)|(\.kml)|(\.doc)|(\.docx)|(\.rtf)|(\.json)|(\.accdb)|(\.geojson)|(\.geotiff)|(\.topojson)|(\.gpx)|(\.html)|(\.mtl)|(\.obj)|(\.ppt)|(\.pptx)|(\.wfs)|(\.wmts)|(\.zip))$', re.I)
 
 def set_intercepts():
-    UserController.perform_reset = perform_reset
     UserController.logged_in = logged_in
     PackageController._save_edit = save_edit
     PackageController.resource_edit = validate_resource_edit
@@ -103,16 +101,6 @@ def unlock_account(id):
         Session.commit()
     else:
         LOG.debug("Account {} not found".format(id))
-
-def perform_reset(self, id):
-    '''
-    Extending Reset to include login_attempts
-    Success loading original perform_reset indicates legitimate user
-    Set login_attempts to 0
-    '''
-    to_render = PERFORM_RESET(self, id)
-    unlock_account(id)
-    return to_render
 
 def user_update(context, data_dict):
     '''
