@@ -461,7 +461,6 @@ class QGOVPlugin(SingletonPlugin):
              m.connect('article', '/article/{path:[-_a-zA-Z0-9/]+}', action='static_content')
              return map
 
-
     def get_helpers(self):
         """ A dictionary of extra helpers that will be available
         to provide QGOV-specific helpers to the templates.
@@ -487,7 +486,8 @@ class QGOVPlugin(SingletonPlugin):
         """Extend actions API
         """
         return {
-            'submit_feedback' : submit_feedback
+            'submit_feedback' : submit_feedback,
+            'user_update': intercepts.user_update
         }
 
     def get_auth_functions(self):
