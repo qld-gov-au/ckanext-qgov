@@ -20,7 +20,7 @@ Queensland Government has developed this plugin to be used with data.qld.gov.au 
 
 #Configuration
 ```
-ckan.plugins = qgov
+ckan.plugins = qgovext
 
 urlm.app_path = https://www.404redirect.qld.gov.au/services/url
 urlm.proxy = proxy:3128
