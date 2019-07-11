@@ -8,7 +8,7 @@ import ckan.lib.base as base
 import re
 from re import DOTALL, IGNORECASE, MULTILINE
 from logging import getLogger
-from ckan.common import request, response
+from ckan.common import request, response, g
 
 LOG = getLogger(__name__)
 
@@ -19,11 +19,6 @@ RAW_BEFORE = base.BaseController.__before__
 """ Used as the cookie name and input field name.
 """
 TOKEN_FIELD_NAME = 'token'
-""" Used to rotate the token cookie periodically.
-If the freshness cookie doesn't appear, the token cookie is still OK,
-but we'll set a new one for next time.
-"""
-TOKEN_FRESHNESS_COOKIE_NAME = 'token-fresh'
 
 """
 This will match a POST form that has whitespace after the opening tag (which all existing forms do).
@@ -34,9 +29,7 @@ POST_FORM = re.compile(r'(<form [^>]*method=["\']post["\'][^>]*>)([^<]*\s<)', IG
 
 """The format of the token HTML field.
 """
-HEX_PATTERN=re.compile(r'^[0-9a-z]+$')
-TOKEN_PATTERN = r'<input type="hidden" name="' + TOKEN_FIELD_NAME + '" value="{token}"/>'
-TOKEN_SEARCH_PATTERN = re.compile(TOKEN_PATTERN.format(token=r'([0-9a-f]+)'))
+HMAC_PATTERN=re.compile(r'^[0-9a-z]+![0-9]+/[0-9]+/[-_a-z0-9%]+$', IGNORECASE)
 API_URL = re.compile(r'^/api\b.*')
 CONFIRM_MODULE_PATTERN = r'data-module=["\']confirm-action["\']'
 HREF_URL_PATTERN = r'href=["\']([^"\']+)'
@@ -60,14 +53,10 @@ def apply_token(html):
     if not is_logged_in() or (not POST_FORM.search(html) and not re.search(CONFIRM_MODULE_PATTERN, html)):
         return html
 
-    token_match = TOKEN_SEARCH_PATTERN.search(html)
-    if token_match:
-        token = token_match.group(1)
-    else:
-        token = get_response_token()
+    token = get_response_token()
 
     def insert_form_token(form_match):
-        return form_match.group(1) + TOKEN_PATTERN.format(token=token) + form_match.group(2)
+        return form_match.group(1) + '<input type="hidden" name="{}" value="{}"/>'.format(TOKEN_FIELD_NAME, token) + form_match.group(2)
 
     def insert_link_token(link_match):
         if TOKEN_FIELD_NAME + '=' in link_match.group(1):
@@ -94,6 +83,35 @@ def get_cookie_token():
 
     return token
 
+def validate_token(token):
+    if not HMAC_PATTERN.match(token):
+        return false
+
+    import time, hmac, hashlib, urllib
+
+    now = int(time.time())
+
+    parts = token.split('!', 1)
+    provided_hmac = unicode(parts[0])
+    message = parts[1]
+
+    secret_key = _get_secret_key()
+    expected_hmac = unicode(hmac.HMAC(secret_key, message, hashlib.sha512).hexdigest())
+    if not hmac.compare_digest(expected_hmac, provided_hmac):
+        return False
+
+    message_parts = message.split('/', 2)
+    timestamp = int(message_parts[0])
+    username = message_parts[2]
+
+    # allow tokens up to 30 minutes old
+    if now < timestamp or now - timestamp > 60 * 30:
+        return False
+    if username != urllib.quote(g.userobj.name):
+        return False
+
+    return True
+
 def get_response_token():
     """Retrieve the token to be injected into pages.
 
@@ -104,25 +122,52 @@ def get_response_token():
     if request.environ['webob.adhoc_attrs'].has_key('response_token'):
         LOG.debug("Reusing response token from request attributes")
         token = request.response_token
-    elif request.cookies.has_key(TOKEN_FIELD_NAME) and request.cookies.has_key(TOKEN_FRESHNESS_COOKIE_NAME):
+    elif request.cookies.has_key(TOKEN_FIELD_NAME):
         LOG.debug("Obtaining token from cookie")
         token = request.cookies.get(TOKEN_FIELD_NAME)
-        if not HEX_PATTERN.match(token):
-            LOG.debug("Invalid cookie token; making new token cookie")
+        if not validate_token(token) or is_soft_expired(token):
+            LOG.debug("Invalid or expired cookie token; making new token cookie")
             token = create_response_token()
         request.response_token = token
     else:
-        LOG.debug("No fresh token found; making new token cookie")
+        LOG.debug("No valid token found; making new token cookie")
         token = create_response_token()
         request.response_token = token
 
     return token
 
+def is_soft_expired(token):
+    """Check whether the token is old enough to need rotation.
+    It may still be valid, but it's time to generate a new one.
+
+    The current rotation age is 10 minutes.
+    """
+    import time
+
+    now = int(time.time())
+    parts = token.split('!', 1)
+    message = parts[1]
+    message_parts = message.split('/', 2)
+    timestamp = int(message_parts[0])
+
+    return now - timestamp > 60 * 10
+
+def _get_secret_key():
+    from ckan.common import config
+
+    return config.get('beaker.session.secret')
+
 def create_response_token():
-    import binascii, os
-    token = binascii.hexlify(os.urandom(32))
+    import time, random, hmac, hashlib, urllib
+
+    secret_key = _get_secret_key()
+    username = urllib.quote(g.userobj.name)
+    timestamp = int(time.time())
+    nonce = random.randint(1, 999999)
+    message = "{}/{}/{}".format(timestamp, nonce, username)
+    token = "{}!{}".format(hmac.HMAC(secret_key, message, hashlib.sha512).hexdigest(), message)
+
     response.set_cookie(TOKEN_FIELD_NAME, token, secure=True, httponly=True)
-    response.set_cookie(TOKEN_FRESHNESS_COOKIE_NAME, '1', max_age=600, secure=True, httponly=True)
     return token
 
 # Check token on applicable requests
@@ -131,10 +176,10 @@ def is_request_exempt():
     return not is_logged_in() or API_URL.match(request.path) or request.method in {'GET', 'HEAD', 'OPTIONS'}
 
 def anti_csrf_before(obj, action, **params):
+    RAW_BEFORE(obj, action)
+
     if not is_request_exempt() and get_cookie_token() != get_post_token():
         csrf_fail("Could not match session token with form token")
-
-    RAW_BEFORE(obj, action)
 
 def csrf_fail(message):
     from flask import abort
@@ -169,6 +214,9 @@ def get_post_token():
 
     # drop token from request so it doesn't populate resource extras
     del request.POST[TOKEN_FIELD_NAME]
+
+    if not validate_token(request.token):
+        csrf_fail("Invalid token format")
 
     return request.token
 
