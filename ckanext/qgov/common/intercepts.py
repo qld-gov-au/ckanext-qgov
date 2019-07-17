@@ -1,7 +1,9 @@
+from logging import getLogger
 from ckan.controllers.user import UserController
 from ckan.controllers.package import PackageController
 from ckan.controllers.storage import StorageController
 import ckan.logic
+import ckan.logic.action.update
 import ckan.logic.schema as schemas
 from ckan.model import Session
 from ckan.lib.base import BaseController, c, render, request, abort, h
@@ -13,7 +15,9 @@ import re
 import requests
 import json
 
-PERFORM_RESET = UserController.perform_reset
+LOG = getLogger(__name__)
+
+USER_UPDATE = ckan.logic.action.update.user_update
 LOGGED_IN = UserController.logged_in
 PACKAGE_EDIT = PackageController._save_edit
 RESOURCE_EDIT = PackageController.resource_edit
@@ -33,7 +37,6 @@ EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
 ALLOWED_EXTENSIONS = re.compile(r'.*((\.csv)|(\.xls)|(\.txt)|(\.kmz)|(\.xlsx)|(\.pdf)|(\.shp)|(\.tab)|(\.jp2)|(\.esri)|(\.gdb)|(\.jpg)|(\.tif)|(\.tiff)|(\.jpeg)|(\.xml)|(\.kml)|(\.doc)|(\.docx)|(\.rtf)|(\.json)|(\.accdb)|(\.geojson)|(\.geotiff)|(\.topojson)|(\.gpx)|(\.html)|(\.mtl)|(\.obj)|(\.ppt)|(\.pptx)|(\.wfs)|(\.wmts)|(\.zip))$', re.I)
 
 def set_intercepts():
-    UserController.perform_reset = perform_reset
     UserController.logged_in = logged_in
     PackageController._save_edit = save_edit
     PackageController.resource_edit = validate_resource_edit
@@ -90,18 +93,24 @@ def default_update_user_schema():
                 user_schema['password'][idx] = plugin.user_password_validator
     return user_schema
 
-def perform_reset(self, id):
-    '''
-    Extending Reset to include login_attempts
-    Success loading original perform_reset indicates legitimate user
-    Set login_attempts to 0
-    '''
-    to_render = PERFORM_RESET(self, id)
+def unlock_account(id):
     qgovUser = Session.query(QGOVUser).filter(QGOVUser.id == id).first()
     if qgovUser:
+        LOG.debug("Clearing failed login attempts for {}".format(id))
         qgovUser.login_attempts = 0
         Session.commit()
-    return to_render
+    else:
+        LOG.debug("Account {} not found".format(id))
+
+def user_update(context, data_dict):
+    '''
+    Unlock an account when the password is reset.
+    '''
+    return_value = USER_UPDATE(context, data_dict)
+    if u'reset_key' in data_dict:
+        id = ckan.logic.get_or_bust(data_dict, 'id')
+        unlock_account(id)
+    return return_value
 
 def logged_in(self):
     if not c.user:
