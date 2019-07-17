@@ -29,7 +29,7 @@ POST_FORM = re.compile(r'(<form [^>]*method=["\']post["\'][^>]*>)([^<]*\s<)', IG
 
 """The format of the token HTML field.
 """
-HMAC_PATTERN=re.compile(r'^[0-9a-z]+![0-9]+/[0-9]+/[-_a-z0-9%]+$', IGNORECASE)
+HMAC_PATTERN = re.compile(r'^[0-9a-z]+![0-9]+/[0-9]+/[-_a-z0-9%]+$', IGNORECASE)
 API_URL = re.compile(r'^/api\b.*')
 CONFIRM_MODULE_PATTERN = r'data-module=["\']confirm-action["\']'
 HREF_URL_PATTERN = r'href=["\']([^"\']+)'
@@ -84,33 +84,44 @@ def get_cookie_token():
     return token
 
 def validate_token(token):
-    if not HMAC_PATTERN.match(token):
-        return false
-
     import time, hmac, hashlib, urllib
 
-    now = int(time.time())
-
-    parts = token.split('!', 1)
-    provided_hmac = unicode(parts[0])
-    message = parts[1]
-
-    secret_key = _get_secret_key()
-    expected_hmac = unicode(hmac.HMAC(secret_key, message, hashlib.sha512).hexdigest())
-    if not hmac.compare_digest(expected_hmac, provided_hmac):
+    token_values = read_token_values(token)
+    if not 'hash' in token_values:
         return False
 
-    message_parts = message.split('/', 2)
-    timestamp = int(message_parts[0])
-    username = message_parts[2]
+    secret_key = _get_secret_key()
+    expected_hmac = unicode(hmac.HMAC(secret_key, token_values['message'], hashlib.sha512).hexdigest())
+    if not hmac.compare_digest(expected_hmac, token_values['hash']):
+        return False
 
+    now = int(time.time())
+    timestamp = token_values['timestamp']
     # allow tokens up to 30 minutes old
     if now < timestamp or now - timestamp > 60 * 30:
         return False
-    if username != urllib.quote(g.userobj.name):
+
+    if token_values['username'] != urllib.quote(g.userobj.name):
         return False
 
     return True
+
+def read_token_values(token):
+    if not HMAC_PATTERN.match(token):
+        return {}
+
+    parts = token.split('!', 1)
+    message = parts[1]
+    # limiting to 2 means that even if a username somehow contains a slash, it won't cause an extra split
+    message_parts = message.split('/', 2)
+
+    return {
+        "message": message,
+        "hash": unicode(parts[0]),
+        "timestamp": int(message_parts[0]),
+        "nonce": message_parts[1],
+        "username": message_parts[2]
+    }
 
 def get_response_token():
     """Retrieve the token to be injected into pages.
@@ -142,15 +153,14 @@ def is_soft_expired(token):
 
     The current rotation age is 10 minutes.
     """
+    if not validate_token(token):
+        return False
+
     import time
-
     now = int(time.time())
-    parts = token.split('!', 1)
-    message = parts[1]
-    message_parts = message.split('/', 2)
-    timestamp = int(message_parts[0])
+    token_values = read_token_values(token)
 
-    return now - timestamp > 60 * 10
+    return now - token_values['timestamp'] > 60 * 10
 
 def _get_secret_key():
     from ckan.common import config
