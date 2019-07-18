@@ -83,15 +83,18 @@ def get_cookie_token():
 
     return token
 
+def _get_safe_username():
+    import urllib
+    return urllib.quote(g.userobj.name, safe='')
+
 def validate_token(token):
-    import time, hmac, hashlib, urllib
+    import time, hmac, hashlib
 
     token_values = read_token_values(token)
     if not 'hash' in token_values:
         return False
 
-    secret_key = _get_secret_key()
-    expected_hmac = unicode(hmac.HMAC(secret_key, token_values['message'], hashlib.sha512).hexdigest())
+    expected_hmac = unicode(get_digest(token_values['message']))
     if not hmac.compare_digest(expected_hmac, token_values['hash']):
         return False
 
@@ -101,7 +104,7 @@ def validate_token(token):
     if now < timestamp or now - timestamp > 60 * 30:
         return False
 
-    if token_values['username'] != urllib.quote(g.userobj.name):
+    if token_values['username'] != _get_safe_username():
         return False
 
     return True
@@ -119,7 +122,7 @@ def read_token_values(token):
         "message": message,
         "hash": unicode(parts[0]),
         "timestamp": int(message_parts[0]),
-        "nonce": message_parts[1],
+        "nonce": int(message_parts[1]),
         "username": message_parts[2]
     }
 
@@ -167,18 +170,24 @@ def _get_secret_key():
 
     return config.get('beaker.session.secret')
 
-def create_response_token():
-    import time, random, hmac, hashlib, urllib
+def get_digest(message):
+    import hmac, hashlib
+    return hmac.HMAC(_get_secret_key(), message, hashlib.sha512).hexdigest()
 
-    secret_key = _get_secret_key()
-    username = urllib.quote(g.userobj.name)
+def create_response_token():
+    import time, random
+
+    username = _get_safe_username()
     timestamp = int(time.time())
     nonce = random.randint(1, 999999)
     message = "{}/{}/{}".format(timestamp, nonce, username)
-    token = "{}!{}".format(hmac.HMAC(secret_key, message, hashlib.sha512).hexdigest(), message)
+    token = "{}!{}".format(get_digest(message), message)
 
-    response.set_cookie(TOKEN_FIELD_NAME, token, secure=True, httponly=True)
+    _set_response_token_cookie(token)
     return token
+
+def _set_response_token_cookie(token):
+    response.set_cookie(TOKEN_FIELD_NAME, token, secure=True, httponly=True)
 
 # Check token on applicable requests
 
