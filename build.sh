@@ -14,12 +14,14 @@ if [ $# -lt 1 ]; then
   exit 1
 fi
 
-if [ "$1" == "clean" -o "$1" == "all" ]; then
+if [ "$1" = "clean" -o "$1" = "all" ]; then
   if [ $# -lt 3 ]; then
       echo "${USAGE}" 1>&2
       exit 1
   fi
 fi
+
+. /usr/lib/ckan/default/bin/activate
 
 clean () {
   echo "Restarting Apache2 to clear existing sessions..."
@@ -42,7 +44,6 @@ clean () {
   babushka $INSTANCE
 
   echo "Creating test data..."
-  . /usr/lib/ckan/bin/activate
   paster --plugin=ckan create-test-data search -c /etc/ckan/$INSTANCE/$INSTANCE.ini
 
   echo "Rebuilding SOLR search index..."
@@ -51,13 +52,11 @@ clean () {
 
 install () {
     echo "Deploying $1 to local Apache instance..."
-    . /usr/lib/ckan/default/bin/activate
     easy_install "$1"
     sudo apachectl graceful
 }
 
 if [ "$1" = "check" ]; then
-    . /usr/lib/ckan/default/bin/activate
     pip install pyflakes pylint
     python -m pyflakes ckanext-qgov
     python -m pylint ckanext
@@ -79,6 +78,9 @@ fi
 if [ "$VERSION" = "" ]; then
     VERSION=0.0.1
 fi
+
+echo "Running tests..."
+(cd ckanext/qgov/common && python -m unittest test_anti_csrf) || exit 1
 
 ARTIFACT=ckanext_qgov-$VERSION-py2.7.egg
 

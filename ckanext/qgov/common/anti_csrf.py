@@ -29,7 +29,7 @@ POST_FORM = re.compile(r'(<form [^>]*method=["\']post["\'][^>]*>)([^<]*\s<)', IG
 
 """The format of the token HTML field.
 """
-HMAC_PATTERN=re.compile(r'^[0-9a-z]+![0-9]+/[0-9]+/[-_a-z0-9%]+$', IGNORECASE)
+HMAC_PATTERN = re.compile(r'^[0-9a-z]+![0-9]+/[0-9]+/[-_a-z0-9%]+$', IGNORECASE)
 API_URL = re.compile(r'^/api\b.*')
 CONFIRM_MODULE_PATTERN = r'data-module=["\']confirm-action["\']'
 HREF_URL_PATTERN = r'href=["\']([^"\']+)'
@@ -83,34 +83,48 @@ def get_cookie_token():
 
     return token
 
+def _get_safe_username():
+    import urllib
+    return urllib.quote(g.userobj.name, safe='')
+
 def validate_token(token):
-    if not HMAC_PATTERN.match(token):
-        return false
+    import time, hmac, hashlib
 
-    import time, hmac, hashlib, urllib
-
-    now = int(time.time())
-
-    parts = token.split('!', 1)
-    provided_hmac = unicode(parts[0])
-    message = parts[1]
-
-    secret_key = _get_secret_key()
-    expected_hmac = unicode(hmac.HMAC(secret_key, message, hashlib.sha512).hexdigest())
-    if not hmac.compare_digest(expected_hmac, provided_hmac):
+    token_values = read_token_values(token)
+    if not 'hash' in token_values:
         return False
 
-    message_parts = message.split('/', 2)
-    timestamp = int(message_parts[0])
-    username = message_parts[2]
+    expected_hmac = unicode(get_digest(token_values['message']))
+    if not hmac.compare_digest(expected_hmac, token_values['hash']):
+        return False
 
+    now = int(time.time())
+    timestamp = token_values['timestamp']
     # allow tokens up to 30 minutes old
     if now < timestamp or now - timestamp > 60 * 30:
         return False
-    if username != urllib.quote(g.userobj.name):
+
+    if token_values['username'] != _get_safe_username():
         return False
 
     return True
+
+def read_token_values(token):
+    if not HMAC_PATTERN.match(token):
+        return {}
+
+    parts = token.split('!', 1)
+    message = parts[1]
+    # limiting to 2 means that even if a username somehow contains a slash, it won't cause an extra split
+    message_parts = message.split('/', 2)
+
+    return {
+        "message": message,
+        "hash": unicode(parts[0]),
+        "timestamp": int(message_parts[0]),
+        "nonce": int(message_parts[1]),
+        "username": message_parts[2]
+    }
 
 def get_response_token():
     """Retrieve the token to be injected into pages.
@@ -142,33 +156,38 @@ def is_soft_expired(token):
 
     The current rotation age is 10 minutes.
     """
+    if not validate_token(token):
+        return False
+
     import time
-
     now = int(time.time())
-    parts = token.split('!', 1)
-    message = parts[1]
-    message_parts = message.split('/', 2)
-    timestamp = int(message_parts[0])
+    token_values = read_token_values(token)
 
-    return now - timestamp > 60 * 10
+    return now - token_values['timestamp'] > 60 * 10
 
 def _get_secret_key():
     from ckan.common import config
 
     return config.get('beaker.session.secret')
 
-def create_response_token():
-    import time, random, hmac, hashlib, urllib
+def get_digest(message):
+    import hmac, hashlib
+    return hmac.HMAC(_get_secret_key(), message, hashlib.sha512).hexdigest()
 
-    secret_key = _get_secret_key()
-    username = urllib.quote(g.userobj.name)
+def create_response_token():
+    import time, random
+
+    username = _get_safe_username()
     timestamp = int(time.time())
     nonce = random.randint(1, 999999)
     message = "{}/{}/{}".format(timestamp, nonce, username)
-    token = "{}!{}".format(hmac.HMAC(secret_key, message, hashlib.sha512).hexdigest(), message)
+    token = "{}!{}".format(get_digest(message), message)
 
-    response.set_cookie(TOKEN_FIELD_NAME, token, secure=True, httponly=True)
+    _set_response_token_cookie(token)
     return token
+
+def _set_response_token_cookie(token):
+    response.set_cookie(TOKEN_FIELD_NAME, token, secure=True, httponly=True)
 
 # Check token on applicable requests
 
