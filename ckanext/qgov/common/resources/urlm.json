@@ -19,13 +19,21 @@
     "url" : "https://test.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",
     "proxy" : null
   },
-  "data-tst" : {
+  "training.data.qld.gov.au" : {
     "url" : "https://test.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",
-    "proxy" : "proxy:3128"
+    "proxy" : null
   },
-  "epub-tst" : {
+  "training.publications.qld.gov.au" : {
     "url" : "https://test.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",
-    "proxy" : "proxy:3128"
+    "proxy" : null
+  },
+  "dev.data.qld.gov.au" : {
+    "url" : "https://test.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",
+    "proxy" : null
+  },
+  "dev.publications.qld.gov.au" : {
+    "url" : "https://test.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",
+    "proxy" : null
   },
   "data-local" : {
     "url" : "https://test.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",
