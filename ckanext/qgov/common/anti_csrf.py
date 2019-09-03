@@ -1,18 +1,24 @@
+# encoding: utf-8
 """Provides a self-contained filter to prevent Cross-Site Request Forgery,
 based on the Double Submit Cookie pattern,
 www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)_Prevention_Cheat_Sheet#Double_Submit_Cookie
 
 The filter can be enabled simply by invoking 'intercept_csrf()'.
 """
-import ckan.lib.base as base
+import hashlib
+import hmac
+import random
 import re
-from re import DOTALL, IGNORECASE, MULTILINE
+from re import IGNORECASE, MULTILINE
+import time
+import urllib
 from logging import getLogger
-from ckan.common import request, response, g
+
+from ckan.common import config, request, response, g
+import ckan.lib.base as base
 
 LOG = getLogger(__name__)
 
-RAW_RENDER = base.render
 RAW_RENDER_JINJA = base.render_jinja2
 RAW_BEFORE = base.BaseController.__before__
 
@@ -25,40 +31,53 @@ This will match a POST form that has whitespace after the opening tag (which all
 Once we have injected a token immediately after the opening tag,
 it won't match any more, which avoids redundant injection.
 """
-POST_FORM = re.compile(r'(<form [^>]*method=["\']post["\'][^>]*>)([^<]*\s<)', IGNORECASE | MULTILINE)
+POST_FORM = re.compile(r'(<form [^>]*method=["\']post["\'][^>]*>)(\s[^<]*<)', IGNORECASE|MULTILINE)
 
 """The format of the token HTML field.
 """
-HMAC_PATTERN = re.compile(r'^[0-9a-z]+![0-9]+/[0-9]+/[-_a-z0-9%]+$', IGNORECASE)
+TOKEN_VALIDATION_PATTERN = re.compile(r'^[0-9a-z]+![0-9]+/[0-9]+/[-_a-z0-9%]+$', IGNORECASE)
 API_URL = re.compile(r'^/api\b.*')
 CONFIRM_MODULE_PATTERN = r'data-module=["\']confirm-action["\']'
 HREF_URL_PATTERN = r'href=["\']([^"\']+)'
 
 # We need to edit confirm-action links, which get intercepted by JavaScript,
 #regardless of which order their 'data-module' and 'href' attributes appear.
-CONFIRM_LINK = re.compile(r'(<a [^>]*' + CONFIRM_MODULE_PATTERN + '[^>]*' + HREF_URL_PATTERN + ')(["\'])', IGNORECASE | MULTILINE)
-CONFIRM_LINK_REVERSED = re.compile(r'(<a [^>]*' + HREF_URL_PATTERN + ')(["\'][^>]*' + CONFIRM_MODULE_PATTERN + ')', IGNORECASE | MULTILINE)
+CONFIRM_LINK = re.compile(r'(<a [^>]*{}[^>]*{})(["\'])'.format(
+    CONFIRM_MODULE_PATTERN, HREF_URL_PATTERN),
+                          IGNORECASE|MULTILINE)
+CONFIRM_LINK_REVERSED = re.compile(r'(<a [^>]*{})(["\'][^>]*{})'.format(
+    HREF_URL_PATTERN, CONFIRM_MODULE_PATTERN),
+                                   IGNORECASE|MULTILINE)
 
 def is_logged_in():
-    return request.cookies.get("auth_tkt")
-
-""" Rewrite HTML to insert tokens if applicable.
-"""
+    """ Determine whether the user is currently logged in and thus needs a token.
+    TODO Also require a token on login/logout forms.
+    """
+    return _get_user()
 
 def anti_csrf_render_jinja2(template_name, extra_vars=None):
+    """ Wrap the core page-rendering function and inject tokens into HTML where appropriate.
+    """
     html = apply_token(RAW_RENDER_JINJA(template_name, extra_vars))
     return html
 
 def apply_token(html):
-    if not is_logged_in() or (not POST_FORM.search(html) and not re.search(CONFIRM_MODULE_PATTERN, html)):
+    """ Rewrite HTML to insert tokens if applicable.
+    """
+    if not is_logged_in() or (
+            not POST_FORM.search(html) and not re.search(CONFIRM_MODULE_PATTERN, html)):
         return html
 
-    token = get_response_token()
+    token = _get_response_token()
 
     def insert_form_token(form_match):
+        """ Inject a token into a POST form. """
         return form_match.group(1) + '<input type="hidden" name="{}" value="{}"/>'.format(TOKEN_FIELD_NAME, token) + form_match.group(2)
 
     def insert_link_token(link_match):
+        """ Inject a token into a link that uses data-module="confirm-action".
+        These links are picked up by JavaScript and converted into empty POST requests.
+        """
         if TOKEN_FIELD_NAME + '=' in link_match.group(1):
             return link_match.group(0)
         if '?' in link_match.group(2):
@@ -69,12 +88,13 @@ def apply_token(html):
 
     return CONFIRM_LINK_REVERSED.sub(insert_link_token, CONFIRM_LINK.sub(insert_link_token, POST_FORM.sub(insert_form_token, html)))
 
-def get_cookie_token():
-    """Retrieve the token expected by the server.
+def _get_cookie_token():
+    """ Retrieve the token expected by the server.
 
     This will be retrieved from the 'token' cookie, if it exists.
     If not, an error will occur.
     """
+    token = None
     if request.cookies.has_key(TOKEN_FIELD_NAME):
         LOG.debug("Obtaining token from cookie")
         token = request.cookies.get(TOKEN_FIELD_NAME)
@@ -83,13 +103,23 @@ def get_cookie_token():
 
     return token
 
+def _get_user():
+    """ Retrieve the current user object.
+    """
+    return g.userobj
+
 def _get_safe_username():
-    import urllib
-    return urllib.quote(g.userobj.name, safe='')
+    """ Retrieve the current username with unsafe characters URL-encoded.
+    """
+    return urllib.quote(_get_user().name, safe='')
 
 def validate_token(token):
-    import time, hmac, hashlib
-
+    """ Verify the integrity of the provided token.
+    It must have the expected format (hash!timestamp/nonce/username),
+    the hash must match the other values,
+    the username must match the current account,
+    and it must not be older than our limit (currently 30 minutes).
+    """
     token_values = read_token_values(token)
     if not 'hash' in token_values:
         return False
@@ -110,12 +140,14 @@ def validate_token(token):
     return True
 
 def read_token_values(token):
-    if not HMAC_PATTERN.match(token):
+    """ Parse the provided token string. Invalid tokens are parsed as empty dicts.
+    """
+    if not TOKEN_VALIDATION_PATTERN.match(token):
         return {}
 
     parts = token.split('!', 1)
     message = parts[1]
-    # limiting to 2 means that even if a username somehow contains a slash, it won't cause an extra split
+    # limiting to 2 means that even if a username contains a slash, it won't cause an extra split
     message_parts = message.split('/', 2)
 
     return {
@@ -126,7 +158,7 @@ def read_token_values(token):
         "username": message_parts[2]
     }
 
-def get_response_token():
+def _get_response_token():
     """Retrieve the token to be injected into pages.
 
     This will be retrieved from the 'token' cookie, if it exists and is fresh.
@@ -159,24 +191,27 @@ def is_soft_expired(token):
     if not validate_token(token):
         return False
 
-    import time
     now = int(time.time())
     token_values = read_token_values(token)
 
     return now - token_values['timestamp'] > 60 * 10
 
 def _get_secret_key():
-    from ckan.common import config
-
+    """ Retrieve the secret key to use in generating secure hashes.
+    Currently this is the Beaker session secret.
+    """
     return config.get('beaker.session.secret')
 
 def get_digest(message):
-    import hmac, hashlib
+    """ Generate a secure (unforgeable) hash of the provided data.
+    """
     return hmac.HMAC(_get_secret_key(), message, hashlib.sha512).hexdigest()
 
 def create_response_token():
-    import time, random
-
+    """ Generate an unforgeable CSRF token. The format of this token is:
+    hash!timestamp/nonce/username
+    where the hash is a secure HMAC of the other values plus a secret key.
+    """
     username = _get_safe_username()
     timestamp = int(time.time())
     nonce = random.randint(1, 999999)
@@ -187,25 +222,32 @@ def create_response_token():
     return token
 
 def _set_response_token_cookie(token):
+    """ Add a generated token cookie to the HTTP response
+    """
     response.set_cookie(TOKEN_FIELD_NAME, token, secure=True, httponly=True)
 
-# Check token on applicable requests
-
 def is_request_exempt():
+    """ Determine whether a request needs to provide a token.
+    HTTP methods without side effects (GET, HEAD, OPTIONS) are exempt, as are API calls
+    (which should instead provide an API key).
+    """
     return not is_logged_in() or API_URL.match(request.path) or request.method in {'GET', 'HEAD', 'OPTIONS'}
 
 def anti_csrf_before(obj, action, **params):
+    """ Wrap the core pre-rendering function to require tokens on applicable requests.
+    """
     RAW_BEFORE(obj, action)
 
-    if not is_request_exempt() and get_cookie_token() != get_post_token():
+    if not is_request_exempt() and _get_cookie_token() != _get_post_token():
         csrf_fail("Could not match session token with form token")
 
 def csrf_fail(message):
-    from flask import abort
+    """ Abort the request and return an error when there is a problem with the CSRF token.
+    """
     LOG.error(message)
-    abort(403, "Your form submission could not be validated")
+    base.abort(403, "Your form submission could not be validated")
 
-def get_post_token():
+def _get_post_token():
     """Retrieve the token provided by the client.
 
     This is normally a single 'token' parameter in the POST body.
@@ -223,13 +265,13 @@ def get_post_token():
         del request.GET[TOKEN_FIELD_NAME]
         return request.token
 
-    postTokens = request.POST.getall(TOKEN_FIELD_NAME)
-    if not postTokens:
+    post_tokens = request.POST.getall(TOKEN_FIELD_NAME)
+    if not post_tokens:
         csrf_fail("Missing CSRF token in form submission")
-    elif len(postTokens) > 1:
+    elif len(post_tokens) > 1:
         csrf_fail("More than one CSRF token in form submission")
     else:
-        request.token = postTokens[0]
+        request.token = post_tokens[0]
 
     # drop token from request so it doesn't populate resource extras
     del request.POST[TOKEN_FIELD_NAME]
@@ -240,5 +282,7 @@ def get_post_token():
     return request.token
 
 def intercept_csrf():
+    """ Monkey-patch the core rendering methods to apply our CSRF tokens.
+    """
     base.render_jinja2 = anti_csrf_render_jinja2
     base.BaseController.__before__ = anti_csrf_before
