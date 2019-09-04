@@ -1,73 +1,64 @@
 # encoding: utf-8
-import os, random, re
+""" Queensland Government CKAN extension.
+This contains a mixture of useful features, such as an anti-CSRF filter,
+and site-specific customisations, such as a feedback channel.
+"""
+import datetime
+import json
+import os
+import random
 from logging import getLogger
-import ckan.lib.base as base
-from ckan.lib.base import h
+
 import ckan.authz as authz
-from routes.mapper import SubMapper
+from ckan.common import _, c
+from ckan.lib.base import h
 import ckan.lib.formatters as formatters
-import ckan.logic.validators as validators
 import ckan.logic.auth as logic_auth
 from ckan.logic import get_action
-from ckan.plugins import implements, SingletonPlugin, IConfigurer, IBlueprint, ITemplateHelpers,IActions,IAuthFunctions,IRoutes
-import ckan.plugins.toolkit as toolkit
-from ckan.lib.navl.dictization_functions import Missing
-from ckan.common import config, _
+from ckan.plugins import implements, SingletonPlugin, IConfigurer, ITemplateHelpers, IActions, IAuthFunctions, IRoutes
 import ckan.model as model
-from ckan import __version__
-from ckan.common import _ as __, g, c
-from flask import Blueprint
-import datetime
-from ckanext.qgov.common.stats import Stats
-import anti_csrf, authenticator, urlm, intercepts
+from routes.mapper import SubMapper
 import requests
-from flask import abort
-import json
+
+import ckanext.qgov.common.anti_csrf as anti_csrf
+import ckanext.qgov.common.authenticator as authenticator
+import ckanext.qgov.common.urlm as urlm
+import ckanext.qgov.common.intercepts as intercepts
+from ckanext.qgov.common.stats import Stats
 
 LOG = getLogger(__name__)
 
 def random_tags():
+    """ Show the most-used tags in a random order.
+    """
     tags = h.unselected_facet_items('tags', limit=15)
     random.shuffle(tags)
     return tags
 
 def format_resource_filesize(size):
+    """ Show a file size, formatted for humans.
+    """
     return formatters.localised_filesize(int(size))
 
 def group_id_for(group_name):
-
+    """ Determine the ID for a provided group name, if any.
+    """
     group = model.Group.get(group_name)
 
     if group and group.is_active():
         return group.id
-    else:
-        LOG.error("%s group was not found or not active", group_name)
-        return None
+
+    LOG.error("%s group was not found or not active", group_name)
+    return None
 
 def format_attribution_date(date_string=None):
+    """ Format a date nicely.
+    """
     if date_string:
-        return datetime.datetime.strptime(date_string.split('T')[0],'%Y-%m-%d').strftime('%d %B %Y')
+        dateobj = datetime.datetime.strptime(date_string.split('T')[0], '%Y-%m-%d')
     else:
-        return datetime.datetime.now().strftime('%d %B %Y')
-
-def user_password_validator(key, data, errors, context):
-    password_min_length = int(config.get('password_min_length', '10'))
-    password_patterns = config.get('password_patterns', r'.*[0-9].*,.*[a-z].*,.*[A-Z].*,.*[-`~!@#$%^&*()_+=|\\/ ].*').split(',')
-
-    value = data[key]
-
-    if isinstance(value, Missing):
-        pass
-    elif not isinstance(value, basestring):
-        errors[('password',)].append(_('Passwords must be strings'))
-    elif value == '':
-        pass
-    elif not len(value) >= password_min_length:
-        errors[('password',)].append(__('Your password must be {min} characters or longer'.format(min=password_min_length)))
-    else:
-        for policy in password_patterns:
-            if not re.search(policy, value):
-                errors[('password',)].append(__('Must contain at least one number, lowercase letter, capital letter, and symbol'))
+        dateobj = datetime.datetime.now()
+    return dateobj.strftime('%d %B %Y')
 
 def related_create(context, data_dict=None):
     '''
@@ -76,11 +67,12 @@ def related_create(context, data_dict=None):
     - Related item must be created for an associated dataset
     - User must be able to create datasets (proves privilege)
 
-    Note: This function is used to both gain entry to the 'Create' form and validate the 'Create' form
+    Note: This function is used both to gain entry to the 'Create' form
+    and to validate the 'Create' form
     '''
-    model = context['model']
+    context_model = context['model']
     user = context['user']
-    userobj = model.User.get( user )
+    userobj = context_model.User.get(user)
 
     check1 = all(authz.check_config_permission(p) for p in (
         'create_dataset_if_not_in_organization',
@@ -89,16 +81,16 @@ def related_create(context, data_dict=None):
         user, 'create_dataset')
 
     if userobj and check1:
-        if data_dict is not None and len(data_dict) != 0:
-            dataset_id = data_dict.get('dataset_id',None)
+        if data_dict:
+            dataset_id = data_dict.get('dataset_id', None)
             if dataset_id is None or dataset_id == '':
                 return {'success': False,
-                    'msg': _('Related item must have an associated dataset')}
+                        'msg': _('Related item must have an associated dataset')}
             # check authentication against package
-            pkg = model.Package.get(dataset_id)
+            pkg = context_model.Package.get(dataset_id)
             if not pkg:
                 return {'success': False,
-                    'msg': _('No package found, cannot check auth.')}
+                        'msg': _('No package found, cannot check auth.')}
 
             pkg_dict = {'id': dataset_id}
             authorised = authz.is_authorized('package_update', context, pkg_dict).get('success')
@@ -116,7 +108,6 @@ def related_update(context, data_dict):
     - Users must be logged-in to create related items
     - User can update if they are able to create datasets for housed package
     '''
-    model = context['model']
     user = context['user']
 
     check1 = all(authz.check_config_permission(p) for p in (
@@ -137,14 +128,16 @@ def related_update(context, data_dict):
             return {'success': False,
                     'msg': _('You do not have permission to update this related item')}
     return {'success': False,
-            'msg': _('You must be logged in and permission to create datasets to update a related item')}
+            'msg': _('You must be logged in and have permission to create datasets to update a related item')}
 
 def get_validation_resources(data_dict):
+    """ Return the validation schemas associated with a package.
+    """
     context = {'ignore_auth': False, 'model': model,
                'user': c.user or c.author}
     package = get_action('package_show')(context, data_dict)
     if 'error' not in package:
-        resources = package.get('resources',[])
+        resources = package.get('resources', [])
         validation_schemas = []
         for resource in resources:
             if resource['format'].upper() == 'CSV VALIDATION SCHEMA':
@@ -153,18 +146,22 @@ def get_validation_resources(data_dict):
     return package
 
 def get_resource_name(data_dict):
+    """ Retrieve the name of a resource given its ID.
+    """
     context = {'ignore_auth': False, 'model': model,
                'user': c.user or c.author}
     package = get_action('package_show')(context, data_dict)
     if 'error' not in package:
-        resources = package.get('resources',[])
+        resources = package.get('resources', [])
         for resource in resources:
             if data_dict['resource_id'] == resource['id']:
                 return resource['name']
         return None
     return None
 
-def generate_download_url(package_id,resource_id):
+def generate_download_url(package_id, resource_id):
+    """ Construct a URL to download a resource given its ID.
+    """
     context = {'ignore_auth': False, 'model': model,
                'user': c.user or c.author}
     try:
@@ -176,18 +173,23 @@ def generate_download_url(package_id,resource_id):
     except:
         return ''
 
-def generate_json_schema(package_id,validation_schema):
-    validation_schema_url = generate_download_url(package_id,validation_schema)
-    r = requests.get(validation_schema_url,verify=False)
-    if r.status_code == requests.codes.ok:
+def generate_json_schema(package_id, validation_schema):
+    """ Retrieve the validation schema for a package, if any.
+    """
+    validation_schema_url = generate_download_url(package_id, validation_schema)
+    req = requests.get(validation_schema_url, verify=False)
+    if req.status_code == requests.codes.ok:
         try:
-            return json.loads(r.text)
+            return json.loads(req.text)
         except:
-            return { "error": "Failed to parse json schema"}
+            return {"error": "Failed to parse json schema"}
     else:
-        return { "error" : "Failed to retrieve json schema"}
+        return {"error" : "Failed to retrieve json schema"}
 
 def legacy_pager(self, *args, **kwargs):
+    """ Construct a paging object suitable for Bootstrap 2.
+    See https://github.com/ckan/ckan/issues/4895
+    """
     kwargs.update(
         format=u"<div class='pagination-wrapper pagination'><ul>"
         "$link_previous ~2~ $link_next</ul></div>",
@@ -201,7 +203,11 @@ class QGOVPlugin(SingletonPlugin):
     """Apply custom functions for Queensland Government portals.
 
     ``IConfigurer`` allows us to add/modify configuration options.
+    ``ITemplateHelpers`` lets us add helper functions
+    for template rendering.
     ``IRoutes`` allows us to add new URLs, or override existing URLs.
+    ``IActions`` allows us to add API actions.
+    ``IAuthFunctions`` lets us override authorisation checks.
     """
     implements(IConfigurer, inherit=True)
     implements(ITemplateHelpers, inherit=True)
@@ -210,13 +216,18 @@ class QGOVPlugin(SingletonPlugin):
     implements(IRoutes, inherit=True)
 
     def __init__(self, **kwargs):
-        validators.user_password_validator = user_password_validator
+        """ Monkey-patch functions that don't have standard extension
+        points.
+        """
         anti_csrf.intercept_csrf()
         authenticator.intercept_authenticator()
         urlm.intercept_404()
         intercepts.set_intercepts()
 
     def update_config_schema(self, schema):
+        """ Don't allow customisation of site CSS via the web interface.
+        These fields represent a persistent XSS risk.
+        """
         schema.pop('ckan.main_css', None)
         schema.pop('ckan.site_custom_css', None)
 
@@ -258,30 +269,22 @@ class QGOVPlugin(SingletonPlugin):
                     hostname = 'default'
 
                 if hostname in urlm_json:
-                    urlm_url = urlm_json[hostname].get('url','')
-                    urlm_proxy = urlm_json[hostname].get('proxy',None)
-                    urlm.configure_urlm(urlm_url,urlm_proxy)
+                    urlm_url = urlm_json[hostname].get('url', '')
+                    urlm_proxy = urlm_json[hostname].get('proxy', None)
+                    urlm.configure_urlm(urlm_url, urlm_proxy)
 
-        if 'ckan.base_templates_folder' in ckan_config and ckan_config['ckan.base_templates_folder'] == 'templates-bs2':
+        if ckan_config.get('ckan.base_templates_folder', None) == 'templates-bs2':
             from ckan.lib.helpers import Page
             Page.pager = legacy_pager
         return ckan_config
 
-    def static_content(self, path):
-        try:
-            return render('static-content/{path}/index.html'.format(path=path))
-        except TemplateNotFound:
-            LOG.warn(path + " not found")
-            base.abort(404)
-
-    def before_map(self, map):
-        # These named routes are used for custom dataset forms which will use
-        # the names below based on the dataset.type ('dataset' is the default
-        # type)
-        with SubMapper(map, controller='ckanext.qgov.common.controller:QGOVController') as m:
-            m.connect('article', '/article/{path:[-_a-zA-Z0-9/]+}', action='static_content')
-            m.connect('submit_feedback', '/api/action/submit_feedback', action='submit_feedback')
-            return map
+    def before_map(self, route_map):
+        """ Add some custom routes for Queensland Government portals.
+        """
+        with SubMapper(route_map, controller='ckanext.qgov.common.controller:QGOVController') as mapper:
+            mapper.connect('article', '/article/{path:[-_a-zA-Z0-9/]+}', action='static_content')
+            mapper.connect('submit_feedback', '/api/action/submit_feedback', action='submit_feedback')
+            return route_map
 
     def get_helpers(self):
         """ A dictionary of extra helpers that will be available
@@ -312,6 +315,8 @@ class QGOVPlugin(SingletonPlugin):
         }
 
     def get_auth_functions(self):
+        """ Override the 'related' auth functions with our own.
+        """
         return {
             'related_create': related_create,
             'related_update' : related_update
