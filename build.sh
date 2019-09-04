@@ -50,6 +50,11 @@ clean () {
   paster --plugin=ckan search-index rebuild -c /etc/ckan/$INSTANCE/$INSTANCE.ini
 }
 
+unit_test () {
+  echo "Running tests..."
+  (cd ckanext/qgov/common && python -m unittest test_anti_csrf) || exit 1
+}
+
 install () {
     echo "Deploying $1 to local Apache instance..."
     easy_install "$1"
@@ -58,9 +63,14 @@ install () {
 
 if [ "$1" = "check" ]; then
     pip install pyflakes pylint
-    python -m pyflakes ckanext-qgov
+    python -m pyflakes ckanext
     python -m pylint ckanext
     exit
+fi
+
+if [ "$1" = "test" ]; then
+    unit_test
+    exit $?
 fi
 
 if [ "$1" = "build" -o "$1" = "install" ]; then
@@ -79,8 +89,7 @@ if [ "$VERSION" = "" ]; then
     VERSION=0.0.1
 fi
 
-echo "Running tests..."
-(cd ckanext/qgov/common && python -m unittest test_anti_csrf) || exit 1
+unit_test || exit 1
 
 ARTIFACT=ckanext_qgov-$VERSION-py2.7.egg
 
