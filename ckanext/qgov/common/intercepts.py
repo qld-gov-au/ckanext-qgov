@@ -277,9 +277,9 @@ def storage_download_with_headers(self, label):
     _set_download_headers(response)
     return file_download
 
-def resource_download_with_headers(self, package_id, resource_id, filename=None):
+def resource_download_with_headers(self, id, resource_id, filename=None):
     """ Add security headers to protect against download-based exploits.
     """
-    file_download = RESOURCE_DOWNLOAD(self, package_id, resource_id, filename)
+    file_download = RESOURCE_DOWNLOAD(self, id, resource_id, filename)
     _set_download_headers(response)
     return file_download
