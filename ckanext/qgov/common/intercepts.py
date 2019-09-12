@@ -225,7 +225,7 @@ def save_edit(self, name_or_id, context, package_type=None):
 
     return PACKAGE_EDIT(self, name_or_id, context, package_type=None)
 
-def validate_resource_edit(self, package_id, resource_id,
+def validate_resource_edit(self, id, resource_id,
                            data=None, errors=None, error_summary=None):
     '''
     Intercept save_edit
@@ -235,8 +235,8 @@ def validate_resource_edit(self, package_id, resource_id,
         resource_format = request.POST.getone('format')
         validation_schema = request.POST.getone('validation_schema')
         if resource_format == 'CSV' and validation_schema and validation_schema != '':
-            schema_url = plugin.generate_download_url(package_id, validation_schema)
-            data_url = plugin.generate_download_url(package_id, resource_id)
+            schema_url = plugin.generate_download_url(id, validation_schema)
+            data_url = plugin.generate_download_url(id, resource_id)
             validation_url = "http://goodtables.okfnlabs.org/api/run?format=csv&schema={0}&data={1}&row_limit=100000&report_limit=1000&report_type=grouped".format(schema_url, data_url)
             req = requests.get(validation_url, verify=False)
             if req.status_code == requests.codes.ok:
@@ -246,7 +246,7 @@ def validate_resource_edit(self, package_id, resource_id,
                 else:
                     h.flash_error("CSV was NOT validated against the selected schema")
 
-    return RESOURCE_EDIT(self, package_id, resource_id, data, errors, error_summary)
+    return RESOURCE_EDIT(self, id, resource_id, data, errors, error_summary)
 
 def upload_after_validation(self, max_size=2):
     """ Validate file type against our whitelist before uploading.
@@ -257,14 +257,14 @@ def upload_after_validation(self, max_size=2):
         )
     UPLOAD(self, max_size)
 
-def resource_upload_after_validation(self, resource_id, max_size=2):
+def resource_upload_after_validation(self, id, max_size=10):
     """ Validate file type against our whitelist before uploading.
     """
     if self.filename and not ALLOWED_EXTENSIONS_PATTERN.search(self.filename):
         raise ckan.logic.ValidationError(
             {'upload': [INVALID_UPLOAD_MESSAGE]}
         )
-    RESOURCE_UPLOAD(self, resource_id, max_size)
+    RESOURCE_UPLOAD(self, id, max_size)
 
 def _set_download_headers(response):
     response.headers['Content-Disposition'] = 'attachment'
