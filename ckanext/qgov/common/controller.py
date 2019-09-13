@@ -154,12 +154,12 @@ class QGOVController(BaseController):
                 # Logic written to maintain legacy data
                 # Once all the records in database have 'maintainer_email',
                 # remove this and feedback_email = package.get('maintainer_email', '')
-                if not 'maintainer_email' in package or package.get('maintainer_email') == '':
+                if 'maintainer_email' in package and package.get('maintainer_email'):
                     feedback_email = package.get('maintainer_email')
-                elif not 'author_email' in package or package.get('author_email') == '':
+                elif 'author_email' in package and package.get('author_email'):
                     feedback_email = package.get('author_email')
                 else:
-                    feedback_email = 'online@qld.gov.au'
+                    feedback_email = 'onlineproducts@smartservice.qld.gov.au'
                 #feedback_email = package.get('maintainer_email', '')
                 if 'organization' in package and package['organization']:
                     feedback_organisation = _strip_non_ascii(package['organization'].get('title', ''))
