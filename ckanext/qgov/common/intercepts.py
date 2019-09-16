@@ -31,10 +31,10 @@ LOGGED_IN = UserController.logged_in
 PACKAGE_EDIT = PackageController._save_edit
 RESOURCE_EDIT = PackageController.resource_edit
 
-DEFAULT_USER_SCHEMA = schemas.default_user_schema
-USER_NEW_FORM_SCHEMA = schemas.user_new_form_schema
-USER_EDIT_FORM_SCHEMA = schemas.user_edit_form_schema
-DEFAULT_UPDATE_USER_SCHEMA = schemas.default_update_user_schema
+DEFAULT_USER_SCHEMA = schemas.default_user_schema()
+USER_NEW_FORM_SCHEMA = schemas.user_new_form_schema()
+USER_EDIT_FORM_SCHEMA = schemas.user_edit_form_schema()
+DEFAULT_UPDATE_USER_SCHEMA = schemas.default_update_user_schema()
 
 UPLOAD = Upload.upload
 RESOURCE_UPLOAD = ResourceUpload.upload
@@ -143,12 +143,12 @@ def _apply_schema_validator(user_schema, field_name, validator_name='user_passwo
 def default_user_schema():
     """ Add our password validator function to the default list.
     """
-    return _apply_schema_validator(DEFAULT_USER_SCHEMA(), 'password')
+    return _apply_schema_validator(DEFAULT_USER_SCHEMA, 'password')
 
 def user_new_form_schema():
     """ Apply our password validator function when creating a new user.
     """
-    user_schema = USER_NEW_FORM_SCHEMA()
+    user_schema = USER_NEW_FORM_SCHEMA
     user_schema = _apply_schema_validator(user_schema, 'password')
     user_schema = _apply_schema_validator(user_schema, 'password1')
     return user_schema
@@ -156,7 +156,7 @@ def user_new_form_schema():
 def user_edit_form_schema():
     """ Apply our password validator function when editing an existing user.
     """
-    user_schema = USER_EDIT_FORM_SCHEMA()
+    user_schema = USER_EDIT_FORM_SCHEMA
     user_schema = _apply_schema_validator(user_schema, 'password')
     user_schema = _apply_schema_validator(user_schema, 'password1')
     return user_schema
@@ -164,7 +164,7 @@ def user_edit_form_schema():
 def default_update_user_schema():
     """ Apply our password validator function when updating a user.
     """
-    return _apply_schema_validator(DEFAULT_UPDATE_USER_SCHEMA(), 'password')
+    return _apply_schema_validator(DEFAULT_UPDATE_USER_SCHEMA, 'password')
 
 def _unlock_account(account_id):
     """ Unlock an account (erase the failed login attempts).
