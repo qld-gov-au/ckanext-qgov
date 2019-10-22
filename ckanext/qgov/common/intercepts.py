@@ -54,6 +54,7 @@ ALLOWED_EXTENSIONS = [
     'esri',
     'gdb',
     'jpg',
+    'png',
     'tif',
     'tiff',
     'jpeg',
