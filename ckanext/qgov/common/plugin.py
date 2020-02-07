@@ -130,6 +130,13 @@ def related_update(context, data_dict):
     return {'success': False,
             'msg': _('You must be logged in and have permission to create datasets to update a related item')}
 
+def auth_user_list(context, data_dict):
+    """Check whether access to the user list is authorised.
+    Restricted to sysadmins as per QOL-5710.
+    """
+    user = context.get('user')
+    return {'success': authz.is_sysadmin(user)}
+
 def get_validation_resources(data_dict):
     """ Return the validation schemas associated with a package.
     """
@@ -319,5 +326,6 @@ class QGOVPlugin(SingletonPlugin):
         """
         return {
             'related_create': related_create,
-            'related_update' : related_update
+            'related_update' : related_update,
+            'user_list': auth_user_list
         }
