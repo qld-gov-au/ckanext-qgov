@@ -134,6 +134,7 @@ def auth_user_list(context, data_dict=None):
     """Check whether access to the user list is authorised.
     Restricted to organisation admins as per QOL-5710.
     """
+    user = context.get('user')
     return {'success': authz.has_user_permission_for_some_org(user, 'update')}
 
 def get_validation_resources(data_dict):
