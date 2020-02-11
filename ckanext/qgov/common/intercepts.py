@@ -22,7 +22,6 @@ from ckan.lib.base import c, request, abort, h
 from ckan.lib.uploader import Upload, ResourceUpload
 
 from ckanext.qgov.common.authenticator import QGOVUser
-from ckanext.qgov.common.controller import plugin
 
 LOG = getLogger(__name__)
 
