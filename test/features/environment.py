@@ -18,6 +18,16 @@ PERSONAS = {
         name=u'admin',
         email=u'admin@localhost',
         password=u'Password123!'
+    ),
+    'Group Admin': dict(
+        name=u'group_admin',
+        email=u'group_admin@localhost',
+        password=u'Password123!'
+    ),
+    'Publisher': dict(
+        name=u'publisher',
+        email=u'publisher@localhost',
+        password=u'Password123!'
     )
 }
 

@@ -36,3 +36,8 @@ def go_to_organisation_page(context):
 @step('I go to register page')
 def go_to_register_page(context):
     when_i_visit_url(context, '/user/register')
+
+
+@step('I go to the user autocomplete API')
+def go_to_user_autocomplete(context):
+    when_i_visit_url(context, '/api/2/util/user/autocomplete?q=admin')
