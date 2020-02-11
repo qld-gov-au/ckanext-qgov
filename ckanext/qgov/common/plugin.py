@@ -130,12 +130,34 @@ def related_update(context, data_dict):
     return {'success': False,
             'msg': _('You must be logged in and have permission to create datasets to update a related item')}
 
+
 def auth_user_list(context, data_dict=None):
     """Check whether access to the user list is authorised.
     Restricted to organisation admins as per QOL-5710.
     """
-    user = context.get('user')
-    return {'success': authz.has_user_permission_for_some_org(user, 'update')}
+    return {'success': _requester_is_admin(context)}
+
+
+def auth_user_show(context, data_dict):
+    """Check whether access to individual user details is authorised.
+    Restricted to organisation admins or self, as per QOL-5710.
+    """
+    if _requester_is_admin(context):
+        return {'success': True}
+    requester = context.get('user')
+    id = data_dict.get('id', None)
+    if id:
+        user_obj = model.User.get(id)
+        if user_obj:
+            return {'success': requester == user_obj.name}
+
+    return {'success': False}
+
+
+def _requester_is_admin(context):
+    requester = context.get('user')
+    return authz.has_user_permission_for_some_org(requester, 'update')
+
 
 def get_validation_resources(data_dict):
     """ Return the validation schemas associated with a package.
@@ -327,5 +349,6 @@ class QGOVPlugin(SingletonPlugin):
         return {
             'related_create': related_create,
             'related_update' : related_update,
-            'user_list': auth_user_list
+            'user_list': auth_user_list,
+            'user_show': auth_user_show
         }
