@@ -1,13 +1,13 @@
 from setuptools import setup, find_packages
 
-version='@BUILD-LABEL@'
+version = '@BUILD-LABEL@'
 
 setup(
     name='ckanext-qgov',
     version=version,
     description='Customises CKAN behavior for Queensland Government portals',
     long_description='',
-    classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
+    classifiers=[],
     keywords='',
     author='Digital Applications',
     author_email='osidt@dsiti.qld.gov.au',
@@ -18,8 +18,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[],
-    entry_points=\
-    """
+    entry_points="""
     [ckan.plugins]
     qgovext=ckanext.qgov.common.plugin:QGOVPlugin
     """,

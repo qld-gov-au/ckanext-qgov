@@ -4,10 +4,12 @@
 from ckan import model
 from sqlalchemy import and_, func, select, Table
 
+
 def table(name):
     """ Helper to construct an SQLAlchemy table object.
     """
     return Table(name, model.meta.metadata, autoload=True)
+
 
 class Stats(object):
     """ Provides some helper functions to display CKAN stats.
@@ -21,14 +23,14 @@ class Stats(object):
         package = table('package')
         query = select([member.c.group_id, func.count(member.c.table_id)]). \
             group_by(member.c.group_id). \
-            where(and_(member.c.group_id != None,
+            where(and_(member.c.group_id is not None,
                        member.c.table_name == 'package',
                        member.c.capacity == 'public',
                        member.c.state == 'active',
                        package.c.state == 'active',
                        package.c.private != 'TRUE',
                        package.c.id == member.c.table_id
-                      )). \
+                       )). \
             order_by(func.count(member.c.table_id).desc()). \
             limit(limit)
 
@@ -63,7 +65,7 @@ class Stats(object):
                        package.c.state == 'active',
                        # Don't count priv datasets
                        package.c.private != 'TRUE'
-                      ))
+                       ))
 
         res_count = model.Session.execute(query).fetchall()
         return res_count[0][0]
@@ -96,7 +98,7 @@ class Stats(object):
                        package.c.owner_org == org_id,
                        # Don't count priv datasets
                        package.c.private != 'TRUE'
-                      ))
+                       ))
 
         res_count = model.Session.execute(query).fetchall()
         return res_count[0][0]
