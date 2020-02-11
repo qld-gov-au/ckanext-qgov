@@ -23,22 +23,26 @@ import paste.deploy.converters
 
 LOG = getLogger(__name__)
 
+
 def add_msg_niceties(recipient_name, body, sender_name, sender_url):
     """ Make email formatting prettier eg adding a polite greeting.
     """
     return _(u"Dear %s,") % recipient_name \
-           + u"\r\n\r\n%s\r\n\r\n" % body \
-           + u"--\r\n%s (%s)" % (sender_name, sender_url)
+        + u"\r\n\r\n%s\r\n\r\n" % body \
+        + u"--\r\n%s (%s)" % (sender_name, sender_url)
+
 
 def _strip_non_ascii(string):
     ''' Returns the string without non ASCII characters'''
     stripped = (c for c in string if 0 < ord(c) < 127)
     return ''.join(stripped)
 
+
 class MailerException(Exception):
     """ Placeholder exception type for SMTP failures.
     """
     pass
+
 
 def _feedback_mail_recipient(recipient_name, recipient_email,
                              sender_name, sender_url, subject, body,
@@ -95,6 +99,7 @@ def _feedback_mail_recipient(recipient_name, recipient_email,
     finally:
         smtp_connection.quit()
 
+
 class QGOVController(BaseController):
     """ Custom route implementations for Queensland Government portals.
     """
@@ -140,12 +145,10 @@ class QGOVController(BaseController):
                 data_dict['resource_id'] = request.GET.get('resource_id', '')
                 data_dict['captcha'] = request.GET.get('captcha', '')
 
-                if (data_dict.get('captcha', '') != ''
-                        or not(request.GET.get('captchaCatch', 'none') == 'dev'
-                               or request.GET.get('captchaCatch', 'none') == 'prod')):
-                    #Do not indicate failure or success since captcha was filled likely bot;
-                    #7 is the expected aurguments in the query string;
-                    #captchaCatch is serverside generated value hence can either be 'dev' or 'prod'
+                if (data_dict.get('captcha', '') or request.GET.get('captchaCatch', 'none') not in ['dev', 'prod']):
+                    # Do not indicate failure or success since captcha was filled likely bot;
+                    # 7 is the expected arguments in the query string;
+                    # captchaCatch is serverside generated value hence can either be 'dev' or 'prod'
                     h.redirect_to('/')
                     return package
 
@@ -154,13 +157,12 @@ class QGOVController(BaseController):
                 # Logic written to maintain legacy data
                 # Once all the records in database have 'maintainer_email',
                 # remove this and feedback_email = package.get('maintainer_email', '')
-                if 'maintainer_email' in package and package.get('maintainer_email'):
-                    feedback_email = package.get('maintainer_email')
-                elif 'author_email' in package and package.get('author_email'):
-                    feedback_email = package.get('author_email')
-                else:
+                feedback_email = package.get('maintainer_email', '')
+                if not feedback_email:
+                    feedback_email = package.get('author_email', '')
+                if not feedback_email:
                     feedback_email = 'onlineproducts@smartservice.qld.gov.au'
-                #feedback_email = package.get('maintainer_email', '')
+
                 if 'organization' in package and package['organization']:
                     feedback_organisation = _strip_non_ascii(package['organization'].get('title', ''))
                 else:
@@ -192,18 +194,18 @@ class QGOVController(BaseController):
                 email_to = [i.strip() for i in email_to if i.strip() != '']
                 if email_to:
                     email_body = "Name: {0} \r\nEmail: {1} \r\nComments: {2} \r\nFeedback Organisation: {3} \r\n" \
-                                "Feedback Email: {4} \r\nFeedback Dataset: {5} \r\nFeedback Resource: {6} \r\n" \
-                                "Feedback URL: {7}://{8}".format(
-                                    cgi.escape(_strip_non_ascii(data_dict['name'])),
-                                    cgi.escape(_strip_non_ascii(data_dict['email'])),
-                                    cgi.escape(_strip_non_ascii(data_dict['comments'])),
-                                    cgi.escape(feedback_organisation),
-                                    cgi.escape(_strip_non_ascii(feedback_email)),
-                                    cgi.escape(feedback_dataset),
-                                    cgi.escape(feedback_resource_name),
-                                    cgi.escape(protocol),
-                                    cgi.escape(feedback_origins)
-                                )
+                        "Feedback Email: {4} \r\nFeedback Dataset: {5} \r\nFeedback Resource: {6} \r\n" \
+                        "Feedback URL: {7}://{8}".format(
+                            cgi.escape(_strip_non_ascii(data_dict['name'])),
+                            cgi.escape(_strip_non_ascii(data_dict['email'])),
+                            cgi.escape(_strip_non_ascii(data_dict['comments'])),
+                            cgi.escape(feedback_organisation),
+                            cgi.escape(_strip_non_ascii(feedback_email)),
+                            cgi.escape(feedback_dataset),
+                            cgi.escape(feedback_resource_name),
+                            cgi.escape(protocol),
+                            cgi.escape(feedback_origins)
+                        )
                     try:
                         _feedback_mail_recipient(
                             email_recipient_name,
@@ -213,10 +215,10 @@ class QGOVController(BaseController):
                             email_subject,
                             email_body
                         )
-                    except:
+                    except Exception:
                         abort(404, 'This form submission is invalid or CKAN mail is not configured.')
 
-                    #Redirect to home page if no thanks page is found
+                    # Redirect to home page if no thanks page is found
                     success_redirect = config.get('feedback_redirection', '/')
                     req = requests.get(protocol + '://' + host + success_redirect, verify=False)
                     if req.status_code == requests.codes.ok:
