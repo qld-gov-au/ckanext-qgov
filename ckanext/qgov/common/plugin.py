@@ -174,6 +174,11 @@ def auth_user_show(context, data_dict):
 
 
 def _requester_is_admin(context):
+    """Check whether the current user has admin privileges in some group
+    or organisation.
+    This is based on the 'update' privilege; see eg
+    ckan.logic.auth.update.group_edit_permissions.
+    """
     requester = context.get('user')
     return authz.has_user_permission_for_some_org(requester, 'update')
 
