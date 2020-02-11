@@ -21,6 +21,7 @@ from ckan.model import Session
 from ckan.lib.base import c, request, abort, h
 from ckan.lib.uploader import Upload, ResourceUpload
 
+from ckanext.qgov.common.plugin import generate_download_url
 from ckanext.qgov.common.authenticator import QGOVUser
 
 LOG = getLogger(__name__)
@@ -247,8 +248,8 @@ def validate_resource_edit(self, id, resource_id,
         resource_format = request.POST.getone('format')
         validation_schema = request.POST.getone('validation_schema')
         if resource_format == 'CSV' and validation_schema and validation_schema != '':
-            schema_url = plugin.generate_download_url(id, validation_schema)
-            data_url = plugin.generate_download_url(id, resource_id)
+            schema_url = generate_download_url(id, validation_schema)
+            data_url = generate_download_url(id, resource_id)
             validation_url = "http://goodtables.okfnlabs.org/api/run?format=csv&schema={0}&data={1}&row_limit=100000&report_limit=1000&report_type=grouped".format(schema_url, data_url)
             req = requests.get(validation_url, verify=False)
             if req.status_code == requests.codes.ok:
