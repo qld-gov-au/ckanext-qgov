@@ -22,3 +22,9 @@ Feature: user_list API
         And I take a screenshot
         Then I should see an element with xpath "//body//div[contains(string(), 'Internal server error')]"
         And I should not see an element with xpath "//*[contains(string(), '"name": "admin"')]"
+
+    Scenario: Test to ensure user_list is not accessible anonymously
+        When I go to the user list API
+        And I take a screenshot
+        Then I should see an element with xpath "//*[contains(string(), '"Authorization error"')]"
+        And I should not see an element with xpath "//*[contains(string(), '"name": "admin"')]"
