@@ -49,12 +49,10 @@ Feature: user_list API
         When I log in
         And I go to the user list API
         And I take a screenshot
-        Then I should see an element with xpath "//*[contains(string(), '"Authorization error"')]"
-        And I should not see an element with xpath "//*[contains(string(), '"name": "admin"')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'Authorization Error') and not contains(string(), '"name": "admin"')]"
 
     Scenario: Test to ensure user_list is not accessible anonymously
         When I go to the user list API
         And I take a screenshot
-        Then I should see an element with xpath "//*[contains(string(), '"requires an authenticated user"')]"
-        And I should not see an element with xpath "//*[contains(string(), '"name": "admin"')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'requires an authenticated user') and not contains(string(), '"name": "admin"')]"
 
