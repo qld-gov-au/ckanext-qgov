@@ -39,4 +39,12 @@ group_admin_update=$( \
 )
 echo ${group_admin_update}
 
+echo "Updating publisher to have editor privileges in the department-of-health Organisation:"
+publisher_update=$( \
+    curl -L -s --header "Authorization: ${API_KEY}" \
+    --data "id=department-of-health&username=publisher&role=editor" \
+    ${CKAN_ACTION_URL}/organization_member_create
+)
+echo ${group_admin_update}
+
 deactivate
