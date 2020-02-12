@@ -96,16 +96,16 @@ Feature: user_list API
         When I log in
         And I view the "department-of-health" organisation API "not including" users
         And I take a screenshot
-        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "department-of-health"') and not contains(string(), '"users":')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "department-of-health"')]"
 
     Scenario: Ensure organisation overview without membership is accessible to admins of other organisations
         Given "Foodie" as the persona
         When I log in
         And I view the "department-of-health" organisation API "not including" users
         And I take a screenshot
-        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "department-of-health"') and not contains(string(), '"users":')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "department-of-health"')]"
 
     Scenario: Ensure organisation overview without membership is accessible anonymously
         When I view the "department-of-health" organisation API "not including" users
         And I take a screenshot
-        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "department-of-health"') and not contains(string(), '"users":')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "department-of-health"')]"
