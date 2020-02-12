@@ -53,6 +53,6 @@ def go_to_group_including_users(context, group_id):
     when_i_visit_url(context, r'/api/3/action/group_show?id={}&include_users=true'.format(group_id))
 
 
-@step('I view the "{organisation_id}" organisation API including users')
-def go_to_organisation_including_users(context, organisation_id):
-    when_i_visit_url(context, r'/api/3/action/organization_show?id={}&include_users=true'.format(organisation_id))
+@step('I view the "{organisation_id}" organisation API "{including}" users')
+def go_to_organisation_including_users(context, organisation_id, including):
+    when_i_visit_url(context, r'/api/3/action/organization_show?id={}&include_users={}'.format(organisation_id, including in ['with', 'including']))
