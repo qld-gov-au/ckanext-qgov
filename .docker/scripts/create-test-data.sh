@@ -22,6 +22,7 @@ paster create-test-data -c ${CKAN_INI_FILE}
 
 paster --plugin=ckan user add group_admin email=group_admin@localhost password="Password123!" -c ${CKAN_INI_FILE}
 paster --plugin=ckan user add publisher email=publisher@localhost password="Password123!" -c ${CKAN_INI_FILE}
+paster --plugin=ckan user add foodie email=foodie@localhost password="Password123!" -c ${CKAN_INI_FILE}
 
 echo "Updating annakarenina to use department-of-health Organisation:"
 package_owner_org_update=$( \
@@ -45,6 +46,14 @@ publisher_update=$( \
     --data "id=department-of-health&username=publisher&role=editor" \
     ${CKAN_ACTION_URL}/organization_member_create
 )
-echo ${group_admin_update}
+echo ${publisher_update}
+
+echo "Updating foodie to have admin privileges in the food-standards-agency Organisation:"
+foodie_update=$( \
+    curl -L -s --header "Authorization: ${API_KEY}" \
+    --data "id=food-standards-agency&username=foodie&role=admin" \
+    ${CKAN_ACTION_URL}/organization_member_create
+)
+echo ${foodie_update}
 
 deactivate

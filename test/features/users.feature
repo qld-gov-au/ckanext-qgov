@@ -1,21 +1,21 @@
 @users
 Feature: user_list API
 
-    Scenario: Test to ensure user autocomplete is accessible to sysadmins
+    Scenario: Ensure user autocomplete is accessible to sysadmins
         Given "Admin" as the persona
         When I log in
         And I go to the user autocomplete API
         And I take a screenshot
         Then I should see an element with xpath "//*[contains(string(), '"name": "admin"')]"
 
-    Scenario: Test to ensure user autocomplete is accessible to organisation admins
+    Scenario: Ensure user autocomplete is accessible to organisation admins
         Given "Group Admin" as the persona
         When I log in
         And I go to the user autocomplete API
         And I take a screenshot
         Then I should see an element with xpath "//*[contains(string(), '"name": "admin"')]"
 
-    Scenario: Test to ensure user autocomplete is not accessible to non-admins
+    Scenario: Ensure user autocomplete is not accessible to non-admins
         Given "Publisher" as the persona
         When I log in
         And I go to the user autocomplete API
@@ -23,36 +23,62 @@ Feature: user_list API
         Then I should see an element with xpath "//body//div[contains(string(), 'Internal server error')]"
         And I should not see an element with xpath "//*[contains(string(), '"name": "admin"')]"
 
-    Scenario: Test to ensure user autocomplete is not accessible anonymously
+    Scenario: Ensure user autocomplete is not accessible anonymously
         When I go to the user autocomplete API
         And I take a screenshot
         Then I should see an element with xpath "//body//div[contains(string(), 'Internal server error')]"
         And I should not see an element with xpath "//*[contains(string(), '"name": "admin"')]"
 
 
-    Scenario: Test to ensure user list is accessible to sysadmins
+    Scenario: Ensure user list is accessible to sysadmins
         Given "Admin" as the persona
         When I log in
         And I go to the user list API
         And I take a screenshot
         Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "admin"')]"
 
-    Scenario: Test to ensure user list is accessible to organisation admins
+    Scenario: Ensure user list is accessible to organisation admins
         Given "Group Admin" as the persona
         When I log in
         And I go to the user list API
         And I take a screenshot
         Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "admin"')]"
 
-    Scenario: Test to ensure user_list is not accessible to non-admins
+    Scenario: Ensure user_list is not accessible to non-admins
         Given "Publisher" as the persona
         When I log in
         And I go to the user list API
         And I take a screenshot
         Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'Authorization Error')]"
 
-    Scenario: Test to ensure user_list is not accessible anonymously
+    Scenario: Ensure user_list is not accessible anonymously
         When I go to the user list API
         And I take a screenshot
         Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'requires an authenticated user')]"
 
+
+    Scenario: Ensure group membership is accessible to sysadmins
+        Given "Admin" as the persona
+        When I log in
+        And I view the "department-of-health" group API including users
+        And I take a screenshot
+        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "group_admin"') and contains(string(), '"name": "publisher"')]"
+
+    Scenario: Ensure group membership is accessible to group admins
+        Given "Group Admin" as the persona
+        When I log in
+        And I view the "department-of-health" group API including users
+        And I take a screenshot
+        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "group_admin"') and contains(string(), '"name": "publisher"')]"
+
+    Scenario: Ensure group membership is not accessible to admins of other groups
+        Given "Foodie" as the persona
+        When I log in
+        And I view the "department-of-health" group API including users
+        And I take a screenshot
+        Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'Authorization Error')]"
+
+    Scenario: Ensure group membership is not accessible anonymously
+        When I view the "department-of-health" group API including users
+        And I take a screenshot
+        Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'requires an authenticated user')]"

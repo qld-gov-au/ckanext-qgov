@@ -46,3 +46,8 @@ def go_to_user_autocomplete(context):
 @step('I go to the user list API')
 def go_to_user_list(context):
     when_i_visit_url(context, '/api/3/action/user_list')
+
+
+@step('I view the {group_id} group API including users')
+def go_to_group_including_users(context, group_id):
+    when_i_visit_url(context, '/api/3/action/group_show?id={}&include_users=true'.format(group_id))
