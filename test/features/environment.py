@@ -28,6 +28,11 @@ PERSONAS = {
         name=u'publisher',
         email=u'publisher@localhost',
         password=u'Password123!'
+    ),
+    'Foodie': dict(
+        name=u'foodie',
+        email=u'foodie@localhost',
+        password=u'Password123!'
     )
 }
 
