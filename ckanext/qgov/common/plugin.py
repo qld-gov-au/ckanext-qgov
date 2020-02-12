@@ -20,6 +20,7 @@ from ckan.plugins import implements, SingletonPlugin, IConfigurer,\
 import ckan.model as model
 from routes.mapper import SubMapper
 import requests
+from paste.deploy.converters import asbool
 
 import ckanext.qgov.common.anti_csrf as anti_csrf
 import ckanext.qgov.common.authenticator as authenticator
@@ -171,6 +172,26 @@ def auth_user_show(context, data_dict):
             return {'success': requester == user_obj.name}
 
     return {'success': False}
+
+
+def auth_group_show(context, data_dict):
+    """Check whether access to a group is authorised.
+    If it's just the group metadata, this requires no privileges,
+    but if user details have been requested, it requires a group admin.
+    """
+    user = context.get('user')
+    group = logic_auth.get_group_object(context, data_dict)
+    if group.state == 'active' and \
+        not asbool(data_dict.get('include_users', False)) and \
+            data_dict.get('object_type', None) != 'user':
+        return {'success': True}
+    authorized = authz.has_user_permission_for_group_or_org(
+        group.id, user, 'update')
+    if authorized:
+        return {'success': True}
+    else:
+        return {'success': False,
+                'msg': _('User %s not authorized to read group %s') % (user, group.id)}
 
 
 def _requester_is_admin(context):
@@ -389,5 +410,6 @@ class QGOVPlugin(SingletonPlugin):
             'related_create': related_create,
             'related_update': related_update,
             'user_list': auth_user_list,
-            'user_show': auth_user_show
+            'user_show': auth_user_show,
+            'group_show': auth_group_show
         }
