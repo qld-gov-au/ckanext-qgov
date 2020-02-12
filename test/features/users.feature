@@ -81,4 +81,4 @@ Feature: user_list API
     Scenario: Ensure organisation membership is not accessible anonymously
         When I view the "department-of-health" organisation API including users
         And I take a screenshot
-        Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'requires an authenticated user')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'Authorization Error')]"
