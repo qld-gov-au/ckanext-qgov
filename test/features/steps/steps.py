@@ -38,9 +38,9 @@ def go_to_register_page(context):
     when_i_visit_url(context, '/user/register')
 
 
-@step('I go to the user autocomplete API')
-def go_to_user_autocomplete(context):
-    when_i_visit_url(context, '/api/2/util/user/autocomplete?q=admin')
+@step('I search the autocomplete API for user "{username}"')
+def go_to_user_autocomplete(context, username):
+    when_i_visit_url(context, '/api/2/util/user/autocomplete?q={}'.format(username))
 
 
 @step('I go to the user list API')
