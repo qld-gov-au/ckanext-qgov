@@ -21,8 +21,8 @@ from ckan.model import Session
 from ckan.lib.base import c, request, abort, h
 from ckan.lib.uploader import Upload, ResourceUpload
 
+import ckanext.qgov.common.plugin
 from ckanext.qgov.common.authenticator import QGOVUser
-from ckanext.qgov.common.controller import *
 
 LOG = getLogger(__name__)
 
@@ -87,6 +87,7 @@ One Stop Shop - oss.online@dsiti.qld.gov.au
 
 EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
 
+
 def set_intercepts():
     """ Monkey-patch to wrap/override core functions with our own.
     """
@@ -104,6 +105,7 @@ def set_intercepts():
     ResourceUpload.upload = resource_upload_after_validation
     StorageController.file = storage_download_with_headers
     PackageController.resource_download = resource_download_with_headers
+
 
 def user_password_validator(key, data, errors, context):
     """ Strengthen the built-in password validation to require more length and complexity.
@@ -133,6 +135,7 @@ def user_password_validator(key, data, errors, context):
                     _('Must contain at least one number, lowercase letter, capital letter, and symbol')
                 )
 
+
 def _apply_schema_validator(user_schema, field_name, validator_name='user_password_validator',
                             validator=user_password_validator):
     if field_name in user_schema:
@@ -141,10 +144,12 @@ def _apply_schema_validator(user_schema, field_name, validator_name='user_passwo
                 user_schema[field_name][idx] = validator
     return user_schema
 
+
 def default_user_schema():
     """ Add our password validator function to the default list.
     """
     return _apply_schema_validator(DEFAULT_USER_SCHEMA, 'password')
+
 
 def user_new_form_schema():
     """ Apply our password validator function when creating a new user.
@@ -154,6 +159,7 @@ def user_new_form_schema():
     user_schema = _apply_schema_validator(user_schema, 'password1')
     return user_schema
 
+
 def user_edit_form_schema():
     """ Apply our password validator function when editing an existing user.
     """
@@ -162,10 +168,12 @@ def user_edit_form_schema():
     user_schema = _apply_schema_validator(user_schema, 'password1')
     return user_schema
 
+
 def default_update_user_schema():
     """ Apply our password validator function when updating a user.
     """
     return _apply_schema_validator(DEFAULT_UPDATE_USER_SCHEMA, 'password')
+
 
 def _unlock_account(account_id):
     """ Unlock an account (erase the failed login attempts).
@@ -178,6 +186,7 @@ def _unlock_account(account_id):
     else:
         LOG.debug("Account %s not found", account_id)
 
+
 def user_update(context, data_dict):
     '''
     Unlock an account when the password is reset.
@@ -187,6 +196,7 @@ def user_update(context, data_dict):
         account_id = ckan.logic.get_or_bust(data_dict, 'id')
         _unlock_account(account_id)
     return return_value
+
 
 def logged_in(self):
     """ Provide a custom error code when login fails due to account lockout.
@@ -201,6 +211,7 @@ def logged_in(self):
             return self.login('account-locked')
     return LOGGED_IN(self)
 
+
 def save_edit(self, name_or_id, context, package_type=None):
     '''
     Intercept save_edit
@@ -210,14 +221,14 @@ def save_edit(self, name_or_id, context, package_type=None):
         author_email = request.POST.getone('author_email')
         if not EMAIL_REGEX.match(author_email):
             abort(400, _('Invalid email.'))
-    except:
+    except Exception:
         abort(400, _('No author email or multiple author emails provided'))
 
-    if request.POST.has_key('author'):
+    if 'author' in request.POST:
         request.POST.__delitem__('author')
-    if request.POST.has_key('maintainer'):
+    if 'maintainer' in request.POST:
         request.POST.__delitem__('maintainer')
-    if request.POST.has_key('maintainer_email'):
+    if 'maintainer_email' in request.POST:
         request.POST.__delitem__('maintainer_email')
 
     request.POST.add('author', author_email)
@@ -226,18 +237,19 @@ def save_edit(self, name_or_id, context, package_type=None):
 
     return PACKAGE_EDIT(self, name_or_id, context, package_type=None)
 
+
 def validate_resource_edit(self, id, resource_id,
                            data=None, errors=None, error_summary=None):
     '''
     Intercept save_edit
     Replace author, maintainer, maintainer_email
     '''
-    if request.POST.has_key('validation_schema') and request.POST.has_key('format'):
+    if 'validation_schema' in request.POST and 'format' in request.POST:
         resource_format = request.POST.getone('format')
         validation_schema = request.POST.getone('validation_schema')
         if resource_format == 'CSV' and validation_schema and validation_schema != '':
-            schema_url = plugin.generate_download_url(id, validation_schema)
-            data_url = plugin.generate_download_url(id, resource_id)
+            schema_url = ckanext.qgov.common.plugin.generate_download_url(id, validation_schema)
+            data_url = ckanext.qgov.common.plugin.generate_download_url(id, resource_id)
             validation_url = "http://goodtables.okfnlabs.org/api/run?format=csv&schema={0}&data={1}&row_limit=100000&report_limit=1000&report_type=grouped".format(schema_url, data_url)
             req = requests.get(validation_url, verify=False)
             if req.status_code == requests.codes.ok:
@@ -249,6 +261,7 @@ def validate_resource_edit(self, id, resource_id,
 
     return RESOURCE_EDIT(self, id, resource_id, data, errors, error_summary)
 
+
 def upload_after_validation(self, max_size=2):
     """ Validate file type against our whitelist before uploading.
     """
@@ -257,6 +270,7 @@ def upload_after_validation(self, max_size=2):
             {self.file_field: [INVALID_UPLOAD_MESSAGE]}
         )
     UPLOAD(self, max_size)
+
 
 def resource_upload_after_validation(self, id, max_size=10):
     """ Validate file type against our whitelist before uploading.
@@ -267,9 +281,11 @@ def resource_upload_after_validation(self, id, max_size=10):
         )
     RESOURCE_UPLOAD(self, id, max_size)
 
+
 def _set_download_headers(response):
     response.headers['Content-Disposition'] = 'attachment'
     response.headers['X-Content-Type-Options'] = 'nosniff'
+
 
 def storage_download_with_headers(self, label):
     """ Add security headers to protect against download-based exploits.
@@ -277,6 +293,7 @@ def storage_download_with_headers(self, label):
     file_download = STORAGE_DOWNLOAD(self, label)
     _set_download_headers(response)
     return file_download
+
 
 def resource_download_with_headers(self, id, resource_id, filename=None):
     """ Add security headers to protect against download-based exploits.

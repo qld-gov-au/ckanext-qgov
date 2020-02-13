@@ -16,14 +16,16 @@ BASE = declarative_base()
 
 LOG = logging.getLogger(__name__)
 
+
 def intercept_authenticator():
     """ Replaces the existing authenticate function with our custom one.
     """
     meta = MetaData(bind=Session.get_bind(), reflect=True)
-    if 'user' in meta.tables and not 'login_attempts' in meta.tables['user'].columns:
+    if 'user' in meta.tables and 'login_attempts' not in meta.tables['user'].columns:
         LOG.warn("'login_attempts' field does not exist, adding...")
         DDL("ALTER TABLE public.user ADD COLUMN login_attempts SMALLINT DEFAULT 0").execute(Session.get_bind())
     UsernamePasswordAuthenticator.authenticate = QGOVAuthenticator().authenticate
+
 
 class QGOVAuthenticator(UsernamePasswordAuthenticator):
     """ Extend UsernamePasswordAuthenticator so it's possible to
@@ -35,7 +37,7 @@ class QGOVAuthenticator(UsernamePasswordAuthenticator):
         """ Mimic most of UsernamePasswordAuthenticator.authenticate
         but add account lockout after 10 failed attempts.
         """
-        if not 'login' in identity or not 'password' in identity:
+        if 'login' not in identity or 'password' not in identity:
             return None
         user = User.by_name(identity.get('login'))
         if user is None:
@@ -57,11 +59,12 @@ class QGOVAuthenticator(UsernamePasswordAuthenticator):
         Session.commit()
         return None
 
+
 class QGOVUser(BASE):
     """ Extend the standard User object to add a login attempt count.
     """
     __tablename__ = 'user'
-    __mapper_args__ = {'include_properties' : ['id', 'name', 'login_attempts']}
+    __mapper_args__ = {'include_properties': ['id', 'name', 'login_attempts']}
     id = Column(types.UnicodeText, primary_key=True)
     name = Column(types.UnicodeText, nullable=False, unique=True)
     login_attempts = Column(types.SmallInteger)
