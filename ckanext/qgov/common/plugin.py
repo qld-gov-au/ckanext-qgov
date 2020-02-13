@@ -15,7 +15,7 @@ from ckan.lib.base import h
 import ckan.lib.formatters as formatters
 import ckan.logic.auth as logic_auth
 from ckan.logic import get_action
-from ckan.plugins import implements, SingletonPlugin, IConfigurer,\
+from ckan.plugins import implements, toolkit, SingletonPlugin, IConfigurer,\
     ITemplateHelpers, IActions, IAuthFunctions, IRoutes
 import ckan.model as model
 from routes.mapper import SubMapper
@@ -174,6 +174,7 @@ def auth_user_show(context, data_dict):
     return {'success': False}
 
 
+@toolkit.auth_allow_anonymous_access
 def auth_group_show(context, data_dict):
     """Check whether access to a group is authorised.
     If it's just the group metadata, this requires no privileges,
