@@ -49,7 +49,7 @@ def go_to_user_list(context):
 
 
 @step('I go to the "{user_id}" profile page')
-def go_to_user_profile(context):
+def go_to_user_profile(context, user_id):
     when_i_visit_url(context, '/user/{}'.format(user_id))
 
 
