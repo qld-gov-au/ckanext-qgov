@@ -110,3 +110,57 @@ Feature: User APIs
         When I go to the "publisher" user API
         And I take a screenshot
         Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'requires an authenticated user')]"
+
+
+    Scenario: Ensure user profile page is accessible to sysadmins
+        Given "Admin" as the persona
+        When I log in
+        And I go to the "admin" profile page
+        And I take a screenshot
+        Then I should see an element with xpath "//dd[string() == 'admin']"
+
+    Scenario: Ensure user profile page is accessible to organisation admins
+        Given "Organisation Admin" as the persona
+        When I log in
+        And I go to the "publisher" profile page
+        And I take a screenshot
+        Then I should see an element with xpath "//dd[string() == 'publisher']"
+
+    Scenario: Ensure user profile page is accessible to group admins
+        Given "Organisation Admin" as the persona
+        When I log in
+        And I go to the "publisher" profile page
+        And I take a screenshot
+        Then I should see an element with xpath "//dd[string() == 'publisher']"
+
+    Scenario: Ensure user profile page for self is accessible to non-admins
+        Given "Publisher" as the persona
+        When I log in
+        And I go to the "publisher" profile page
+        And I take a screenshot
+        Then I should see an element with xpath "//dd[string() == 'publisher']]"
+
+    Scenario: Ensure non-self user profile page is not accessible to non-admins
+        Given "Publisher" as the persona
+        When I log in
+        And I go to the "admin" profile page
+        And I take a screenshot
+        Then I should see an element with xpath "//*[contains(string(), 'Not authorised to see this page')]"
+
+    Scenario: Ensure user profile page is not accessible anonymously
+        When I go to the "publisher" profile page
+        And I take a screenshot
+        Then I should see an element with xpath "//*[contains(string(), 'Not authorised to see this page')]"
+
+
+    Scenario: Ensure dashboard page is accessible to non-admins
+        Given "Publisher" as the persona
+        When I log in
+        And I go to the dashboard
+        And I take a screenshot
+        Then I should see an element with xpath "//dd[string() == 'publisher']]"
+
+    Scenario: Ensure dashboard page is not accessible anonymously
+        When I go to the dashboard
+        And I take a screenshot
+        Then I should see an element with xpath "//*[contains(string(), 'Not authorised to see this page')]"

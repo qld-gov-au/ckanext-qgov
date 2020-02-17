@@ -48,6 +48,16 @@ def go_to_user_list(context):
     when_i_visit_url(context, '/api/3/action/user_list')
 
 
+@step('I go to the "{user_id}" profile page')
+def go_to_user_profile(context):
+    when_i_visit_url(context, '/user/{}'.format(user_id))
+
+
+@step('I go to the dashboard')
+def go_to_user_profile(context):
+    when_i_visit_url(context, '/dashboard')
+
+
 @step('I go to the "{user_id}" user API')
 def go_to_user_show(context, user_id):
     when_i_visit_url(context, '/api/3/action/user_show?id={}'.format(user_id))
