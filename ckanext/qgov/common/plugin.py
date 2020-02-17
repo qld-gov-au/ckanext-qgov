@@ -202,8 +202,26 @@ def _requester_is_admin(context):
     ckan.logic.auth.update.group_edit_permissions.
     """
     requester = context.get('user')
-    return authz.has_user_permission_for_some_org(requester, 'update')
+    return _has_user_permission_for_some_group(requester, 'admin')
 
+
+def _has_user_permission_for_some_group(user_name, permission):
+    """Check if the user has the given permission for any group.
+    """
+    user_id = get_user_id_for_username(user_name, allow_none=True)
+    if not user_id:
+        return False
+    roles = get_roles_with_permission(permission)
+
+    if not roles:
+        return False
+    # get any groups the user has with the needed role
+    q = model.Session.query(model.Member) \
+        .filter(model.Member.table_name == 'user') \
+        .filter(model.Member.state == 'active') \
+        .filter(model.Member.capacity.in_(roles)) \
+        .filter(model.Member.table_id == user_id)
+    return bool(q.count())
 
 def get_validation_resources(data_dict):
     """ Return the validation schemas associated with a package.

@@ -9,6 +9,13 @@ Feature: User APIs
         Then I should see an element with xpath "//*[contains(string(), '"name": "admin"')]"
 
     Scenario: Ensure user autocomplete is accessible to organisation admins
+        Given "Organisation Admin" as the persona
+        When I log in
+        And I search the autocomplete API for user "admin"
+        And I take a screenshot
+        Then I should see an element with xpath "//*[contains(string(), '"name": "admin"')]"
+
+    Scenario: Ensure user autocomplete is accessible to group admins
         Given "Group Admin" as the persona
         When I log in
         And I search the autocomplete API for user "admin"
@@ -38,6 +45,13 @@ Feature: User APIs
         Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "admin"')]"
 
     Scenario: Ensure user list is accessible to organisation admins
+        Given "Organisation Admin" as the persona
+        When I log in
+        And I go to the user list API
+        And I take a screenshot
+        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "admin"')]"
+
+    Scenario: Ensure user list is accessible to group admins
         Given "Group Admin" as the persona
         When I log in
         And I go to the user list API
@@ -65,11 +79,11 @@ Feature: User APIs
         Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "admin"')]"
 
     Scenario: Ensure user detail is accessible to organisation admins
-        Given "Group Admin" as the persona
+        Given "Organisation Admin" as the persona
         When I log in
-        And I go to the "group_admin" user API
+        And I go to the "publisher" user API
         And I take a screenshot
-        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "group_admin"')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "publisher"')]"
 
     Scenario: Ensure user detail for self is accessible to non-admins
         Given "Publisher" as the persona
