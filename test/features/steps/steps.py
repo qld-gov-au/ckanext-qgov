@@ -48,7 +48,7 @@ def go_to_user_list(context):
     when_i_visit_url(context, '/api/3/action/user_list')
 
 
-@step('I go to the "{user}" user API')
+@step('I go to the "{user_id}" user API')
 def go_to_user_show(context, user_id):
     when_i_visit_url(context, '/api/3/action/user_show?id={}'.format(user_id))
 
