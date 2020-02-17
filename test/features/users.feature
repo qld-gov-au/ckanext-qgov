@@ -138,7 +138,7 @@ Feature: User APIs
         When I log in
         And I go to the "publisher" profile page
         And I take a screenshot
-        Then I should see an element with xpath "//h1[string() = 'publisher']]"
+        Then I should see an element with xpath "//h1[string() = 'publisher']"
 
     Scenario: Ensure non-self user profile page is not accessible to non-admins
         Given "Publisher" as the persona
