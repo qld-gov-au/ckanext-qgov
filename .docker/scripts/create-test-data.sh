@@ -20,7 +20,7 @@ paster create-test-data hierarchy -c ${CKAN_INI_FILE}
 # Creating basic test data which has datasets with resources
 paster create-test-data -c ${CKAN_INI_FILE}
 
-paster --plugin=ckan user add group_admin email=group_admin@localhost password="Password123!" -c ${CKAN_INI_FILE}
+paster --plugin=ckan user add organisation_admin email=organisation_admin@localhost password="Password123!" -c ${CKAN_INI_FILE}
 paster --plugin=ckan user add publisher email=publisher@localhost password="Password123!" -c ${CKAN_INI_FILE}
 paster --plugin=ckan user add foodie email=foodie@localhost password="Password123!" -c ${CKAN_INI_FILE}
 
@@ -32,13 +32,13 @@ package_owner_org_update=$( \
 )
 echo ${package_owner_org_update}
 
-echo "Updating group_admin to have admin privileges in the department-of-health Organisation:"
-group_admin_update=$( \
+echo "Updating organisation_admin to have admin privileges in the department-of-health Organisation:"
+organisation_admin_update=$( \
     curl -L -s --header "Authorization: ${API_KEY}" \
-    --data "id=department-of-health&username=group_admin&role=admin" \
+    --data "id=department-of-health&username=organisation_admin&role=admin" \
     ${CKAN_ACTION_URL}/organization_member_create
 )
-echo ${group_admin_update}
+echo ${organisation_admin_update}
 
 echo "Updating publisher to have editor privileges in the department-of-health Organisation:"
 publisher_update=$( \

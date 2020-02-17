@@ -6,14 +6,14 @@ Feature: organization_show API
         When I log in
         And I view the "department-of-health" organisation API "including" users
         And I take a screenshot
-        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "group_admin"') and contains(string(), '"name": "publisher"')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "organisation_admin"') and contains(string(), '"name": "publisher"')]"
 
     Scenario: Ensure organisation membership is accessible to organisation admins
-        Given "Group Admin" as the persona
+        Given "Organisation Admin" as the persona
         When I log in
         And I view the "department-of-health" organisation API "including" users
         And I take a screenshot
-        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "group_admin"') and contains(string(), '"name": "publisher"')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "organisation_admin"') and contains(string(), '"name": "publisher"')]"
 
     Scenario: Ensure organisation membership is not accessible to non-admin members
         Given "Publisher" as the persona

@@ -19,9 +19,9 @@ PERSONAS = {
         email=u'admin@localhost',
         password=u'Password123!'
     ),
-    'Group Admin': dict(
-        name=u'group_admin',
-        email=u'group_admin@localhost',
+    'Organisation Admin': dict(
+        name=u'organisation_admin',
+        email=u'organisation_admin@localhost',
         password=u'Password123!'
     ),
     'Publisher': dict(
