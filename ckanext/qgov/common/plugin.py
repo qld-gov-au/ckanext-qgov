@@ -208,10 +208,10 @@ def _requester_is_admin(context):
 def _has_user_permission_for_some_group(user_name, permission):
     """Check if the user has the given permission for any group.
     """
-    user_id = get_user_id_for_username(user_name, allow_none=True)
+    user_id = authz.get_user_id_for_username(user_name, allow_none=True)
     if not user_id:
         return False
-    roles = get_roles_with_permission(permission)
+    roles = authz.get_roles_with_permission(permission)
 
     if not roles:
         return False
@@ -221,7 +221,20 @@ def _has_user_permission_for_some_group(user_name, permission):
         .filter(model.Member.state == 'active') \
         .filter(model.Member.capacity.in_(roles)) \
         .filter(model.Member.table_id == user_id)
+    group_ids = []
+    for row in q.all():
+        group_ids.append(row.group_id)
+    # if not in any groups has no permissions
+    if not group_ids:
+        return False
+
+    # see if any of the groups are active
+    q = model.Session.query(model.Group) \
+        .filter(model.Group.state == 'active') \
+        .filter(model.Group.id.in_(group_ids))
+
     return bool(q.count())
+
 
 def get_validation_resources(data_dict):
     """ Return the validation schemas associated with a package.
