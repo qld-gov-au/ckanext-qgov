@@ -67,9 +67,9 @@ Feature: User APIs
     Scenario: Ensure user detail is accessible to organisation admins
         Given "Group Admin" as the persona
         When I log in
-        And I go to the "group-admin" user API
+        And I go to the "group_admin" user API
         And I take a screenshot
-        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "group-admin"')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "group_admin"')]"
 
     Scenario: Ensure user detail for self is accessible to non-admins
         Given "Publisher" as the persona
