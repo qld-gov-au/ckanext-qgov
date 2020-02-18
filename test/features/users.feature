@@ -158,7 +158,7 @@ Feature: User APIs
         When I log in
         And I go to the dashboard
         And I take a screenshot
-        Then I should see an element with xpath "//h2[contains(string(), 'News feed']]"
+        Then I should see an element with xpath "//h2[contains(string(), 'News feed']"
 
     Scenario: Ensure dashboard page is not accessible anonymously
         When I go to the dashboard
