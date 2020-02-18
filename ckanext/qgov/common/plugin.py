@@ -168,8 +168,10 @@ def auth_user_show(context, data_dict):
     id = data_dict.get('id', None)
     if id:
         user_obj = model.User.get(id)
-        if user_obj:
-            return {'success': requester == user_obj.name}
+    else:
+        user_obj = data_dict.get('user_obj', None)
+    if user_obj:
+        return {'success': requester == user_obj.name}
 
     return {'success': False}
 
