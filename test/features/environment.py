@@ -19,6 +19,11 @@ PERSONAS = {
         email=u'admin@localhost',
         password=u'Password123!'
     ),
+    'Organisation Admin': dict(
+        name=u'organisation_admin',
+        email=u'organisation_admin@localhost',
+        password=u'Password123!'
+    ),
     'Group Admin': dict(
         name=u'group_admin',
         email=u'group_admin@localhost',
@@ -27,6 +32,11 @@ PERSONAS = {
     'Publisher': dict(
         name=u'publisher',
         email=u'publisher@localhost',
+        password=u'Password123!'
+    ),
+    'Walker': dict(
+        name=u'walker',
+        email=u'walker@localhost',
         password=u'Password123!'
     ),
     'Foodie': dict(
