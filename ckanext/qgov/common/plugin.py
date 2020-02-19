@@ -15,10 +15,12 @@ from ckan.lib.base import h
 import ckan.lib.formatters as formatters
 import ckan.logic.auth as logic_auth
 from ckan.logic import get_action
-from ckan.plugins import implements, SingletonPlugin, IConfigurer, ITemplateHelpers, IActions, IAuthFunctions, IRoutes
+from ckan.plugins import implements, toolkit, SingletonPlugin, IConfigurer,\
+    ITemplateHelpers, IActions, IAuthFunctions, IRoutes
 import ckan.model as model
 from routes.mapper import SubMapper
 import requests
+from paste.deploy.converters import asbool
 
 import ckanext.qgov.common.anti_csrf as anti_csrf
 import ckanext.qgov.common.authenticator as authenticator
@@ -28,6 +30,7 @@ from ckanext.qgov.common.stats import Stats
 
 LOG = getLogger(__name__)
 
+
 def random_tags():
     """ Show the most-used tags in a random order.
     """
@@ -35,10 +38,12 @@ def random_tags():
     random.shuffle(tags)
     return tags
 
+
 def format_resource_filesize(size):
     """ Show a file size, formatted for humans.
     """
     return formatters.localised_filesize(int(size))
+
 
 def group_id_for(group_name):
     """ Determine the ID for a provided group name, if any.
@@ -51,14 +56,17 @@ def group_id_for(group_name):
     LOG.error("%s group was not found or not active", group_name)
     return None
 
+
 def format_attribution_date(date_string=None):
     """ Format a date nicely.
     """
     if date_string:
-        dateobj = datetime.datetime.strptime(date_string.split('T')[0], '%Y-%m-%d')
+        dateobj = datetime.datetime.strptime(date_string.split('T')[0],
+                                             '%Y-%m-%d')
     else:
         dateobj = datetime.datetime.now()
     return dateobj.strftime('%d %B %Y')
+
 
 def related_create(context, data_dict=None):
     '''
@@ -85,7 +93,8 @@ def related_create(context, data_dict=None):
             dataset_id = data_dict.get('dataset_id', None)
             if dataset_id is None or dataset_id == '':
                 return {'success': False,
-                        'msg': _('Related item must have an associated dataset')}
+                        'msg': _('''Related item must have
+                                    an associated dataset''')}
             # check authentication against package
             pkg = context_model.Package.get(dataset_id)
             if not pkg:
@@ -93,14 +102,20 @@ def related_create(context, data_dict=None):
                         'msg': _('No package found, cannot check auth.')}
 
             pkg_dict = {'id': dataset_id}
-            authorised = authz.is_authorized('package_update', context, pkg_dict).get('success')
+            authorised = authz.is_authorized(
+                'package_update',
+                context,
+                pkg_dict).get('success')
             if not authorised:
                 return {'success': False,
-                        'msg': _('Not authorised to add a related item to this package.')}
+                        'msg': _('''Not authorised to add a related item
+                                    to this package.''')}
 
         return {'success': True}
 
-    return {'success': False, 'msg': _('You must be logged in to add a related item')}
+    return {'success': False,
+            'msg': _('You must be logged in to add a related item')}
+
 
 def related_update(context, data_dict):
     '''
@@ -121,14 +136,107 @@ def related_update(context, data_dict):
         if related.datasets:
             for package in related.datasets:
                 pkg_dict = {'id': package.id}
-                authorised = authz.is_authorized('package_update', context, pkg_dict).get('success')
+                authorised = authz.is_authorized(
+                    'package_update',
+                    context,
+                    pkg_dict).get('success')
                 if authorised:
                     return {'success': True}
 
             return {'success': False,
-                    'msg': _('You do not have permission to update this related item')}
+                    'msg': _('''You do not have permission
+                                to update this related item''')}
     return {'success': False,
-            'msg': _('You must be logged in and have permission to create datasets to update a related item')}
+            'msg': _('''You must be logged in and have permission
+                        to create datasets to update a related item''')}
+
+
+def auth_user_list(context, data_dict=None):
+    """Check whether access to the user list is authorised.
+    Restricted to organisation admins as per QOL-5710.
+    """
+    return {'success': _requester_is_admin(context)}
+
+
+def auth_user_show(context, data_dict):
+    """Check whether access to individual user details is authorised.
+    Restricted to organisation admins or self, as per QOL-5710.
+    """
+    if _requester_is_admin(context):
+        return {'success': True}
+    requester = context.get('user')
+    id = data_dict.get('id', None)
+    if id:
+        user_obj = model.User.get(id)
+    else:
+        user_obj = data_dict.get('user_obj', None)
+    if user_obj:
+        return {'success': requester == user_obj.name}
+
+    return {'success': False}
+
+
+@toolkit.auth_allow_anonymous_access
+def auth_group_show(context, data_dict):
+    """Check whether access to a group is authorised.
+    If it's just the group metadata, this requires no privileges,
+    but if user details have been requested, it requires a group admin.
+    """
+    user = context.get('user')
+    group = logic_auth.get_group_object(context, data_dict)
+    if group.state == 'active' and \
+        not asbool(data_dict.get('include_users', False)) and \
+            data_dict.get('object_type', None) != 'user':
+        return {'success': True}
+    authorized = authz.has_user_permission_for_group_or_org(
+        group.id, user, 'update')
+    if authorized:
+        return {'success': True}
+    else:
+        return {'success': False,
+                'msg': _('User %s not authorized to read group %s') % (user, group.id)}
+
+
+def _requester_is_admin(context):
+    """Check whether the current user has admin privileges in some group
+    or organisation.
+    This is based on the 'update' privilege; see eg
+    ckan.logic.auth.update.group_edit_permissions.
+    """
+    requester = context.get('user')
+    return _has_user_permission_for_some_group(requester, 'admin')
+
+
+def _has_user_permission_for_some_group(user_name, permission):
+    """Check if the user has the given permission for any group.
+    """
+    user_id = authz.get_user_id_for_username(user_name, allow_none=True)
+    if not user_id:
+        return False
+    roles = authz.get_roles_with_permission(permission)
+
+    if not roles:
+        return False
+    # get any groups the user has with the needed role
+    q = model.Session.query(model.Member) \
+        .filter(model.Member.table_name == 'user') \
+        .filter(model.Member.state == 'active') \
+        .filter(model.Member.capacity.in_(roles)) \
+        .filter(model.Member.table_id == user_id)
+    group_ids = []
+    for row in q.all():
+        group_ids.append(row.group_id)
+    # if not in any groups has no permissions
+    if not group_ids:
+        return False
+
+    # see if any of the groups are active
+    q = model.Session.query(model.Group) \
+        .filter(model.Group.state == 'active') \
+        .filter(model.Group.id.in_(group_ids))
+
+    return bool(q.count())
+
 
 def get_validation_resources(data_dict):
     """ Return the validation schemas associated with a package.
@@ -145,6 +253,7 @@ def get_validation_resources(data_dict):
         return validation_schemas
     return package
 
+
 def get_resource_name(data_dict):
     """ Retrieve the name of a resource given its ID.
     """
@@ -159,32 +268,34 @@ def get_resource_name(data_dict):
         return None
     return None
 
+
 def generate_download_url(package_id, resource_id):
     """ Construct a URL to download a resource given its ID.
     """
     context = {'ignore_auth': False, 'model': model,
                'user': c.user or c.author}
     try:
-        resource = get_action('resource_show')(context, {
-            "id":resource_id
-        })
+        resource = get_action('resource_show')(context, {"id": resource_id})
         if 'error' not in resource:
             return resource.get('url')
-    except:
+    except Exception:
         return ''
+
 
 def generate_json_schema(package_id, validation_schema):
     """ Retrieve the validation schema for a package, if any.
     """
-    validation_schema_url = generate_download_url(package_id, validation_schema)
+    validation_schema_url = generate_download_url(package_id,
+                                                  validation_schema)
     req = requests.get(validation_schema_url, verify=False)
     if req.status_code == requests.codes.ok:
         try:
             return json.loads(req.text)
-        except:
+        except Exception:
             return {"error": "Failed to parse json schema"}
     else:
-        return {"error" : "Failed to retrieve json schema"}
+        return {"error": "Failed to retrieve json schema"}
+
 
 def legacy_pager(self, *args, **kwargs):
     """ Construct a paging object suitable for Bootstrap 2.
@@ -198,6 +309,7 @@ def legacy_pager(self, *args, **kwargs):
     )
     from ckan.lib.helpers import Page
     return super(Page, self).pager(*args, **kwargs)
+
 
 class QGOVPlugin(SingletonPlugin):
     """Apply custom functions for Queensland Government portals.
@@ -239,22 +351,27 @@ class QGOVPlugin(SingletonPlugin):
         ckan_config['ckan.template_title_deliminater'] = '|'
         here = os.path.dirname(__file__)
 
-        #If path to qgov-licences exists add to path
-        possible_licences_path = os.path.join(here, 'resources', 'qgov-licences.json')
+        # If path to qgov-licences exists add to path
+        possible_licences_path = os.path.join(here,
+                                              'resources',
+                                              'qgov-licences.json')
         if os.path.isfile(possible_licences_path):
-            ckan_config['licenses_group_url'] = 'file://'+ possible_licences_path
+            ckan_config['licenses_group_url'] = 'file://' \
+                + possible_licences_path
 
-        #Theme Inclusions of public and templates
+        # Theme Inclusions of public and templates
         possible_public_path = os.path.join(here, 'theme/public')
         if os.path.isdir(possible_public_path):
-            ckan_config['extra_public_paths'] = possible_public_path + ',' + ckan_config.get('extra_public_paths', '')
+            ckan_config['extra_public_paths'] = possible_public_path \
+                + ',' + ckan_config.get('extra_public_paths', '')
         possible_template_path = os.path.join(here, 'theme/templates')
         if os.path.isdir(possible_template_path):
-            ckan_config['extra_template_paths'] = possible_template_path + ',' + ckan_config.get('extra_template_paths', '')
+            ckan_config['extra_template_paths'] = possible_template_path \
+                + ',' + ckan_config.get('extra_template_paths', '')
         # block unwanted content
         ckan_config['openid_enabled'] = False
 
-        #configure URL Management system through Config or JSON
+        # configure URL Management system through Config or JSON
         urlm_path = ckan_config.get('urlm.app_path', None)
         if urlm_path:
             urlm_proxy = ckan_config.get('urlm.proxy', None)
@@ -273,7 +390,8 @@ class QGOVPlugin(SingletonPlugin):
                     urlm_proxy = urlm_json[hostname].get('proxy', None)
                     urlm.configure_urlm(urlm_url, urlm_proxy)
 
-        if ckan_config.get('ckan.base_templates_folder', None) == 'templates-bs2':
+        if ckan_config.get('ckan.base_templates_folder',
+                           None) == 'templates-bs2':
             from ckan.lib.helpers import Page
             Page.pager = legacy_pager
         return ckan_config
@@ -281,9 +399,14 @@ class QGOVPlugin(SingletonPlugin):
     def before_map(self, route_map):
         """ Add some custom routes for Queensland Government portals.
         """
-        with SubMapper(route_map, controller='ckanext.qgov.common.controller:QGOVController') as mapper:
-            mapper.connect('article', '/article/{path:[-_a-zA-Z0-9/]+}', action='static_content')
-            mapper.connect('submit_feedback', '/api/action/submit_feedback', action='submit_feedback')
+        controller = 'ckanext.qgov.common.controller:QGOVController'
+        with SubMapper(route_map, controller=controller) as mapper:
+            mapper.connect('article',
+                           '/article/{path:[-_a-zA-Z0-9/]+}',
+                           action='static_content')
+            mapper.connect('submit_feedback',
+                           '/api/action/submit_feedback',
+                           action='submit_feedback')
             return route_map
 
     def get_helpers(self):
@@ -319,5 +442,8 @@ class QGOVPlugin(SingletonPlugin):
         """
         return {
             'related_create': related_create,
-            'related_update' : related_update
+            'related_update': related_update,
+            'user_list': auth_user_list,
+            'user_show': auth_user_show,
+            'group_show': auth_group_show
         }

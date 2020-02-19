@@ -11,6 +11,7 @@ import anti_csrf
 NUMBER_FIELDS = re.compile(r'(![0-9]+)/([0-9]+)/')
 STUB_TOKEN = 'some_token_or_other'
 
+
 class MockUser(object):
     """ Stub class to represent a logged-in user.
     """
@@ -20,6 +21,7 @@ class MockUser(object):
         """
         self.name = name
 
+
 def mock_objects(username='unit-test'):
     """ Monkey-patch necessary functions in the CSRF filter to imitate core CKAN.
     """
@@ -27,6 +29,7 @@ def mock_objects(username='unit-test'):
     anti_csrf._get_response_token = lambda: STUB_TOKEN
     anti_csrf._get_secret_key = lambda: 'secret'
     anti_csrf._set_response_token_cookie = lambda token: token
+
 
 class TestAntiCsrfFilter(unittest.TestCase):
     """ Test our anti-CSRF filter with mock CKAN objects.
@@ -113,22 +116,22 @@ class TestAntiCsrfFilter(unittest.TestCase):
                      Form contents here</form>''',
              "expected": '''<form method="POST"><input type="hidden" name="{}" value="{}"/>
                      Form contents here</form>'''
-            },
+             },
             {"input": '''<a data-module="confirm-action" href="/some/path">
                      Click here</a>''',
              "expected": '''<a data-module="confirm-action" href="/some/path?{}={}">
                      Click here</a>'''
-            },
+             },
             {"input": '''<a data-module="confirm-action" href="/some/path?foo=baz">
                      Click here</a>''',
              "expected": '''<a data-module="confirm-action" href="/some/path?foo=baz&{}={}">
                      Click here</a>'''
-            },
+             },
             {"input": '''<a href="/some/path" data-module="confirm-action">
                      Click here</a>''',
              "expected": '''<a href="/some/path?{}={}" data-module="confirm-action">
                      Click here</a>'''
-            },
+             },
         ]
         for case in html_cases:
             injected_html = anti_csrf.apply_token(case['input'])
@@ -136,6 +139,7 @@ class TestAntiCsrfFilter(unittest.TestCase):
             self.assertEqual(injected_html,
                              case['expected'].format(anti_csrf.TOKEN_FIELD_NAME, STUB_TOKEN))
             self.assertEqual(injected_html, anti_csrf.apply_token(injected_html))
+
 
 if __name__ == '__main__':
     unittest.main()

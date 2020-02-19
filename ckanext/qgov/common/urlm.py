@@ -15,6 +15,7 @@ RAW_ABORT = base.abort
 URLM_ENDPOINT = None
 URLM_PROXY = None
 
+
 def configure_urlm(app_path, proxy):
     """
     app_path: The path to the URL Management system
@@ -26,6 +27,7 @@ def configure_urlm(app_path, proxy):
 
     LOG.info("Using URL Management system at %s via proxy %s", URLM_ENDPOINT, URLM_PROXY)
 
+
 def intercept_404():
     """ Monkey-patch ourselves into the 404 handler.
     """
@@ -34,6 +36,7 @@ def intercept_404():
     package.abort = base.abort
     # related.abort = base.abort
     user.abort = base.abort
+
 
 def abort_with_purl(status_code=None, detail='', headers=None, comment=None):
     """ Consult PURL about a 404, redirecting if it reports a new URL.
