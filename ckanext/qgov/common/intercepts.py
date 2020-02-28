@@ -8,11 +8,10 @@ from logging import getLogger
 
 import requests
 
-from ckan.common import _, config, response
+from ckan.common import _, response
 from ckan.controllers.user import UserController
 from ckan.controllers.package import PackageController
 from ckan.controllers.storage import StorageController
-import ckan.lib.helpers as h
 from ckan.lib.navl.dictization_functions import Missing
 import ckan.logic
 import ckan.logic.action.update
@@ -23,8 +22,8 @@ from ckan.lib.base import c, request, abort, h
 from ckan.lib.uploader import Upload, ResourceUpload
 import ckan.lib.navl.dictization_functions as df
 
-import ckanext.qgov.common.plugin
-from ckanext.qgov.common.authenticator import QGOVUser
+import plugin
+from authenticator import QGOVUser
 
 LOG = getLogger(__name__)
 
@@ -91,6 +90,17 @@ One Stop Shop - oss.online@dsiti.qld.gov.au
 EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
 
 
+def configure(config):
+    global password_min_length
+    global password_patterns
+
+    password_min_length = int(config.get('password_min_length', '10'))
+    password_patterns = config.get(
+        'password_patterns',
+        r'.*[0-9].*,.*[a-z].*,.*[A-Z].*,.*[-`~!@#$%^&*()_+=|\\/ ].*'
+    ).split(',')
+
+
 def set_intercepts():
     """ Monkey-patch to wrap/override core functions with our own.
     """
@@ -116,12 +126,6 @@ def set_intercepts():
 def user_password_validator(key, data, errors, context):
     """ Strengthen the built-in password validation to require more length and complexity.
     """
-    password_min_length = int(config.get('password_min_length', '10'))
-    password_patterns = config.get(
-        'password_patterns',
-        r'.*[0-9].*,.*[a-z].*,.*[A-Z].*,.*[-`~!@#$%^&*()_+=|\\/ ].*'
-    ).split(',')
-
     value = data[key]
 
     if isinstance(value, Missing):
@@ -267,8 +271,8 @@ def validate_resource_edit(self, id, resource_id,
         resource_format = request.POST.getone('format')
         validation_schema = request.POST.getone('validation_schema')
         if resource_format == 'CSV' and validation_schema and validation_schema != '':
-            schema_url = ckanext.qgov.common.plugin.generate_download_url(id, validation_schema)
-            data_url = ckanext.qgov.common.plugin.generate_download_url(id, resource_id)
+            schema_url = plugin.generate_download_url(id, validation_schema)
+            data_url = plugin.generate_download_url(id, resource_id)
             validation_url = "http://goodtables.okfnlabs.org/api/run?format=csv&schema={0}&data={1}&row_limit=100000&report_limit=1000&report_type=grouped".format(schema_url, data_url)
             req = requests.get(validation_url, verify=False)
             if req.status_code == requests.codes.ok:

@@ -395,6 +395,7 @@ class QGOVPlugin(SingletonPlugin):
         anti_csrf.intercept_csrf()
         authenticator.intercept_authenticator()
         urlm.intercept_404()
+        intercepts.configure(config)
         intercepts.set_intercepts()
 
     def before_map(self, route_map):
