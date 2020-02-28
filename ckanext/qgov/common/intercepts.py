@@ -285,19 +285,33 @@ def validate_resource_edit(self, id, resource_id,
     return RESOURCE_EDIT(self, id, resource_id, data, errors, error_summary)
 
 
-def valid_url(value):
+def valid_url(key, flattened_data, errors, context):
     """ Check whether the value is a valid URL.
 
     As well as checking syntax, this requires the URL to match one of the
-    permitted protocols.
+    permitted protocols, unless it is an upload.
     """
+    value = flattened_data[key]
     if not value:
         return
-    if not h.is_url(value):
-        value = 'http://{}'.format(value)
+    if h.is_url(value):
+        return value
+    url_type_key = _make_modified_tuple(key, 2, 'url_type')
+    url_type = flattened_data.get(url_type_key, None)
+    if url_type == 'upload':
+        return value
+
+    value = 'http://{}'.format(value)
     if not h.is_url(value):
         raise df.Invalid(_('Must be a valid URL'))
-    return value
+    LOG.debug("Resource URL %s is ok", value)
+    flattened_data[key] = value
+
+
+def _make_modified_tuple(input_tuple, index, value):
+    temp = list(input_tuple)
+    temp[index] = value
+    return tuple(temp)
 
 
 def upload_after_validation(self, max_size=2):
