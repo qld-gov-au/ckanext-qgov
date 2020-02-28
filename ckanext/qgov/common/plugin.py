@@ -16,7 +16,7 @@ import ckan.lib.formatters as formatters
 import ckan.logic.auth as logic_auth
 from ckan.logic import get_action
 from ckan.plugins import implements, toolkit, SingletonPlugin, IConfigurer,\
-    ITemplateHelpers, IActions, IAuthFunctions, IRoutes
+    ITemplateHelpers, IActions, IAuthFunctions, IRoutes, IConfigurable
 import ckan.model as model
 from routes.mapper import SubMapper
 import requests
@@ -322,19 +322,11 @@ class QGOVPlugin(SingletonPlugin):
     ``IAuthFunctions`` lets us override authorisation checks.
     """
     implements(IConfigurer, inherit=True)
+    implements(IConfigurable, inherit=True)
     implements(ITemplateHelpers, inherit=True)
     implements(IActions, inherit=True)
     implements(IAuthFunctions, inherit=True)
     implements(IRoutes, inherit=True)
-
-    def __init__(self, **kwargs):
-        """ Monkey-patch functions that don't have standard extension
-        points.
-        """
-        anti_csrf.intercept_csrf()
-        authenticator.intercept_authenticator()
-        urlm.intercept_404()
-        intercepts.set_intercepts()
 
     def update_config_schema(self, schema):
         """ Don't allow customisation of site CSS via the web interface.
@@ -395,6 +387,15 @@ class QGOVPlugin(SingletonPlugin):
             from ckan.lib.helpers import Page
             Page.pager = legacy_pager
         return ckan_config
+
+    def configure(self, config):
+        """ Monkey-patch functions that don't have standard extension
+        points.
+        """
+        anti_csrf.intercept_csrf()
+        authenticator.intercept_authenticator()
+        urlm.intercept_404()
+        intercepts.set_intercepts()
 
     def before_map(self, route_map):
         """ Add some custom routes for Queensland Government portals.
