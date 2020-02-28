@@ -7,7 +7,7 @@ Feature: Resource UI
         When I visit "/dataset/new_resource/warandpeace"
         And I press the element with xpath "//form[@id='resource-edit']//a[string() = 'Link']"
         And I fill in "url" with "http://www.qld.gov.au"
-        And I fill in "Name" with "Good link"
+        And I fill in "name" with "Good link"
         And I press the element with xpath "//button[contains(string(), 'Add')]"
         And I press the element with xpath "//a[@title = 'Good link' and contains(string(), 'Good link')]"
         And I take a screenshot
@@ -19,7 +19,7 @@ Feature: Resource UI
         When I visit "/dataset/new_resource/warandpeace"
         And I press the element with xpath "//form[@id='resource-edit']//a[string() = 'Link']"
         And I fill in "url" with "www.qld.gov.au"
-        And I fill in "Name" with "Good link without protocol"
+        And I fill in "name" with "Good link without protocol"
         And I press the element with xpath "//button[contains(string(), 'Add')]"
         And I press the element with xpath "//a[@title = 'Good link without protocol' and contains(string(), 'Good link without protocol')]"
         And I take a screenshot
