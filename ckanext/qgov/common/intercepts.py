@@ -12,6 +12,7 @@ from ckan.common import _, config, response
 from ckan.controllers.user import UserController
 from ckan.controllers.package import PackageController
 from ckan.controllers.storage import StorageController
+import ckan.lib.helpers as h
 from ckan.lib.navl.dictization_functions import Missing
 import ckan.logic
 import ckan.logic.action.update
@@ -20,6 +21,7 @@ import ckan.logic.validators as validators
 from ckan.model import Session
 from ckan.lib.base import c, request, abort, h
 from ckan.lib.uploader import Upload, ResourceUpload
+import ckan.lib.navl.dictization_functions as df
 
 import ckanext.qgov.common.plugin
 from ckanext.qgov.common.authenticator import QGOVUser
@@ -35,6 +37,7 @@ DEFAULT_USER_SCHEMA = schemas.default_user_schema()
 USER_NEW_FORM_SCHEMA = schemas.user_new_form_schema()
 USER_EDIT_FORM_SCHEMA = schemas.user_edit_form_schema()
 DEFAULT_UPDATE_USER_SCHEMA = schemas.default_update_user_schema()
+RESOURCE_SCHEMA = schemas.default_resource_schema()
 
 UPLOAD = Upload.upload
 RESOURCE_UPLOAD = ResourceUpload.upload
@@ -100,6 +103,9 @@ def set_intercepts():
     schemas.user_new_form_schema = user_new_form_schema
     schemas.user_edit_form_schema = user_edit_form_schema
     schemas.default_update_user_schema = default_update_user_schema
+    RESOURCE_SCHEMA['url'].append(valid_url)
+
+    schemas.default_resource_schema = default_resource_schema
 
     Upload.upload = upload_after_validation
     ResourceUpload.upload = resource_upload_after_validation
@@ -173,6 +179,19 @@ def default_update_user_schema():
     """ Apply our password validator function when updating a user.
     """
     return _apply_schema_validator(DEFAULT_UPDATE_USER_SCHEMA, 'password')
+
+
+def default_resource_schema():
+    """ Return a copy of the altered resource schema.
+
+    This cannot be an entirely shallow copy, or else it will be permanently
+    modified by eg schema.default_show_package_schema; however, it does not
+    need to be infinitely deep.
+    """
+    resource_schema = RESOURCE_SCHEMA.copy()
+    for key in resource_schema:
+        resource_schema[key] = resource_schema[key][:]
+    return resource_schema
 
 
 def _unlock_account(account_id):
@@ -260,6 +279,21 @@ def validate_resource_edit(self, id, resource_id,
                     h.flash_error("CSV was NOT validated against the selected schema")
 
     return RESOURCE_EDIT(self, id, resource_id, data, errors, error_summary)
+
+
+def valid_url(value):
+    """ Check whether the value is a valid URL.
+
+    As well as checking syntax, this requires the URL to match one of the
+    permitted protocols.
+    """
+    if not value:
+        return
+    if not h.is_url(value):
+        value = 'http://{}'.format(value)
+    if not h.is_url(value):
+        raise df.Invalid(_('Must be a valid URL'))
+    return value
 
 
 def upload_after_validation(self, max_size=2):
