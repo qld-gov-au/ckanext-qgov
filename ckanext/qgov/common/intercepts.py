@@ -292,26 +292,21 @@ def valid_url(key, flattened_data, errors, context):
     permitted protocols, unless it is an upload.
     """
     value = flattened_data[key]
-    if not value:
+    if not value or h.is_url(value) or _is_upload(key, flattened_data):
         return
-    if h.is_url(value):
-        return value
-    url_type_key = _make_modified_tuple(key, 2, 'url_type')
-    url_type = flattened_data.get(url_type_key, None)
-    if url_type == 'upload':
-        return value
 
     value = 'http://{}'.format(value)
     if not h.is_url(value):
         raise df.Invalid(_('Must be a valid URL'))
-    LOG.debug("Resource URL %s is ok", value)
     flattened_data[key] = value
 
 
-def _make_modified_tuple(input_tuple, index, value):
-    temp = list(input_tuple)
-    temp[index] = value
-    return tuple(temp)
+def _is_upload(key, flattened_data):
+    url_type_key = list(key)
+    url_type_key[2] = 'url_type'
+    url_type_key = tuple(url_type_key)
+    url_type = flattened_data.get(url_type_key, None)
+    return url_type == 'upload'
 
 
 def upload_after_validation(self, max_size=2):
