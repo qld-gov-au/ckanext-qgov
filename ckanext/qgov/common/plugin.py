@@ -22,10 +22,10 @@ from routes.mapper import SubMapper
 import requests
 from paste.deploy.converters import asbool
 
-import ckanext.qgov.common.anti_csrf as anti_csrf
-import ckanext.qgov.common.authenticator as authenticator
-import ckanext.qgov.common.urlm as urlm
-import ckanext.qgov.common.intercepts as intercepts
+import anti_csrf
+import authenticator
+import urlm
+import intercepts
 from ckanext.qgov.common.stats import Stats
 
 LOG = getLogger(__name__)

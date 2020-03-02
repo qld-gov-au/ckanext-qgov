@@ -52,7 +52,7 @@ clean () {
 
 unit_test () {
   echo "Running tests..."
-  (cd ckanext/qgov/common && python -m unittest test_anti_csrf) || exit 1
+  (cd ckanext/qgov/common && python -m unittest test_anti_csrf && python -m unittest test_url_validation) || exit 1
 }
 
 install () {
