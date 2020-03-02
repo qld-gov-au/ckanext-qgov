@@ -8,7 +8,7 @@ from logging import getLogger
 
 import requests
 
-from ckan.common import _, config, response
+from ckan.common import _, response
 from ckan.controllers.user import UserController
 from ckan.controllers.package import PackageController
 from ckan.controllers.storage import StorageController
@@ -20,9 +20,10 @@ import ckan.logic.validators as validators
 from ckan.model import Session
 from ckan.lib.base import c, request, abort, h
 from ckan.lib.uploader import Upload, ResourceUpload
+import ckan.lib.navl.dictization_functions as df
 
-import ckanext.qgov.common.plugin
-from ckanext.qgov.common.authenticator import QGOVUser
+import plugin
+from authenticator import QGOVUser
 
 LOG = getLogger(__name__)
 
@@ -35,6 +36,7 @@ DEFAULT_USER_SCHEMA = schemas.default_user_schema()
 USER_NEW_FORM_SCHEMA = schemas.user_new_form_schema()
 USER_EDIT_FORM_SCHEMA = schemas.user_edit_form_schema()
 DEFAULT_UPDATE_USER_SCHEMA = schemas.default_update_user_schema()
+RESOURCE_SCHEMA = schemas.default_resource_schema()
 
 UPLOAD = Upload.upload
 RESOURCE_UPLOAD = ResourceUpload.upload
@@ -88,6 +90,17 @@ One Stop Shop - oss.online@dsiti.qld.gov.au
 EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
 
 
+def configure(config):
+    global password_min_length
+    global password_patterns
+
+    password_min_length = int(config.get('password_min_length', '10'))
+    password_patterns = config.get(
+        'password_patterns',
+        r'.*[0-9].*,.*[a-z].*,.*[A-Z].*,.*[-`~!@#$%^&*()_+=|\\/ ].*'
+    ).split(',')
+
+
 def set_intercepts():
     """ Monkey-patch to wrap/override core functions with our own.
     """
@@ -100,6 +113,9 @@ def set_intercepts():
     schemas.user_new_form_schema = user_new_form_schema
     schemas.user_edit_form_schema = user_edit_form_schema
     schemas.default_update_user_schema = default_update_user_schema
+    RESOURCE_SCHEMA['url'].append(valid_url)
+
+    schemas.default_resource_schema = default_resource_schema
 
     Upload.upload = upload_after_validation
     ResourceUpload.upload = resource_upload_after_validation
@@ -110,12 +126,6 @@ def set_intercepts():
 def user_password_validator(key, data, errors, context):
     """ Strengthen the built-in password validation to require more length and complexity.
     """
-    password_min_length = int(config.get('password_min_length', '10'))
-    password_patterns = config.get(
-        'password_patterns',
-        r'.*[0-9].*,.*[a-z].*,.*[A-Z].*,.*[-`~!@#$%^&*()_+=|\\/ ].*'
-    ).split(',')
-
     value = data[key]
 
     if isinstance(value, Missing):
@@ -173,6 +183,19 @@ def default_update_user_schema():
     """ Apply our password validator function when updating a user.
     """
     return _apply_schema_validator(DEFAULT_UPDATE_USER_SCHEMA, 'password')
+
+
+def default_resource_schema():
+    """ Return a copy of the altered resource schema.
+
+    This cannot be an entirely shallow copy, or else it will be permanently
+    modified by eg schema.default_show_package_schema; however, it does not
+    need to be infinitely deep.
+    """
+    resource_schema = RESOURCE_SCHEMA.copy()
+    for key in resource_schema:
+        resource_schema[key] = resource_schema[key][:]
+    return resource_schema
 
 
 def _unlock_account(account_id):
@@ -248,8 +271,8 @@ def validate_resource_edit(self, id, resource_id,
         resource_format = request.POST.getone('format')
         validation_schema = request.POST.getone('validation_schema')
         if resource_format == 'CSV' and validation_schema and validation_schema != '':
-            schema_url = ckanext.qgov.common.plugin.generate_download_url(id, validation_schema)
-            data_url = ckanext.qgov.common.plugin.generate_download_url(id, resource_id)
+            schema_url = plugin.generate_download_url(id, validation_schema)
+            data_url = plugin.generate_download_url(id, resource_id)
             validation_url = "http://goodtables.okfnlabs.org/api/run?format=csv&schema={0}&data={1}&row_limit=100000&report_limit=1000&report_type=grouped".format(schema_url, data_url)
             req = requests.get(validation_url, verify=False)
             if req.status_code == requests.codes.ok:
@@ -260,6 +283,30 @@ def validate_resource_edit(self, id, resource_id,
                     h.flash_error("CSV was NOT validated against the selected schema")
 
     return RESOURCE_EDIT(self, id, resource_id, data, errors, error_summary)
+
+
+def valid_url(key, flattened_data, errors, context):
+    """ Check whether the value is a valid URL.
+
+    As well as checking syntax, this requires the URL to match one of the
+    permitted protocols, unless it is an upload.
+    """
+    value = flattened_data[key]
+    if not value or h.is_url(value) or _is_upload(key, flattened_data):
+        return
+
+    value = 'http://{}'.format(value)
+    if not h.is_url(value):
+        raise df.Invalid(_('Must be a valid URL'))
+    flattened_data[key] = value
+
+
+def _is_upload(key, flattened_data):
+    url_type_key = list(key)
+    url_type_key[2] = 'url_type'
+    url_type_key = tuple(url_type_key)
+    url_type = flattened_data.get(url_type_key, None)
+    return url_type == 'upload'
 
 
 def upload_after_validation(self, max_size=2):
