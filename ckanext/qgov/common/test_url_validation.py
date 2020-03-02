@@ -11,7 +11,7 @@ from ckan.lib.cli import MockTranslator
 import ckan.lib.helpers as h
 import ckan.lib.navl.dictization_functions as df
 
-import intercepts
+import plugin
 
 
 def mock_objects(config):
@@ -101,7 +101,7 @@ class TestUrlValidation(unittest.TestCase):
                 url_type = 'link'
             print "Testing URL {} of type '{}'".format(input_url, url_type)
             flattened_data = {key: input_url, ('resources', 0, 'url_type'): url_type}
-            intercepts.valid_url(key, flattened_data, None, None)
+            plugin.valid_url(key, flattened_data, None, None)
             self.assertEqual(flattened_data[key], test.get('expected', input_url))
 
     def test_valid_hostnames(self):
@@ -113,7 +113,8 @@ class TestUrlValidation(unittest.TestCase):
             config = {'ckanext.qgov.resource_domains.whitelist': test.get('whitelist', ''),
                       'ckanext.qgov.resource_domains.blacklist': test.get('blacklist', '')}
             mock_objects(config)
-            intercepts.configure(config)
+            qgov_plugin = plugin.QGOVPlugin()
+            qgov_plugin.configure(config)
             for case in test['url_cases']:
                 input_url = case.get('input')
                 print "Testing valid URL {} with whitelist [{}] and blacklist [{}]".format(input_url, test.get('whitelist', ''), test.get('blacklist', ''))
@@ -122,7 +123,7 @@ class TestUrlValidation(unittest.TestCase):
                 else:
                     url_type = 'link'
                 flattened_data = {key: input_url, ('resources', 0, 'url_type'): url_type}
-                intercepts.valid_resource_url(key, flattened_data, None, None)
+                plugin.valid_resource_url(key, flattened_data, None, None)
                 self.assertEqual(flattened_data[key], case.get('expected', input_url))
 
     def test_invalid_hostnames(self):
@@ -134,7 +135,8 @@ class TestUrlValidation(unittest.TestCase):
             config = {'ckanext.qgov.resource_domains.whitelist': test.get('whitelist', ''),
                       'ckanext.qgov.resource_domains.blacklist': test.get('blacklist', '')}
             mock_objects(config)
-            intercepts.configure(config)
+            qgov_plugin = plugin.QGOVPlugin()
+            qgov_plugin.configure(config)
             for case in test['url_cases']:
                 print "Testing invalid URL {} with whitelist {} and blacklist {}".format(case, test.get('whitelist', ''), test.get('blacklist', ''))
                 if test.get('upload', False):
@@ -142,18 +144,19 @@ class TestUrlValidation(unittest.TestCase):
                 else:
                     url_type = 'link'
                 flattened_data = {key: case, ('resources', 0, 'url_type'): url_type}
-                self.assertRaises(df.Invalid, intercepts.valid_resource_url, key, flattened_data, None, None)
+                self.assertRaises(df.Invalid, plugin.valid_resource_url, key, flattened_data, None, None)
 
     def test_default_blacklist(self):
         """ Test that the blacklist defaults to 'private' if not provided.
         """
         mock_objects({})
-        intercepts.configure({})
+        qgov_plugin = plugin.QGOVPlugin()
+        qgov_plugin.configure({})
         key = ('resources', 0, 'url')
         for input_url in ['http://127.0.0.1', 'localhost']:
             print "Testing private URL {}".format(input_url)
             flattened_data = {key: input_url}
-            self.assertRaises(df.Invalid, intercepts.valid_resource_url, key, flattened_data, None, None)
+            self.assertRaises(df.Invalid, plugin.valid_resource_url, key, flattened_data, None, None)
 
 
 if __name__ == '__main__':

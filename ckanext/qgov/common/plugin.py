@@ -5,18 +5,23 @@ and site-specific customisations, such as a feedback channel.
 """
 import datetime
 import json
+from logging import getLogger
 import os
 import random
-from logging import getLogger
+import re
+import socket
+import urlparse
 
 import ckan.authz as authz
 from ckan.common import _, c
 from ckan.lib.base import h
 import ckan.lib.formatters as formatters
+import ckan.lib.navl.dictization_functions as df
 import ckan.logic.auth as logic_auth
 from ckan.logic import get_action
 from ckan.plugins import implements, toolkit, SingletonPlugin, IConfigurer,\
-    ITemplateHelpers, IActions, IAuthFunctions, IRoutes, IConfigurable
+    ITemplateHelpers, IActions, IAuthFunctions, IRoutes, IConfigurable,\
+    IValidators
 import ckan.model as model
 from routes.mapper import SubMapper
 import requests
@@ -29,6 +34,9 @@ import intercepts
 from ckanext.qgov.common.stats import Stats
 
 LOG = getLogger(__name__)
+
+IP_ADDRESS = re.compile(r'^({0}[.]){{3}}{0}$'.format(r'[0-9]{1,3}'))
+PRIVATE_IP_ADDRESS = re.compile(r'^((10|127)([.]{0}){{3}}|(172[.](1[6-9]|2[0-9]|3[01])|169[.]254)([.]{0}){{2}}|192[.]168([.]{0}){{2}})$'.format(r'[0-9]{1,3}'))
 
 
 def random_tags():
@@ -311,6 +319,116 @@ def legacy_pager(self, *args, **kwargs):
     return super(Page, self).pager(*args, **kwargs)
 
 
+def valid_url(key, flattened_data, errors, context):
+    """ Check whether the value is a valid URL.
+
+    As well as checking syntax, this requires the URL to match one of the
+    permitted protocols, unless it is an upload.
+    """
+    value = flattened_data[key]
+    if not value or h.is_url(value) or _is_upload(key, flattened_data):
+        return
+
+    value = 'http://{}'.format(value)
+    if not h.is_url(value):
+        raise df.Invalid(_('Must be a valid URL'))
+    flattened_data[key] = value
+
+
+def _is_upload(key, flattened_data):
+    url_type_key = list(key)
+    url_type_key[2] = 'url_type'
+    url_type_key = tuple(url_type_key)
+    url_type = flattened_data.get(url_type_key, None)
+    return url_type == 'upload'
+
+
+def valid_resource_url(key, flattened_data, errors, context):
+    """ Check whether the resource URL is permitted.
+
+    This requires either an uploaded file, or passing any configured
+    whitelist/blacklist checks.
+    """
+
+    valid_url(key, flattened_data, errors, context)
+    value = flattened_data[key]
+    if not value or _is_upload(key, flattened_data):
+        LOG.debug("No resource URL found, or file is uploaded; skipping check")
+        return
+
+    if not RESOURCE_WHITELIST and not RESOURCE_BLACKLIST:
+        LOG.debug("No whitelist or blacklist found; skipping URL check")
+        return
+
+    # parse our URL so we can extract the domain
+    resource_url = urlparse.urlparse(value)
+    if not resource_url:
+        LOG.warn("Invalid resource URL")
+        raise df.Invalid(_('Must be a valid URL'))
+
+    LOG.debug("Requested resource domain is %s", resource_url.hostname)
+    if not resource_url.hostname:
+        raise df.Invalid(_('Must be a valid URL'))
+
+    # reject the URL if it matches any blacklist entry
+    if RESOURCE_BLACKLIST:
+        for domain in RESOURCE_BLACKLIST:
+            if _domain_match(resource_url.hostname, domain):
+                raise df.Invalid(_('{} is blocked').format(domain))
+
+    # require the URL to match a whitelist entry, if applicable
+    if RESOURCE_WHITELIST:
+        for domain in RESOURCE_WHITELIST:
+            if _domain_match(resource_url.hostname, domain):
+                return
+        raise df.Invalid(_('Must be from an allowed domain: {}').format(RESOURCE_WHITELIST))
+
+    return
+
+
+def _domain_match(hostname, pattern):
+    """ Test whether 'hostname' matches the pattern.
+
+    Note that this is not a regex match, but subdomains are allowed.
+    Alternatively, 'pattern' can be an IP address, in which case,
+    this tests whether 'hostname' can resolve to that IP address.
+
+    If the pattern is 'private', then all private IP addresses are matched.
+    This includes:
+    10.x.x.x
+    127.x.x.x
+    169.254.x.x
+    172.16.0.0 to 172.31.255.255
+    192.168.x.x
+    """
+    if pattern == 'private':
+        if PRIVATE_IP_ADDRESS.match(hostname):
+            return True
+        try:
+            hostname, aliaslist, ipaddrlist = socket.gethostbyname_ex(hostname)
+            for ipaddr in ipaddrlist:
+                if PRIVATE_IP_ADDRESS.match(ipaddr):
+                    LOG.debug("%s can resolve to %s which is private",
+                              hostname, ipaddrlist)
+                    return True
+        except socket.gaierror:
+            # this is normal since the user could enter any arbitrary hostname
+            pass
+    elif IP_ADDRESS.match(pattern):
+        try:
+            hostname, aliaslist, ipaddrlist = socket.gethostbyname_ex(hostname)
+            if pattern in ipaddrlist:
+                LOG.debug("%s can resolve to %s which includes %s",
+                          hostname, ipaddrlist, pattern)
+                return True
+        except socket.gaierror:
+            # this is normal since the user could enter any arbitrary hostname
+            pass
+    if hostname == pattern or hostname.endswith('.' + pattern):
+        return True
+    return False
+
+
 class QGOVPlugin(SingletonPlugin):
     """Apply custom functions for Queensland Government portals.
 
@@ -327,6 +445,7 @@ class QGOVPlugin(SingletonPlugin):
     implements(IActions, inherit=True)
     implements(IAuthFunctions, inherit=True)
     implements(IRoutes, inherit=True)
+    implements(IValidators, inherit=True)
 
     def update_config_schema(self, schema):
         """ Don't allow customisation of site CSS via the web interface.
@@ -392,11 +511,13 @@ class QGOVPlugin(SingletonPlugin):
         """ Monkey-patch functions that don't have standard extension
         points.
         """
-        anti_csrf.intercept_csrf()
-        authenticator.intercept_authenticator()
-        urlm.intercept_404()
+        global RESOURCE_WHITELIST
+        global RESOURCE_BLACKLIST
+        RESOURCE_WHITELIST = config.get('ckanext.qgov.resource_domains.whitelist', '').split()
+        RESOURCE_BLACKLIST = config.get('ckanext.qgov.resource_domains.blacklist', 'private').split()
+        LOG.info("Resources must come from: %s and cannot come from %s", RESOURCE_WHITELIST, RESOURCE_BLACKLIST)
+
         intercepts.configure(config)
-        intercepts.set_intercepts()
 
     def before_map(self, route_map):
         """ Add some custom routes for Queensland Government portals.
@@ -410,6 +531,15 @@ class QGOVPlugin(SingletonPlugin):
                            '/api/action/submit_feedback',
                            action='submit_feedback')
             return route_map
+
+    def after_map(self, route_map):
+        """ Add monkey-patches after routing is set up.
+        """
+        anti_csrf.intercept_csrf()
+        authenticator.intercept_authenticator()
+        urlm.intercept_404()
+        intercepts.set_intercepts()
+        return route_map
 
     def get_helpers(self):
         """ A dictionary of extra helpers that will be available
@@ -448,4 +578,12 @@ class QGOVPlugin(SingletonPlugin):
             'user_list': auth_user_list,
             'user_show': auth_user_show,
             'group_show': auth_group_show
+        }
+
+    def get_validators(self):
+        """ Add URL validators.
+        """
+        return {
+            'valid_url': valid_url,
+            'valid_resource_url': valid_resource_url
         }

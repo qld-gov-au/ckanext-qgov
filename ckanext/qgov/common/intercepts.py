@@ -5,8 +5,6 @@
 import re
 import json
 from logging import getLogger
-import socket
-import urlparse
 
 import requests
 
@@ -22,7 +20,7 @@ import ckan.logic.validators as validators
 from ckan.model import Session
 from ckan.lib.base import c, request, abort, h
 from ckan.lib.uploader import Upload, ResourceUpload
-import ckan.lib.navl.dictization_functions as df
+import ckan.plugins.toolkit as toolkit
 
 import plugin
 from authenticator import QGOVUser
@@ -38,15 +36,11 @@ DEFAULT_USER_SCHEMA = schemas.default_user_schema()
 USER_NEW_FORM_SCHEMA = schemas.user_new_form_schema()
 USER_EDIT_FORM_SCHEMA = schemas.user_edit_form_schema()
 DEFAULT_UPDATE_USER_SCHEMA = schemas.default_update_user_schema()
-RESOURCE_SCHEMA = schemas.default_resource_schema()
 
 UPLOAD = Upload.upload
 RESOURCE_UPLOAD = ResourceUpload.upload
 STORAGE_DOWNLOAD = StorageController.file
 RESOURCE_DOWNLOAD = PackageController.resource_download
-
-IP_ADDRESS = re.compile(r'^({0}[.]){{3}}{0}$'.format(r'[0-9]{1,3}'))
-PRIVATE_IP_ADDRESS = re.compile(r'^((10|127)([.]{0}){{3}}|(172[.](1[6-9]|2[0-9]|3[01])|169[.]254)([.]{0}){{2}}|192[.]168([.]{0}){{2}})$'.format(r'[0-9]{1,3}'))
 
 ALLOWED_EXTENSIONS = [
     'csv',
@@ -96,12 +90,8 @@ EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
 
 
 def configure(config):
-    global RESOURCE_WHITELIST
-    global RESOURCE_BLACKLIST
     global password_min_length
     global password_patterns
-    RESOURCE_WHITELIST = config.get('ckanext.qgov.resource_domains.whitelist', '').split()
-    RESOURCE_BLACKLIST = config.get('ckanext.qgov.resource_domains.blacklist', 'private').split()
 
     password_min_length = int(config.get('password_min_length', '10'))
     password_patterns = config.get(
@@ -122,11 +112,6 @@ def set_intercepts():
     schemas.user_new_form_schema = user_new_form_schema
     schemas.user_edit_form_schema = user_edit_form_schema
     schemas.default_update_user_schema = default_update_user_schema
-
-    LOG.info("Resources must come from: %s and cannot come from %s", RESOURCE_WHITELIST, RESOURCE_BLACKLIST)
-
-    RESOURCE_SCHEMA['url'].append(valid_url)
-    RESOURCE_SCHEMA['url'].append(valid_resource_url)
 
     schemas.default_resource_schema = default_resource_schema
 
@@ -199,15 +184,11 @@ def default_update_user_schema():
 
 
 def default_resource_schema():
-    """ Return a copy of the altered resource schema.
-
-    This cannot be an entirely shallow copy, or else it will be permanently
-    modified by eg schema.default_show_package_schema; however, it does not
-    need to be infinitely deep.
+    """ Add URL validators to the default resource schema.
     """
-    resource_schema = RESOURCE_SCHEMA.copy()
-    for key in resource_schema:
-        resource_schema[key] = resource_schema[key][:]
+    resource_schema = schemas.default_resource_schema()
+    resource_schema['url'].append(toolkit.get_validator('valid_url'))
+    resource_schema['url'].append(toolkit.get_validator('valid_resource_url'))
     return resource_schema
 
 
@@ -296,116 +277,6 @@ def validate_resource_edit(self, id, resource_id,
                     h.flash_error("CSV was NOT validated against the selected schema")
 
     return RESOURCE_EDIT(self, id, resource_id, data, errors, error_summary)
-
-
-def valid_url(key, flattened_data, errors, context):
-    """ Check whether the value is a valid URL.
-
-    As well as checking syntax, this requires the URL to match one of the
-    permitted protocols, unless it is an upload.
-    """
-    value = flattened_data[key]
-    if not value or h.is_url(value) or _is_upload(key, flattened_data):
-        return
-
-    value = 'http://{}'.format(value)
-    if not h.is_url(value):
-        raise df.Invalid(_('Must be a valid URL'))
-    flattened_data[key] = value
-
-
-def _is_upload(key, flattened_data):
-    url_type_key = list(key)
-    url_type_key[2] = 'url_type'
-    url_type_key = tuple(url_type_key)
-    url_type = flattened_data.get(url_type_key, None)
-    return url_type == 'upload'
-
-
-def valid_resource_url(key, flattened_data, errors, context):
-    """ Check whether the resource URL is permitted.
-
-    This requires either an uploaded file, or passing any configured
-    whitelist/blacklist checks.
-    """
-
-    valid_url(key, flattened_data, errors, context)
-    value = flattened_data[key]
-    if not value or _is_upload(key, flattened_data):
-        LOG.debug("No resource URL found, or file is uploaded; skipping check")
-        return
-
-    if not RESOURCE_WHITELIST and not RESOURCE_BLACKLIST:
-        LOG.debug("No whitelist or blacklist found; skipping URL check")
-        return
-
-    # parse our URL so we can extract the domain
-    resource_url = urlparse.urlparse(value)
-    if not resource_url:
-        LOG.warn("Invalid resource URL")
-        raise df.Invalid(_('Must be a valid URL'))
-
-    LOG.debug("Requested resource domain is %s", resource_url.hostname)
-    if not resource_url.hostname:
-        raise df.Invalid(_('Must be a valid URL'))
-
-    # reject the URL if it matches any blacklist entry
-    if RESOURCE_BLACKLIST:
-        for domain in RESOURCE_BLACKLIST:
-            if _domain_match(resource_url.hostname, domain):
-                raise df.Invalid(_('{} is blocked').format(domain))
-
-    # require the URL to match a whitelist entry, if applicable
-    if RESOURCE_WHITELIST:
-        for domain in RESOURCE_WHITELIST:
-            if _domain_match(resource_url.hostname, domain):
-                return
-        raise df.Invalid(_('Must be from an allowed domain: {}').format(RESOURCE_WHITELIST))
-
-    return
-
-
-def _domain_match(hostname, pattern):
-    """ Test whether 'hostname' matches the pattern.
-
-    Note that this is not a regex match, but subdomains are allowed.
-    Alternatively, 'pattern' can be an IP address, in which case,
-    this tests whether 'hostname' can resolve to that IP address.
-
-    If the pattern is 'private', then all private IP addresses are matched.
-    This includes:
-    10.x.x.x
-    127.x.x.x
-    169.254.x.x
-    172.16.0.0 to 172.31.255.255
-    192.168.x.x
-    """
-    if pattern == 'private':
-        if PRIVATE_IP_ADDRESS.match(hostname):
-            return True
-        try:
-            hostname, aliaslist, ipaddrlist = socket.gethostbyname_ex(hostname)
-            for ipaddr in ipaddrlist:
-                if PRIVATE_IP_ADDRESS.match(ipaddr):
-                    LOG.debug("%s can resolve to %s which is private",
-                              hostname, ipaddrlist)
-                    return True
-        except socket.gaierror:
-            # this is normal since the user could enter any arbitrary hostname
-            pass
-    elif IP_ADDRESS.match(pattern):
-        try:
-            hostname, aliaslist, ipaddrlist = socket.gethostbyname_ex(hostname)
-            if pattern in ipaddrlist:
-                LOG.debug("%s can resolve to %s which includes %s",
-                          hostname, ipaddrlist, pattern)
-                return True
-        except socket.gaierror:
-            # this is normal since the user could enter any arbitrary hostname
-            pass
-    if hostname == pattern or hostname.endswith('.' + pattern):
-        return True
-    return False
 
 
 def upload_after_validation(self, max_size=2):
