@@ -20,7 +20,7 @@ import ckan.logic.validators as validators
 from ckan.model import Session
 from ckan.lib.base import c, request, abort, h
 from ckan.lib.uploader import Upload, ResourceUpload
-import ckan.lib.navl.dictization_functions as df
+import ckan.plugins.toolkit as toolkit
 
 import plugin
 from authenticator import QGOVUser
@@ -36,7 +36,6 @@ DEFAULT_USER_SCHEMA = schemas.default_user_schema()
 USER_NEW_FORM_SCHEMA = schemas.user_new_form_schema()
 USER_EDIT_FORM_SCHEMA = schemas.user_edit_form_schema()
 DEFAULT_UPDATE_USER_SCHEMA = schemas.default_update_user_schema()
-RESOURCE_SCHEMA = schemas.default_resource_schema()
 
 UPLOAD = Upload.upload
 RESOURCE_UPLOAD = ResourceUpload.upload
@@ -113,7 +112,6 @@ def set_intercepts():
     schemas.user_new_form_schema = user_new_form_schema
     schemas.user_edit_form_schema = user_edit_form_schema
     schemas.default_update_user_schema = default_update_user_schema
-    RESOURCE_SCHEMA['url'].append(valid_url)
 
     schemas.default_resource_schema = default_resource_schema
 
@@ -186,15 +184,11 @@ def default_update_user_schema():
 
 
 def default_resource_schema():
-    """ Return a copy of the altered resource schema.
-
-    This cannot be an entirely shallow copy, or else it will be permanently
-    modified by eg schema.default_show_package_schema; however, it does not
-    need to be infinitely deep.
+    """ Add URL validators to the default resource schema.
     """
-    resource_schema = RESOURCE_SCHEMA.copy()
-    for key in resource_schema:
-        resource_schema[key] = resource_schema[key][:]
+    resource_schema = schemas.default_resource_schema()
+    resource_schema['url'].append(toolkit.get_validator('valid_url'))
+    resource_schema['url'].append(toolkit.get_validator('valid_resource_url'))
     return resource_schema
 
 
@@ -283,30 +277,6 @@ def validate_resource_edit(self, id, resource_id,
                     h.flash_error("CSV was NOT validated against the selected schema")
 
     return RESOURCE_EDIT(self, id, resource_id, data, errors, error_summary)
-
-
-def valid_url(key, flattened_data, errors, context):
-    """ Check whether the value is a valid URL.
-
-    As well as checking syntax, this requires the URL to match one of the
-    permitted protocols, unless it is an upload.
-    """
-    value = flattened_data[key]
-    if not value or h.is_url(value) or _is_upload(key, flattened_data):
-        return
-
-    value = 'http://{}'.format(value)
-    if not h.is_url(value):
-        raise df.Invalid(_('Must be a valid URL'))
-    flattened_data[key] = value
-
-
-def _is_upload(key, flattened_data):
-    url_type_key = list(key)
-    url_type_key[2] = 'url_type'
-    url_type_key = tuple(url_type_key)
-    url_type = flattened_data.get(url_type_key, None)
-    return url_type == 'upload'
 
 
 def upload_after_validation(self, max_size=2):
