@@ -9,6 +9,7 @@ import unittest
 
 from ckan.lib.cli import MockTranslator
 import ckan.lib.helpers as h
+import ckan.lib.navl.dictization_functions as df
 
 import intercepts
 
@@ -29,6 +30,30 @@ URL_DATA = [
     {'input': 'git+https://github.com/ckan/ckan.git', 'expected': 'http://git+https://github.com/ckan/ckan.git'},
     {'input': 'example.pdf', 'expected': 'http://example.pdf', 'upload': False},
     {'input': 'example.pdf', 'upload': True},
+]
+
+VALID_RESOURCE_URLS = [
+    # No whitelist/blacklist; any domain is ok
+    {'url_cases': [{'input': 'http://foo'}, {'input': 'https://google.com'}, {'input': 'example.com', 'expected': 'http://example.com'}]},
+    # Domain matches whitelist
+    {'whitelist': 'gov.au translink.com.au', 'url_cases': [{'input': 'http://www.translink.com.au'}, {'input': 'https://www.qld.gov.au'}, {'input': 'www.qld.gov.au', 'expected': 'http://www.qld.gov.au'}]},
+    # Domain does not match blacklist
+    {'blacklist': 'evil.com', 'url_cases': [{'input': 'https://example.com'}, {'input': 'http://evil.com.au'}]},
+    # Domains matches whitelist and does not match blacklist
+    {'whitelist': 'gov.au translink.com.au', 'blacklist': '127.0.0.1', 'url_cases': [{'input': 'http://www.qld.gov.au'}]},
+    # File upload skips whitelist and blacklist
+    {'whitelist': 'gov.au translink.com.au', 'url_cases': [{'input': 'example.pdf'}, {'input': 'https://www.qld.gov.au/example.pdf'}, {'input': 'www.qld.gov.au/example.csv'}], 'upload': True},
+    {'blacklist': 'example.pdf', 'url_cases': [{'input': 'example.pdf'}], 'upload': True},
+]
+
+INVALID_RESOURCE_URLS = [
+    # Domain does not match whitelist
+    {'whitelist': 'gov.au translink.com.au', 'url_cases': ['http://www.example.com', 'https://data.gov']},
+    # Hostname matches blacklist or resolves to an address on the blacklist
+    {'blacklist': '127.0.0.1 evil.com', 'url_cases': ['https://evil.com', 'http://subdomain.evil.com', 'http://127.0.0.1/', 'http://localhost/']},
+    # Hostname matches both whitelist and blacklist
+    {'whitelist': 'example.com', 'blacklist': 'example.com', 'url_cases': ['http://example.com']},
+    {'whitelist': 'localhost', 'blacklist': '127.0.0.1', 'url_cases': ['http://localhost/']},
 ]
 
 
@@ -52,6 +77,46 @@ class TestUrlValidation(unittest.TestCase):
             flattened_data = {key: input_url, ('resources', 0, 'url_type'): url_type}
             intercepts.valid_url(key, flattened_data, None, None)
             self.assertEqual(flattened_data[key], test.get('expected', input_url))
+
+    def test_valid_hostnames(self):
+        """ Test that hostnames are accepted when they pass whitelist/blacklist
+        validation, if any.
+        """
+        key = ('resources', 0, 'url')
+        for test in VALID_RESOURCE_URLS:
+            config = {'ckanext.qgov.resource_domains.whitelist': test.get('whitelist', ''),
+                      'ckanext.qgov.resource_domains.blacklist': test.get('blacklist', '')}
+            mock_objects(config)
+            intercepts.configure(config)
+            for case in test['url_cases']:
+                input_url = case.get('input')
+                print "Testing valid URL {} with whitelist [{}] and blacklist [{}]".format(input_url, test.get('whitelist', ''), test.get('blacklist', ''))
+                if test.get('upload', False):
+                    url_type = 'upload'
+                else:
+                    url_type = 'link'
+                flattened_data = {key: input_url, ('resources', 0, 'url_type'): url_type}
+                intercepts.valid_resource_url(key, flattened_data, None, None)
+                self.assertEqual(flattened_data[key], case.get('expected', input_url))
+
+    def test_invalid_hostnames(self):
+        """ Test that hostnames are rejected when they match the blacklist
+        or do not match the whitelist.
+        """
+        key = ('resources', 0, 'url')
+        for test in INVALID_RESOURCE_URLS:
+            config = {'ckanext.qgov.resource_domains.whitelist': test.get('whitelist', ''),
+                      'ckanext.qgov.resource_domains.blacklist': test.get('blacklist', '')}
+            mock_objects(config)
+            intercepts.configure(config)
+            for case in test['url_cases']:
+                print "Testing invalid URL {} with whitelist {} and blacklist {}".format(case, test.get('whitelist', ''), test.get('blacklist', ''))
+                if test.get('upload', False):
+                    url_type = 'upload'
+                else:
+                    url_type = 'link'
+                flattened_data = {key: case, ('resources', 0, 'url_type'): url_type}
+                self.assertRaises(df.Invalid, intercepts.valid_resource_url, key, flattened_data, None, None)
 
 
 if __name__ == '__main__':

@@ -5,6 +5,8 @@
 import re
 import json
 from logging import getLogger
+import socket
+import urlparse
 
 import requests
 
@@ -42,6 +44,8 @@ UPLOAD = Upload.upload
 RESOURCE_UPLOAD = ResourceUpload.upload
 STORAGE_DOWNLOAD = StorageController.file
 RESOURCE_DOWNLOAD = PackageController.resource_download
+
+IP_ADDRESS = re.compile(r'^([0-9]{1,3}[.]){3}[0-9]{1,3}$')
 
 ALLOWED_EXTENSIONS = [
     'csv',
@@ -91,8 +95,12 @@ EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
 
 
 def configure(config):
+    global RESOURCE_WHITELIST
+    global RESOURCE_BLACKLIST
     global password_min_length
     global password_patterns
+    RESOURCE_WHITELIST = config.get('ckanext.qgov.resource_domains.whitelist', '').split()
+    RESOURCE_BLACKLIST = config.get('ckanext.qgov.resource_domains.blacklist', '').split()
 
     password_min_length = int(config.get('password_min_length', '10'))
     password_patterns = config.get(
@@ -113,7 +121,11 @@ def set_intercepts():
     schemas.user_new_form_schema = user_new_form_schema
     schemas.user_edit_form_schema = user_edit_form_schema
     schemas.default_update_user_schema = default_update_user_schema
+
+    LOG.info("Resources must come from: %s and cannot come from %s", RESOURCE_WHITELIST, RESOURCE_BLACKLIST)
+
     RESOURCE_SCHEMA['url'].append(valid_url)
+    RESOURCE_SCHEMA['url'].append(valid_resource_url)
 
     schemas.default_resource_schema = default_resource_schema
 
@@ -307,6 +319,71 @@ def _is_upload(key, flattened_data):
     url_type_key = tuple(url_type_key)
     url_type = flattened_data.get(url_type_key, None)
     return url_type == 'upload'
+
+
+def valid_resource_url(key, flattened_data, errors, context):
+    """ Check whether the resource URL is permitted.
+
+    This requires either an uploaded file, or passing any configured
+    whitelist/blacklist checks.
+    """
+
+    valid_url(key, flattened_data, errors, context)
+    value = flattened_data[key]
+    if not value or _is_upload(key, flattened_data):
+        LOG.debug("No resource URL found, or file is uploaded; skipping check")
+        return
+
+    if not RESOURCE_WHITELIST and not RESOURCE_BLACKLIST:
+        LOG.debug("No whitelist or blacklist found; skipping URL check")
+        return
+
+    # parse our URL so we can extract the domain
+    resource_url = urlparse.urlparse(value)
+    if not resource_url:
+        LOG.warn("Invalid resource URL")
+        raise df.Invalid(_('Must be a valid URL'))
+
+    LOG.debug("Requested resource domain is %s", resource_url.hostname)
+    if not resource_url.hostname:
+        raise df.Invalid(_('Must be a valid URL'))
+
+    # reject the URL if it matches any blacklist entry
+    if RESOURCE_BLACKLIST:
+        for domain in RESOURCE_BLACKLIST:
+            if _domain_match(resource_url.hostname, domain):
+                raise df.Invalid(_('{} is blocked').format(domain))
+
+    # require the URL to match a whitelist entry, if applicable
+    if RESOURCE_WHITELIST:
+        for domain in RESOURCE_WHITELIST:
+            if _domain_match(resource_url.hostname, domain):
+                return
+        raise df.Invalid(_('Must be from an allowed domain: {}').format(RESOURCE_WHITELIST))
+
+    return
+
+
+def _domain_match(hostname, pattern):
+    """ Test whether 'hostname' matches the pattern.
+
+    Note that this is not a regex match, but subdomains are allowed.
+    Alternatively, 'pattern' can be an IP address, in which case,
+    this tests whether 'hostname' can resolve to that IP address.
+    """
+    if IP_ADDRESS.match(pattern):
+        try:
+            hostname, aliaslist, ipaddrlist = socket.gethostbyname_ex(hostname)
+            if pattern in ipaddrlist:
+                LOG.debug("%s can resolve to %s which includes %s",
+                          hostname, ipaddrlist, pattern)
+                return True
+        except socket.gaierror:
+            # this is normal since the user could enter any arbitrary hostname
+            pass
+    if hostname == pattern or hostname.endswith('.' + pattern):
+        return True
+    return False
 
 
 def upload_after_validation(self, max_size=2):
