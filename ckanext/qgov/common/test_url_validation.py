@@ -39,6 +39,20 @@ VALID_RESOURCE_URLS = [
     {'whitelist': 'gov.au translink.com.au', 'url_cases': [{'input': 'http://www.translink.com.au'}, {'input': 'https://www.qld.gov.au'}, {'input': 'www.qld.gov.au', 'expected': 'http://www.qld.gov.au'}]},
     # Domain does not match blacklist
     {'blacklist': 'evil.com', 'url_cases': [{'input': 'https://example.com'}, {'input': 'http://evil.com.au'}]},
+    {'blacklist': 'private', 'url_cases': [
+        {'input': 'http://www.qld.gov.au'},
+        {'input': 'http://example.com'},
+        {'input': 'http://9.0.0.0'},
+        {'input': 'http://11.0.0.0'},
+        {'input': 'http://126.255.255.255'},
+        {'input': 'http://128.0.0.0'},
+        {'input': 'http://169.253.255.255'},
+        {'input': 'http://169.255.0.0'},
+        {'input': 'http://172.15.255.255'},
+        {'input': 'http://172.32.0.0'},
+        {'input': 'http://192.167.255.255'},
+        {'input': 'http://192.169.0.0'},
+    ]},
     # Domains matches whitelist and does not match blacklist
     {'whitelist': 'gov.au translink.com.au', 'blacklist': '127.0.0.1', 'url_cases': [{'input': 'http://www.qld.gov.au'}]},
     # File upload skips whitelist and blacklist
@@ -51,6 +65,18 @@ INVALID_RESOURCE_URLS = [
     {'whitelist': 'gov.au translink.com.au', 'url_cases': ['http://www.example.com', 'https://data.gov']},
     # Hostname matches blacklist or resolves to an address on the blacklist
     {'blacklist': '127.0.0.1 evil.com', 'url_cases': ['https://evil.com', 'http://subdomain.evil.com', 'http://127.0.0.1/', 'http://localhost/']},
+    {'blacklist': 'private', 'url_cases': [
+        'http://127.0.0.1/',
+        'http://localhost/',
+        'http://10.0.0.0/',
+        'http://10.255.255.255/',
+        'http://169.254.0.0:1234/latest/',
+        'http://169.254.255.255',
+        'http://172.16.0.0/',
+        'http://172.31.255.255/',
+        'http://192.168.0.0/',
+        'http://192.168.255.255/',
+    ]},
     # Hostname matches both whitelist and blacklist
     {'whitelist': 'example.com', 'blacklist': 'example.com', 'url_cases': ['http://example.com']},
     {'whitelist': 'localhost', 'blacklist': '127.0.0.1', 'url_cases': ['http://localhost/']},

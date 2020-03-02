@@ -45,7 +45,8 @@ RESOURCE_UPLOAD = ResourceUpload.upload
 STORAGE_DOWNLOAD = StorageController.file
 RESOURCE_DOWNLOAD = PackageController.resource_download
 
-IP_ADDRESS = re.compile(r'^([0-9]{1,3}[.]){3}[0-9]{1,3}$')
+IP_ADDRESS = re.compile(r'^({0}[.]){{3}}{0}$'.format(r'[0-9]{1,3}'))
+PRIVATE_IP_ADDRESS = re.compile(r'^((10|127)([.]{0}){{3}}|(172[.](1[6-9]|2[0-9]|3[01])|169[.]254)([.]{0}){{2}}|192[.]168([.]{0}){{2}})$'.format(r'[0-9]{1,3}'))
 
 ALLOWED_EXTENSIONS = [
     'csv',
@@ -370,8 +371,29 @@ def _domain_match(hostname, pattern):
     Note that this is not a regex match, but subdomains are allowed.
     Alternatively, 'pattern' can be an IP address, in which case,
     this tests whether 'hostname' can resolve to that IP address.
+
+    If the pattern is 'private', then all private IP addresses are matched.
+    This includes:
+    10.x.x.x
+    127.x.x.x
+    169.254.x.x
+    172.16.0.0 to 172.31.255.255
+    192.168.x.x
     """
-    if IP_ADDRESS.match(pattern):
+    if pattern == 'private':
+        if PRIVATE_IP_ADDRESS.match(hostname):
+            return True
+        try:
+            hostname, aliaslist, ipaddrlist = socket.gethostbyname_ex(hostname)
+            for ipaddr in ipaddrlist:
+                if PRIVATE_IP_ADDRESS.match(ipaddr):
+                    LOG.debug("%s can resolve to %s which is private",
+                              hostname, ipaddrlist)
+                    return True
+        except socket.gaierror:
+            # this is normal since the user could enter any arbitrary hostname
+            pass
+    elif IP_ADDRESS.match(pattern):
         try:
             hostname, aliaslist, ipaddrlist = socket.gethostbyname_ex(hostname)
             if pattern in ipaddrlist:
