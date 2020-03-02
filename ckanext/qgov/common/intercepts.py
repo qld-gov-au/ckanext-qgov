@@ -101,7 +101,7 @@ def configure(config):
     global password_min_length
     global password_patterns
     RESOURCE_WHITELIST = config.get('ckanext.qgov.resource_domains.whitelist', '').split()
-    RESOURCE_BLACKLIST = config.get('ckanext.qgov.resource_domains.blacklist', '').split()
+    RESOURCE_BLACKLIST = config.get('ckanext.qgov.resource_domains.blacklist', 'private').split()
 
     password_min_length = int(config.get('password_min_length', '10'))
     password_patterns = config.get(

@@ -144,6 +144,17 @@ class TestUrlValidation(unittest.TestCase):
                 flattened_data = {key: case, ('resources', 0, 'url_type'): url_type}
                 self.assertRaises(df.Invalid, intercepts.valid_resource_url, key, flattened_data, None, None)
 
+    def test_default_blacklist(self):
+        """ Test that the blacklist defaults to 'private' if not provided.
+        """
+        mock_objects({})
+        intercepts.configure({})
+        key = ('resources', 0, 'url')
+        for input_url in ['http://127.0.0.1', 'localhost']:
+            print "Testing private URL {}".format(input_url)
+            flattened_data = {key: input_url}
+            self.assertRaises(df.Invalid, intercepts.valid_resource_url, key, flattened_data, None, None)
+
 
 if __name__ == '__main__':
     unittest.main()
