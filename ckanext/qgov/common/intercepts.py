@@ -36,6 +36,7 @@ DEFAULT_USER_SCHEMA = schemas.default_user_schema()
 USER_NEW_FORM_SCHEMA = schemas.user_new_form_schema()
 USER_EDIT_FORM_SCHEMA = schemas.user_edit_form_schema()
 DEFAULT_UPDATE_USER_SCHEMA = schemas.default_update_user_schema()
+RESOURCE_SCHEMA = schemas.default_resource_schema()
 
 UPLOAD = Upload.upload
 RESOURCE_UPLOAD = ResourceUpload.upload
@@ -186,7 +187,12 @@ def default_update_user_schema():
 def default_resource_schema():
     """ Add URL validators to the default resource schema.
     """
-    resource_schema = schemas.default_resource_schema()
+    resource_schema = RESOURCE_SCHEMA.copy()
+    # We can't make an entirely shallow copy, or else it will be permanently
+    # modified by eg schema.default_show_package_schema, but we don't want
+    # infinite depth either.
+    for key in resource_schema:
+        resource_schema[key] = resource_schema[key][:]
     resource_schema['url'].append(toolkit.get_validator('valid_url'))
     resource_schema['url'].append(toolkit.get_validator('valid_resource_url'))
     return resource_schema

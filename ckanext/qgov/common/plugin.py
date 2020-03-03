@@ -374,7 +374,7 @@ def valid_resource_url(key, flattened_data, errors, context):
     if RESOURCE_BLACKLIST:
         for domain in RESOURCE_BLACKLIST:
             if _domain_match(resource_url.hostname, domain):
-                raise df.Invalid(_('{} is blocked').format(domain))
+                raise df.Invalid(_('Domain is blocked'))
 
     # require the URL to match a whitelist entry, if applicable
     if RESOURCE_WHITELIST:
