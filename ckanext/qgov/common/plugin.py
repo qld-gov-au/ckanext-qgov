@@ -370,23 +370,26 @@ def valid_resource_url(key, flattened_data, errors, context):
     if not resource_url.hostname:
         raise df.Invalid(_('Must be a valid URL'))
 
+    address_resolution = None
     # reject the URL if it matches any blacklist entry
     if RESOURCE_BLACKLIST:
         for domain in RESOURCE_BLACKLIST:
-            if _domain_match(resource_url.hostname, domain):
+            is_match, address_resolution = _domain_match(resource_url.hostname, domain, address_resolution)
+            if is_match:
                 raise df.Invalid(_('Domain is blocked'))
 
     # require the URL to match a whitelist entry, if applicable
     if RESOURCE_WHITELIST:
         for domain in RESOURCE_WHITELIST:
-            if _domain_match(resource_url.hostname, domain):
+            is_match, address_resolution = _domain_match(resource_url.hostname, domain, address_resolution)
+            if is_match:
                 return
         raise df.Invalid(_('Must be from an allowed domain: {}').format(RESOURCE_WHITELIST))
 
     return
 
 
-def _domain_match(hostname, pattern):
+def _domain_match(hostname, pattern, address_resolution):
     """ Test whether 'hostname' matches the pattern.
 
     Note that this is not a regex match, but subdomains are allowed.
@@ -405,51 +408,62 @@ def _domain_match(hostname, pattern):
 
     if pattern == 'private':
         if PRIVATE_IP_ADDRESS.match(hostname):
-            return True
+            return True, address_resolution
 
-        try:
-            resolved_hostname, aliaslist, ipaddrlist = socket.gethostbyname_ex(hostname)
-        except socket.gaierror:
+        address_resolution = _resolve_address(hostname, address_resolution)
+        if address_resolution == ():
             # couldn't resolve hostname, nothing further to do
-            return False
+            return False, address_resolution
 
+        ipaddrlist = address_resolution[2]
         for ipaddr in ipaddrlist:
             if PRIVATE_IP_ADDRESS.match(ipaddr):
                 LOG.debug("%s can resolve to %s which is private",
                           hostname, ipaddrlist)
-                return True
+                return True, address_resolution
 
     elif IP_ADDRESS.match(pattern):
         if hostname == pattern:
-            return True
+            return True, address_resolution
 
-        try:
-            resolved_hostname, aliaslist, ipaddrlist = socket.gethostbyname_ex(hostname)
-        except socket.gaierror:
+        address_resolution = _resolve_address(hostname, address_resolution)
+        if address_resolution == ():
             # couldn't resolve hostname, nothing further to do
-            return False
+            return False, address_resolution
 
+        ipaddrlist = address_resolution[2]
         if pattern in ipaddrlist:
             LOG.debug("%s can resolve to %s which includes %s",
                       hostname, ipaddrlist, pattern)
-            return True
+            return True, address_resolution
 
     else:
         if _is_subdomain(hostname, pattern):
-            return True
+            return True, address_resolution
 
-        try:
-            resolved_hostname, aliaslist, ipaddrlist = socket.gethostbyname_ex(hostname)
-        except socket.gaierror:
+        address_resolution = _resolve_address(hostname, address_resolution)
+        if address_resolution == ():
             # couldn't resolve hostname, nothing further to do
-            return False
+            return False, address_resolution
+
+        resolved_hostname = address_resolution[0]
         if _is_subdomain(resolved_hostname, pattern):
-            return True
+            return True, address_resolution
+        aliaslist = address_resolution[1]
         for alias in aliaslist:
             if _is_subdomain(alias, pattern):
-                return True
+                return True, address_resolution
 
-    return False
+    return False, address_resolution
+
+
+def _resolve_address(hostname, memo):
+    if memo:
+        return memo
+    try:
+        return (socket.gethostbyname_ex(hostname))
+    except socket.gaierror:
+        return ()
 
 
 def _is_subdomain(hostname, pattern):
