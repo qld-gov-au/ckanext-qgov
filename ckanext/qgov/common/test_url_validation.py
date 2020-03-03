@@ -42,8 +42,10 @@ VALID_RESOURCE_URLS = [
     {'blacklist': 'private', 'url_cases': [
         {'input': 'http://www.qld.gov.au'},
         {'input': 'http://example.com'},
-        {'input': 'http://9.0.0.0'},
+        {'input': 'http://1.0.0.0'},
+        {'input': 'http://9.255.255.255'},
         {'input': 'http://11.0.0.0'},
+        {'input': 'http://20.0.0.0'},
         {'input': 'http://126.255.255.255'},
         {'input': 'http://128.0.0.0'},
         {'input': 'http://169.253.255.255'},
@@ -68,6 +70,8 @@ INVALID_RESOURCE_URLS = [
     {'blacklist': 'private', 'url_cases': [
         'http://127.0.0.1/',
         'http://localhost/',
+        'http://0.0.0.0/',
+        'http://0.255.255.255/',
         'http://10.0.0.0/',
         'http://10.255.255.255/',
         'http://169.254.0.0:1234/latest/',
