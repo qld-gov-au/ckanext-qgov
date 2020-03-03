@@ -411,7 +411,7 @@ def _domain_match(hostname, pattern, address_resolution):
             return True, address_resolution
 
         address_resolution = _resolve_address(hostname, address_resolution)
-        if address_resolution == ():
+        if not address_resolution:
             # couldn't resolve hostname, nothing further to do
             return False, address_resolution
 
@@ -427,7 +427,7 @@ def _domain_match(hostname, pattern, address_resolution):
             return True, address_resolution
 
         address_resolution = _resolve_address(hostname, address_resolution)
-        if address_resolution == ():
+        if not address_resolution:
             # couldn't resolve hostname, nothing further to do
             return False, address_resolution
 
@@ -442,7 +442,7 @@ def _domain_match(hostname, pattern, address_resolution):
             return True, address_resolution
 
         address_resolution = _resolve_address(hostname, address_resolution)
-        if address_resolution == ():
+        if not address_resolution:
             # couldn't resolve hostname, nothing further to do
             return False, address_resolution
 
@@ -458,15 +458,27 @@ def _domain_match(hostname, pattern, address_resolution):
 
 
 def _resolve_address(hostname, memo):
-    if memo:
+    """ Perform a DNS resolution on a hostname.
+    If successful, return a tuple containing the resolved hostname,
+    the list of aliases if any, and the list of IP addresses.
+    If unsuccessful, return a tuple containing the value False.
+    Note that if this tuple is evaluated as a boolean, the result is False.
+
+    If 'memo' is present (including if it is a tuple containing only False),
+    then just return 'memo'.
+    """
+    if memo or memo == (False):
         return memo
     try:
         return (socket.gethostbyname_ex(hostname))
     except socket.gaierror:
-        return ()
+        return (False)
 
 
 def _is_subdomain(hostname, pattern):
+    """ Checks whether 'hostname' is equal to 'pattern'
+    or is a subdomain of 'pattern'.
+    """
     return hostname == pattern or hostname.endswith('.' + pattern)
 
 
