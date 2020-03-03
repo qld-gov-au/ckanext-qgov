@@ -36,7 +36,7 @@ from ckanext.qgov.common.stats import Stats
 LOG = getLogger(__name__)
 
 IP_ADDRESS = re.compile(r'^({0}[.]){{3}}{0}$'.format(r'[0-9]{1,3}'))
-PRIVATE_IP_ADDRESS = re.compile(r'^((10|127)([.]{0}){{3}}|(172[.](1[6-9]|2[0-9]|3[01])|169[.]254)([.]{0}){{2}}|192[.]168([.]{0}){{2}})$'.format(r'[0-9]{1,3}'))
+PRIVATE_IP_ADDRESS = re.compile(r'^((1?0|127)([.]{0}){{3}}|(172[.](1[6-9]|2[0-9]|3[01])|169[.]254)([.]{0}){{2}}|192[.]168([.]{0}){{2}})$'.format(r'[0-9]{1,3}'))
 
 
 def random_tags():
@@ -395,6 +395,7 @@ def _domain_match(hostname, pattern):
 
     If the pattern is 'private', then all private IP addresses are matched.
     This includes:
+    0.x.x.x
     10.x.x.x
     127.x.x.x
     169.254.x.x
