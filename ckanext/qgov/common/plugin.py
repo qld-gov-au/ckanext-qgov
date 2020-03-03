@@ -470,6 +470,12 @@ class QGOVPlugin(SingletonPlugin):
             ckan_config['licenses_group_url'] = 'file://' \
                 + possible_licences_path
 
+        if 'scheming.presets' in ckan_config:
+            # inject our presets before the others so we can override them
+            ckan_config['scheming.presets'] = \
+                'ckanext.qgov.common:resources/scheming_presets.json ' \
+                + ckan_config['scheming.presets']
+
         # Theme Inclusions of public and templates
         possible_public_path = os.path.join(here, 'theme/public')
         if os.path.isdir(possible_public_path):
