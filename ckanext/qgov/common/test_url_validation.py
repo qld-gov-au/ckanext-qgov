@@ -39,6 +39,7 @@ VALID_RESOURCE_URLS = [
     {'whitelist': 'gov.au translink.com.au', 'url_cases': [{'input': 'http://www.translink.com.au'}, {'input': 'https://www.qld.gov.au'}, {'input': 'www.qld.gov.au', 'expected': 'http://www.qld.gov.au'}]},
     # Domain does not match blacklist
     {'blacklist': 'evil.com', 'url_cases': [{'input': 'https://example.com'}, {'input': 'http://evil.com.au'}]},
+    {'blacklist': '1.2.3.4', 'url_cases': [{'input': 'https://example.com.1.2.3.4'}]},
     {'blacklist': 'private', 'url_cases': [
         {'input': 'http://www.qld.gov.au'},
         {'input': 'http://example.com'},

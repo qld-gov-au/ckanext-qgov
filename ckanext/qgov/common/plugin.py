@@ -402,32 +402,58 @@ def _domain_match(hostname, pattern):
     172.16.0.0 to 172.31.255.255
     192.168.x.x
     """
+
     if pattern == 'private':
         if PRIVATE_IP_ADDRESS.match(hostname):
             return True
+
         try:
-            hostname, aliaslist, ipaddrlist = socket.gethostbyname_ex(hostname)
-            for ipaddr in ipaddrlist:
-                if PRIVATE_IP_ADDRESS.match(ipaddr):
-                    LOG.debug("%s can resolve to %s which is private",
-                              hostname, ipaddrlist)
-                    return True
+            resolved_hostname, aliaslist, ipaddrlist = socket.gethostbyname_ex(hostname)
         except socket.gaierror:
-            # this is normal since the user could enter any arbitrary hostname
-            pass
-    elif IP_ADDRESS.match(pattern):
-        try:
-            hostname, aliaslist, ipaddrlist = socket.gethostbyname_ex(hostname)
-            if pattern in ipaddrlist:
-                LOG.debug("%s can resolve to %s which includes %s",
-                          hostname, ipaddrlist, pattern)
+            # couldn't resolve hostname, nothing further to do
+            return False
+
+        for ipaddr in ipaddrlist:
+            if PRIVATE_IP_ADDRESS.match(ipaddr):
+                LOG.debug("%s can resolve to %s which is private",
+                          hostname, ipaddrlist)
                 return True
+
+    elif IP_ADDRESS.match(pattern):
+        if hostname == pattern:
+            return True
+
+        try:
+            resolved_hostname, aliaslist, ipaddrlist = socket.gethostbyname_ex(hostname)
         except socket.gaierror:
-            # this is normal since the user could enter any arbitrary hostname
-            pass
-    if hostname == pattern or hostname.endswith('.' + pattern):
-        return True
+            # couldn't resolve hostname, nothing further to do
+            return False
+
+        if pattern in ipaddrlist:
+            LOG.debug("%s can resolve to %s which includes %s",
+                      hostname, ipaddrlist, pattern)
+            return True
+
+    else:
+        if _is_subdomain(hostname, pattern):
+            return True
+
+        try:
+            resolved_hostname, aliaslist, ipaddrlist = socket.gethostbyname_ex(hostname)
+        except socket.gaierror:
+            # couldn't resolve hostname, nothing further to do
+            return False
+        if _is_subdomain(resolved_hostname, pattern):
+            return True
+        for alias in aliaslist:
+            if _is_subdomain(alias, pattern):
+                return True
+
     return False
+
+
+def _is_subdomain(hostname, pattern):
+    return hostname == pattern or hostname.endswith('.' + pattern)
 
 
 class QGOVPlugin(SingletonPlugin):
