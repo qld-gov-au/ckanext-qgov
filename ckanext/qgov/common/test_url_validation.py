@@ -87,6 +87,17 @@ INVALID_RESOURCE_URLS = [
     {'whitelist': 'localhost', 'blacklist': '127.0.0.1', 'url_cases': ['http://localhost/']},
 ]
 
+MATCHING_ADDRESS_DATA = [
+    # pattern matches the unresolved hostname
+    {'input': 'example.com', 'pattern': 'example.com', 'address_resolution': ('foo.com', ['bar.org'], ['1.2.3.4'])},
+    # pattern matches the resolved hostname
+    {'input': 'example.com', 'pattern': 'foo.com', 'address_resolution': ('foo.com', ['bar.org'], ['1.2.3.4'])},
+    # pattern matches an alias
+    {'input': 'example.com', 'pattern': 'foo.com', 'address_resolution': ('example.com.au', ['bar.org', 'foo.com'], ['1.2.3.4'])},
+    # pattern matches a resolved address
+    {'input': 'example.com', 'pattern': '1.2.3.4', 'address_resolution': ('foo.com', ['bar.org'], ['1.2.3.4'])},
+]
+
 
 class TestUrlValidation(unittest.TestCase):
     """ Test our URL validation.
@@ -154,6 +165,19 @@ class TestUrlValidation(unittest.TestCase):
             print "Testing private URL {}".format(input_url)
             flattened_data = {key: input_url}
             self.assertRaises(df.Invalid, plugin.valid_resource_url, key, flattened_data, None, None)
+
+    def test_dns_resolution_is_checked(self):
+        """ Ensure that the DNS resolution of a domain is checked.
+
+        - Aliases should be checked for matches.
+        - Resolved IP address(es) should be checked.
+        """
+        for test in MATCHING_ADDRESS_DATA:
+            pattern = test.get('pattern')
+            input_url = test.get('input')
+            address_resolution = test.get('address_resolution')
+            print "Testing match for pattern {} on URL {} with DNS resolution {}".format(pattern, input_url, address_resolution)
+            self.assertEqual(plugin._domain_match(input_url, pattern, address_resolution), (True, address_resolution))
 
 
 if __name__ == '__main__':
