@@ -59,8 +59,8 @@ VALID_RESOURCE_URLS = [
     # Domains matches whitelist and does not match blacklist
     {'whitelist': 'gov.au translink.com.au', 'blacklist': '127.0.0.1', 'url_cases': [{'input': 'http://www.qld.gov.au'}]},
     # File upload skips whitelist and blacklist
-    {'whitelist': 'gov.au translink.com.au', 'url_cases': [{'input': 'example.pdf'}, {'input': 'https://www.qld.gov.au/example.pdf'}, {'input': 'www.qld.gov.au/example.csv'}], 'upload': True},
-    {'blacklist': 'example.pdf', 'url_cases': [{'input': 'example.pdf'}], 'upload': True},
+    {'whitelist': 'gov.au translink.com.au', 'url_cases': [{'input': 'example.pdf'}, {'input': 'https://www.qld.gov.au/example.pdf'}, {'input': 'www.qld.gov.au/example.csv'}], 'url_type': 'upload'},
+    {'blacklist': 'example.pdf', 'url_cases': [{'input': 'example.pdf'}], 'url_type': 'upload'},
 ]
 
 INVALID_RESOURCE_URLS = [
@@ -85,6 +85,17 @@ INVALID_RESOURCE_URLS = [
     # Hostname matches both whitelist and blacklist
     {'whitelist': 'example.com', 'blacklist': 'example.com', 'url_cases': ['http://example.com']},
     {'whitelist': 'localhost', 'blacklist': '127.0.0.1', 'url_cases': ['http://localhost/']},
+]
+
+MATCHING_ADDRESS_DATA = [
+    # pattern matches the unresolved hostname
+    {'input': 'example.com', 'pattern': 'example.com', 'address_resolution': ('foo.com', ['bar.org'], ['1.2.3.4'])},
+    # pattern matches the resolved hostname
+    {'input': 'example.com', 'pattern': 'foo.com', 'address_resolution': ('foo.com', ['bar.org'], ['1.2.3.4'])},
+    # pattern matches an alias
+    {'input': 'example.com', 'pattern': 'foo.com', 'address_resolution': ('example.com.au', ['bar.org', 'foo.com'], ['1.2.3.4'])},
+    # pattern matches a resolved address
+    {'input': 'example.com', 'pattern': '1.2.3.4', 'address_resolution': ('foo.com', ['bar.org'], ['1.2.3.4'])},
 ]
 
 
@@ -123,11 +134,7 @@ class TestUrlValidation(unittest.TestCase):
             for case in test['url_cases']:
                 input_url = case.get('input')
                 print "Testing valid URL {} with whitelist [{}] and blacklist [{}]".format(input_url, test.get('whitelist', ''), test.get('blacklist', ''))
-                if test.get('upload', False):
-                    url_type = 'upload'
-                else:
-                    url_type = 'link'
-                flattened_data = {key: input_url, ('resources', 0, 'url_type'): url_type}
+                flattened_data = {key: input_url, ('resources', 0, 'url_type'): test.get('url_type', 'link')}
                 plugin.valid_resource_url(key, flattened_data, None, None)
                 self.assertEqual(flattened_data[key], case.get('expected', input_url))
 
@@ -144,11 +151,7 @@ class TestUrlValidation(unittest.TestCase):
             qgov_plugin.configure(config)
             for case in test['url_cases']:
                 print "Testing invalid URL {} with whitelist {} and blacklist {}".format(case, test.get('whitelist', ''), test.get('blacklist', ''))
-                if test.get('upload', False):
-                    url_type = 'upload'
-                else:
-                    url_type = 'link'
-                flattened_data = {key: case, ('resources', 0, 'url_type'): url_type}
+                flattened_data = {key: case, ('resources', 0, 'url_type'): test.get('url_type', 'link')}
                 self.assertRaises(df.Invalid, plugin.valid_resource_url, key, flattened_data, None, None)
 
     def test_default_blacklist(self):
@@ -162,6 +165,20 @@ class TestUrlValidation(unittest.TestCase):
             print "Testing private URL {}".format(input_url)
             flattened_data = {key: input_url}
             self.assertRaises(df.Invalid, plugin.valid_resource_url, key, flattened_data, None, None)
+
+    def test_dns_resolution_is_checked(self):
+        """ Ensure that the DNS resolution of a domain is checked.
+
+        - Resolved hostname should be checked for matches.
+        - Aliases should be checked for matches.
+        - Resolved IP address(es) should be checked.
+        """
+        for test in MATCHING_ADDRESS_DATA:
+            pattern = test.get('pattern')
+            input_url = test.get('input')
+            address_resolution = test.get('address_resolution')
+            print "Testing match for pattern {} on URL {} with DNS resolution {}".format(pattern, input_url, address_resolution)
+            self.assertEqual(plugin._domain_match(input_url, pattern, address_resolution), True)
 
 
 if __name__ == '__main__':
