@@ -1,62 +1,62 @@
 @users
-Feature: organization_show API
+Feature: Organization APIs
 
-    Scenario: Ensure organisation membership is accessible to sysadmins
+    Scenario: Organisation membership is accessible to sysadmins
         Given "Admin" as the persona
         When I log in
         And I view the "department-of-health" organisation API "including" users
         And I take a screenshot
         Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "organisation_admin"') and contains(string(), '"name": "publisher"')]"
 
-    Scenario: Ensure organisation membership is accessible to organisation admins
+    Scenario: Organisation membership is accessible to admins of the organisation
         Given "Organisation Admin" as the persona
         When I log in
         And I view the "department-of-health" organisation API "including" users
         And I take a screenshot
         Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "organisation_admin"') and contains(string(), '"name": "publisher"')]"
 
-    Scenario: Ensure organisation membership is not accessible to non-admin members
+    Scenario: Organisation membership is not accessible to non-admins
         Given "Publisher" as the persona
         When I log in
         And I view the "department-of-health" organisation API "including" users
         And I take a screenshot
         Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'Authorization Error')]"
 
-    Scenario: Ensure organisation membership is not accessible to admins of other organisations
+    Scenario: Organisation membership is not accessible to other admins
         Given "Foodie" as the persona
         When I log in
         And I view the "department-of-health" organisation API "including" users
         And I take a screenshot
         Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'Authorization Error')]"
 
-    Scenario: Ensure organisation membership is not accessible anonymously
+    Scenario: Organisation membership is not accessible anonymously
         When I view the "department-of-health" organisation API "including" users
         And I take a screenshot
         Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'Authorization Error')]"
 
 
-    Scenario: Ensure organisation overview without membership is accessible to organisation admins
+    Scenario: Organisation overview is accessible to admins of the organisation
         Given "Organisation Admin" as the persona
         When I log in
         And I view the "department-of-health" organisation API "not including" users
         And I take a screenshot
         Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "department-of-health"')]"
 
-    Scenario: Ensure organisation overview without membership is accessible to non-admin members
+    Scenario: Organisation overview is accessible to non-admins
         Given "Publisher" as the persona
         When I log in
         And I view the "department-of-health" organisation API "not including" users
         And I take a screenshot
         Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "department-of-health"')]"
 
-    Scenario: Ensure organisation overview without membership is accessible to admins of other organisations
+    Scenario: Organisation overview is accessible to other admins
         Given "Foodie" as the persona
         When I log in
         And I view the "department-of-health" organisation API "not including" users
         And I take a screenshot
         Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "department-of-health"')]"
 
-    Scenario: Ensure organisation overview without membership is accessible anonymously
+    Scenario: Organisation overview is accessible anonymously
         When I view the "department-of-health" organisation API "not including" users
         And I take a screenshot
         Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "department-of-health"')]"
