@@ -169,6 +169,7 @@ class TestUrlValidation(unittest.TestCase):
     def test_dns_resolution_is_checked(self):
         """ Ensure that the DNS resolution of a domain is checked.
 
+        - Resolved hostname should be checked for matches.
         - Aliases should be checked for matches.
         - Resolved IP address(es) should be checked.
         """
