@@ -177,7 +177,7 @@ class TestUrlValidation(unittest.TestCase):
             input_url = test.get('input')
             address_resolution = test.get('address_resolution')
             print "Testing match for pattern {} on URL {} with DNS resolution {}".format(pattern, input_url, address_resolution)
-            self.assertEqual(plugin._domain_match(input_url, pattern, address_resolution), (True, address_resolution))
+            self.assertEqual(plugin._domain_match(input_url, pattern, address_resolution), True)
 
 
 if __name__ == '__main__':

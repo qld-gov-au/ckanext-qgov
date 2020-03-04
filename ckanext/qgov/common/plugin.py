@@ -370,19 +370,17 @@ def valid_resource_url(key, flattened_data, errors, context):
     if not resource_url.hostname:
         raise df.Invalid(_('Must be a valid URL'))
 
-    address_resolution = None
+    address_resolution = _resolve_address(resource_url.hostname)
     # reject the URL if it matches any blacklist entry
     if RESOURCE_BLACKLIST:
         for domain in RESOURCE_BLACKLIST:
-            is_match, address_resolution = _domain_match(resource_url.hostname, domain, address_resolution)
-            if is_match:
+            if _domain_match(resource_url.hostname, domain, address_resolution):
                 raise df.Invalid(_('Domain is blocked'))
 
     # require the URL to match a whitelist entry, if applicable
     if RESOURCE_WHITELIST:
         for domain in RESOURCE_WHITELIST:
-            is_match, address_resolution = _domain_match(resource_url.hostname, domain, address_resolution)
-            if is_match:
+            if _domain_match(resource_url.hostname, domain, address_resolution):
                 return
         raise df.Invalid(_('Must be from an allowed domain: {}').format(RESOURCE_WHITELIST))
 
@@ -408,67 +406,59 @@ def _domain_match(hostname, pattern, address_resolution):
 
     if pattern == 'private':
         if PRIVATE_IP_ADDRESS.match(hostname):
-            return True, address_resolution
+            return True
 
-        address_resolution = _resolve_address(hostname, address_resolution)
         if not address_resolution:
             # couldn't resolve hostname, nothing further to do
-            return False, address_resolution
+            return False
 
         ipaddrlist = address_resolution[2]
         for ipaddr in ipaddrlist:
             if PRIVATE_IP_ADDRESS.match(ipaddr):
                 LOG.debug("%s can resolve to %s which is private",
                           hostname, ipaddrlist)
-                return True, address_resolution
+                return True
 
     elif IP_ADDRESS.match(pattern):
         if hostname == pattern:
-            return True, address_resolution
+            return True
 
-        address_resolution = _resolve_address(hostname, address_resolution)
         if not address_resolution:
             # couldn't resolve hostname, nothing further to do
-            return False, address_resolution
+            return False
 
         ipaddrlist = address_resolution[2]
         if pattern in ipaddrlist:
             LOG.debug("%s can resolve to %s which includes %s",
                       hostname, ipaddrlist, pattern)
-            return True, address_resolution
+            return True
 
     else:
         if _is_subdomain(hostname, pattern):
-            return True, address_resolution
+            return True
 
-        address_resolution = _resolve_address(hostname, address_resolution)
         if not address_resolution:
             # couldn't resolve hostname, nothing further to do
-            return False, address_resolution
+            return False
 
         resolved_hostname = address_resolution[0]
         if _is_subdomain(resolved_hostname, pattern):
-            return True, address_resolution
+            return True
         aliaslist = address_resolution[1]
         for alias in aliaslist:
             if _is_subdomain(alias, pattern):
-                return True, address_resolution
+                return True
 
-    return False, address_resolution
+    return False
 
 
-def _resolve_address(hostname, memo):
+def _resolve_address(hostname):
     """ Perform a DNS resolution on a hostname.
     If successful, return a tuple containing the resolved hostname,
     the list of aliases if any, and the list of IP addresses.
     If unsuccessful, return a tuple containing the value False.
     Note that if this tuple is evaluated as a boolean, the result is False.
-
-    If 'memo' is present (including if it is a tuple containing only False),
-    then just return 'memo'.
     """
-    if memo or memo == (False):
-        return memo
     try:
         return (socket.gethostbyname_ex(hostname))
     except socket.gaierror:
