@@ -44,6 +44,7 @@ VALID_RESOURCE_URLS = [
         {'input': 'http://www.qld.gov.au'},
         {'input': 'http://example.com'},
         {'input': 'http://1.0.0.0'},
+        {'input': 'http://1.2.3.04'},
         {'input': 'http://9.255.255.255'},
         {'input': 'http://11.0.0.0'},
         {'input': 'http://20.0.0.0'},

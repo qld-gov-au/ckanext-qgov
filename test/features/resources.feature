@@ -32,7 +32,6 @@ Feature: Resource UI
         Examples:
         | url |
         | http://127.0.0.1/ |
-        | http://localhost/ |
         | http://0.0.0.0/ |
         | http://0.0.0.08/ |
         | http://0.255.255.255/ |
@@ -44,3 +43,16 @@ Feature: Resource UI
         | http://172.31.255.255/ |
         | http://192.168.0.0/ |
         | http://192.168.255.255/ |
+
+    @dns_needed
+    Scenario Outline: Link resource resolving to private address should be rejected
+        Given "Admin" as the persona
+        When I create a resource with name "Bad link" and URL "<url>"
+        Then I take a screenshot
+        And I should see "URL: Domain is blocked"
+
+        Examples:
+        | url |
+        | http://127.0.0.1.xip.io/ |
+        | http://169.254.169.254.nip.io/ |
+        | http://localhost/ |
