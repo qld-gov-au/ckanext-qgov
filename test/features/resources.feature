@@ -34,6 +34,7 @@ Feature: Resource UI
         | http://127.0.0.1/ |
         | http://localhost/ |
         | http://0.0.0.0/ |
+        | http://0.0.0.08/ |
         | http://0.255.255.255/ |
         | http://10.0.0.0/ |
         | http://10.255.255.255/ |
