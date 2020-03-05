@@ -13,6 +13,7 @@ from re import IGNORECASE, MULTILINE
 import time
 import urllib
 from logging import getLogger
+import urlparse
 
 from ckan.common import config, request, response, g
 import ckan.lib.base as base
@@ -235,9 +236,16 @@ def create_response_token():
 
 
 def _set_response_token_cookie(token):
-    """ Add a generated token cookie to the HTTP response
+    """ Add a generated token cookie to the HTTP response.
     """
-    response.set_cookie(TOKEN_FIELD_NAME, token, secure=True, httponly=True)
+    site_url = urlparse.urlparse(config.get('ckan.site_url', ''))
+    if site_url.scheme == 'https':
+        LOG.debug("Securing CSRF token cookie for site %s", site_url)
+        secure_cookies = True
+    else:
+        LOG.warn("Site %s is not secure! CSRF token may be exposed!", site_url)
+        secure_cookies = False
+    response.set_cookie(TOKEN_FIELD_NAME, token, secure=secure_cookies, httponly=True)
 
 
 def is_request_exempt():

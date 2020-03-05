@@ -461,7 +461,7 @@ def _resolve_address(hostname):
     """
     try:
         return (socket.gethostbyname_ex(hostname))
-    except socket.gaierror:
+    except (socket.gaierror, socket.herror):
         return (False)
 
 

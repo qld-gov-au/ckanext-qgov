@@ -22,6 +22,17 @@ def log_in(context):
         Then I should see an element with xpath "//a[contains(string(), 'Log out')]"
     """)
 
+@step('I create a resource with name "{name}" and URL "{url}"')
+def add_resource(context, name, url):
+    context.execute_steps(u"""
+        When I log in
+        And I visit "/dataset/new_resource/warandpeace"
+        And I press the element with xpath "//form[@id='resource-edit']//a[string() = 'Link']"
+        And I fill in "name" with "{}"
+        And I fill in "url" with "{}"
+        And I press the element with xpath "//button[contains(string(), 'Add')]"
+    """.format(name, url))
+
 
 @step('I go to dataset page')
 def go_to_dataset_page(context):
