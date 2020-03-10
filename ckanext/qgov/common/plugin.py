@@ -5,30 +5,38 @@ and site-specific customisations, such as a feedback channel.
 """
 import datetime
 import json
+from logging import getLogger
 import os
 import random
-from logging import getLogger
+import re
+import socket
+import urlparse
 
 import ckan.authz as authz
 from ckan.common import _, c
 from ckan.lib.base import h
 import ckan.lib.formatters as formatters
+import ckan.lib.navl.dictization_functions as df
 import ckan.logic.auth as logic_auth
 from ckan.logic import get_action
 from ckan.plugins import implements, toolkit, SingletonPlugin, IConfigurer,\
-    ITemplateHelpers, IActions, IAuthFunctions, IRoutes
+    ITemplateHelpers, IActions, IAuthFunctions, IRoutes, IConfigurable,\
+    IValidators
 import ckan.model as model
 from routes.mapper import SubMapper
 import requests
 from paste.deploy.converters import asbool
 
-import ckanext.qgov.common.anti_csrf as anti_csrf
-import ckanext.qgov.common.authenticator as authenticator
-import ckanext.qgov.common.urlm as urlm
-import ckanext.qgov.common.intercepts as intercepts
+import anti_csrf
+import authenticator
+import urlm
+import intercepts
 from ckanext.qgov.common.stats import Stats
 
 LOG = getLogger(__name__)
+
+IP_ADDRESS = re.compile(r'^({0}[.]){{3}}{0}$'.format(r'[0-9]{1,3}'))
+PRIVATE_IP_ADDRESS = re.compile(r'^((1?0|127)([.]{0}){{3}}|(172[.](1[6-9]|2[0-9]|3[01])|169[.]254)([.]{0}){{2}}|192[.]168([.]{0}){{2}})$'.format(r'[0-9]{1,3}'))
 
 
 def random_tags():
@@ -311,6 +319,159 @@ def legacy_pager(self, *args, **kwargs):
     return super(Page, self).pager(*args, **kwargs)
 
 
+def valid_url(key, flattened_data, errors, context):
+    """ Check whether the value is a valid URL.
+
+    As well as checking syntax, this requires the URL to match one of the
+    permitted protocols, unless it is an upload.
+    """
+    value = flattened_data[key]
+    if not value or h.is_url(value) or _is_upload(key, flattened_data):
+        return
+
+    value = 'http://{}'.format(value)
+    if not h.is_url(value):
+        raise df.Invalid(_('Must be a valid URL'))
+    flattened_data[key] = value
+
+
+def _is_upload(key, flattened_data):
+    url_type_key = list(key)
+    url_type_key[2] = 'url_type'
+    url_type_key = tuple(url_type_key)
+    url_type = flattened_data.get(url_type_key, None)
+    return url_type == 'upload'
+
+
+def valid_resource_url(key, flattened_data, errors, context):
+    """ Check whether the resource URL is permitted.
+
+    This requires either an uploaded file, or passing any configured
+    whitelist/blacklist checks.
+    """
+
+    valid_url(key, flattened_data, errors, context)
+    value = flattened_data[key]
+    if not value or _is_upload(key, flattened_data):
+        LOG.debug("No resource URL found, or file is uploaded; skipping check")
+        return
+
+    if not RESOURCE_WHITELIST and not RESOURCE_BLACKLIST:
+        LOG.debug("No whitelist or blacklist found; skipping URL check")
+        return
+
+    # parse our URL so we can extract the domain
+    resource_url = urlparse.urlparse(value)
+    if not resource_url:
+        LOG.warn("Invalid resource URL")
+        raise df.Invalid(_('Must be a valid URL'))
+
+    LOG.debug("Requested resource domain is %s", resource_url.hostname)
+    if not resource_url.hostname:
+        raise df.Invalid(_('Must be a valid URL'))
+
+    address_resolution = _resolve_address(resource_url.hostname)
+    # reject the URL if it matches any blacklist entry
+    if RESOURCE_BLACKLIST:
+        for domain in RESOURCE_BLACKLIST:
+            if _domain_match(resource_url.hostname, domain, address_resolution):
+                raise df.Invalid(_('Domain is blocked'))
+
+    # require the URL to match a whitelist entry, if applicable
+    if RESOURCE_WHITELIST:
+        for domain in RESOURCE_WHITELIST:
+            if _domain_match(resource_url.hostname, domain, address_resolution):
+                return
+        raise df.Invalid(_('Must be from an allowed domain: {}').format(RESOURCE_WHITELIST))
+
+    return
+
+
+def _domain_match(hostname, pattern, address_resolution):
+    """ Test whether 'hostname' matches the pattern.
+
+    Note that this is not a regex match, but subdomains are allowed.
+    Alternatively, 'pattern' can be an IP address, in which case,
+    this tests whether 'hostname' can resolve to that IP address.
+
+    If the pattern is 'private', then all private IP addresses are matched.
+    This includes:
+    0.x.x.x
+    10.x.x.x
+    127.x.x.x
+    169.254.x.x
+    172.16.0.0 to 172.31.255.255
+    192.168.x.x
+    """
+
+    if pattern == 'private':
+        if PRIVATE_IP_ADDRESS.match(hostname):
+            return True
+
+        if not address_resolution:
+            # couldn't resolve hostname, nothing further to do
+            return False
+
+        ipaddrlist = address_resolution[2]
+        for ipaddr in ipaddrlist:
+            if PRIVATE_IP_ADDRESS.match(ipaddr):
+                LOG.debug("%s can resolve to %s which is private",
+                          hostname, ipaddrlist)
+                return True
+
+    elif IP_ADDRESS.match(pattern):
+        if hostname == pattern:
+            return True
+
+        if not address_resolution:
+            # couldn't resolve hostname, nothing further to do
+            return False
+
+        ipaddrlist = address_resolution[2]
+        if pattern in ipaddrlist:
+            LOG.debug("%s can resolve to %s which includes %s",
+                      hostname, ipaddrlist, pattern)
+            return True
+
+    else:
+        if _is_subdomain(hostname, pattern):
+            return True
+
+        if not address_resolution:
+            # couldn't resolve hostname, nothing further to do
+            return False
+
+        resolved_hostname = address_resolution[0]
+        if _is_subdomain(resolved_hostname, pattern):
+            return True
+        aliaslist = address_resolution[1]
+        for alias in aliaslist:
+            if _is_subdomain(alias, pattern):
+                return True
+
+    return False
+
+
+def _resolve_address(hostname):
+    """ Perform a DNS resolution on a hostname.
+    If successful, return a tuple containing the resolved hostname,
+    the list of aliases if any, and the list of IP addresses.
+    If unsuccessful, return a tuple containing the value False.
+    Note that if this tuple is evaluated as a boolean, the result is False.
+    """
+    try:
+        return (socket.gethostbyname_ex(hostname))
+    except (socket.gaierror, socket.herror):
+        return (False)
+
+
+def _is_subdomain(hostname, pattern):
+    """ Checks whether 'hostname' is equal to 'pattern'
+    or is a subdomain of 'pattern'.
+    """
+    return hostname == pattern or hostname.endswith('.' + pattern)
+
+
 class QGOVPlugin(SingletonPlugin):
     """Apply custom functions for Queensland Government portals.
 
@@ -322,19 +483,12 @@ class QGOVPlugin(SingletonPlugin):
     ``IAuthFunctions`` lets us override authorisation checks.
     """
     implements(IConfigurer, inherit=True)
+    implements(IConfigurable, inherit=True)
     implements(ITemplateHelpers, inherit=True)
     implements(IActions, inherit=True)
     implements(IAuthFunctions, inherit=True)
     implements(IRoutes, inherit=True)
-
-    def __init__(self, **kwargs):
-        """ Monkey-patch functions that don't have standard extension
-        points.
-        """
-        anti_csrf.intercept_csrf()
-        authenticator.intercept_authenticator()
-        urlm.intercept_404()
-        intercepts.set_intercepts()
+    implements(IValidators, inherit=True)
 
     def update_config_schema(self, schema):
         """ Don't allow customisation of site CSS via the web interface.
@@ -358,6 +512,12 @@ class QGOVPlugin(SingletonPlugin):
         if os.path.isfile(possible_licences_path):
             ckan_config['licenses_group_url'] = 'file://' \
                 + possible_licences_path
+
+        if 'scheming.presets' in ckan_config:
+            # inject our presets before the others so we can override them
+            ckan_config['scheming.presets'] = \
+                'ckanext.qgov.common:resources/scheming_presets.json ' \
+                + ckan_config['scheming.presets']
 
         # Theme Inclusions of public and templates
         possible_public_path = os.path.join(here, 'theme/public')
@@ -396,6 +556,18 @@ class QGOVPlugin(SingletonPlugin):
             Page.pager = legacy_pager
         return ckan_config
 
+    def configure(self, config):
+        """ Monkey-patch functions that don't have standard extension
+        points.
+        """
+        global RESOURCE_WHITELIST
+        global RESOURCE_BLACKLIST
+        RESOURCE_WHITELIST = config.get('ckanext.qgov.resource_domains.whitelist', '').split()
+        RESOURCE_BLACKLIST = config.get('ckanext.qgov.resource_domains.blacklist', 'private').split()
+        LOG.info("Resources must come from: %s and cannot come from %s", RESOURCE_WHITELIST, RESOURCE_BLACKLIST)
+
+        intercepts.configure(config)
+
     def before_map(self, route_map):
         """ Add some custom routes for Queensland Government portals.
         """
@@ -408,6 +580,15 @@ class QGOVPlugin(SingletonPlugin):
                            '/api/action/submit_feedback',
                            action='submit_feedback')
             return route_map
+
+    def after_map(self, route_map):
+        """ Add monkey-patches after routing is set up.
+        """
+        anti_csrf.intercept_csrf()
+        authenticator.intercept_authenticator()
+        urlm.intercept_404()
+        intercepts.set_intercepts()
+        return route_map
 
     def get_helpers(self):
         """ A dictionary of extra helpers that will be available
@@ -446,4 +627,12 @@ class QGOVPlugin(SingletonPlugin):
             'user_list': auth_user_list,
             'user_show': auth_user_show,
             'group_show': auth_group_show
+        }
+
+    def get_validators(self):
+        """ Add URL validators.
+        """
+        return {
+            'valid_url': valid_url,
+            'valid_resource_url': valid_resource_url
         }

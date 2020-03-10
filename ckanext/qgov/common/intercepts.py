@@ -8,7 +8,7 @@ from logging import getLogger
 
 import requests
 
-from ckan.common import _, config, response
+from ckan.common import _, response
 from ckan.controllers.user import UserController
 from ckan.controllers.package import PackageController
 from ckan.controllers.storage import StorageController
@@ -20,9 +20,10 @@ import ckan.logic.validators as validators
 from ckan.model import Session
 from ckan.lib.base import c, request, abort, h
 from ckan.lib.uploader import Upload, ResourceUpload
+import ckan.plugins.toolkit as toolkit
 
-import ckanext.qgov.common.plugin
-from ckanext.qgov.common.authenticator import QGOVUser
+import plugin
+from authenticator import QGOVUser
 
 LOG = getLogger(__name__)
 
@@ -35,6 +36,7 @@ DEFAULT_USER_SCHEMA = schemas.default_user_schema()
 USER_NEW_FORM_SCHEMA = schemas.user_new_form_schema()
 USER_EDIT_FORM_SCHEMA = schemas.user_edit_form_schema()
 DEFAULT_UPDATE_USER_SCHEMA = schemas.default_update_user_schema()
+RESOURCE_SCHEMA = schemas.default_resource_schema()
 
 UPLOAD = Upload.upload
 RESOURCE_UPLOAD = ResourceUpload.upload
@@ -88,6 +90,17 @@ One Stop Shop - oss.online@dsiti.qld.gov.au
 EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
 
 
+def configure(config):
+    global password_min_length
+    global password_patterns
+
+    password_min_length = int(config.get('password_min_length', '10'))
+    password_patterns = config.get(
+        'password_patterns',
+        r'.*[0-9].*,.*[a-z].*,.*[A-Z].*,.*[-`~!@#$%^&*()_+=|\\/ ].*'
+    ).split(',')
+
+
 def set_intercepts():
     """ Monkey-patch to wrap/override core functions with our own.
     """
@@ -101,6 +114,8 @@ def set_intercepts():
     schemas.user_edit_form_schema = user_edit_form_schema
     schemas.default_update_user_schema = default_update_user_schema
 
+    schemas.default_resource_schema = default_resource_schema
+
     Upload.upload = upload_after_validation
     ResourceUpload.upload = resource_upload_after_validation
     StorageController.file = storage_download_with_headers
@@ -110,12 +125,6 @@ def set_intercepts():
 def user_password_validator(key, data, errors, context):
     """ Strengthen the built-in password validation to require more length and complexity.
     """
-    password_min_length = int(config.get('password_min_length', '10'))
-    password_patterns = config.get(
-        'password_patterns',
-        r'.*[0-9].*,.*[a-z].*,.*[A-Z].*,.*[-`~!@#$%^&*()_+=|\\/ ].*'
-    ).split(',')
-
     value = data[key]
 
     if isinstance(value, Missing):
@@ -173,6 +182,20 @@ def default_update_user_schema():
     """ Apply our password validator function when updating a user.
     """
     return _apply_schema_validator(DEFAULT_UPDATE_USER_SCHEMA, 'password')
+
+
+def default_resource_schema():
+    """ Add URL validators to the default resource schema.
+    """
+    resource_schema = RESOURCE_SCHEMA.copy()
+    # We can't make an entirely shallow copy, or else it will be permanently
+    # modified by eg schema.default_show_package_schema, but we don't want
+    # infinite depth either.
+    for key in resource_schema:
+        resource_schema[key] = resource_schema[key][:]
+    resource_schema['url'].append(toolkit.get_validator('valid_url'))
+    resource_schema['url'].append(toolkit.get_validator('valid_resource_url'))
+    return resource_schema
 
 
 def _unlock_account(account_id):
@@ -248,8 +271,8 @@ def validate_resource_edit(self, id, resource_id,
         resource_format = request.POST.getone('format')
         validation_schema = request.POST.getone('validation_schema')
         if resource_format == 'CSV' and validation_schema and validation_schema != '':
-            schema_url = ckanext.qgov.common.plugin.generate_download_url(id, validation_schema)
-            data_url = ckanext.qgov.common.plugin.generate_download_url(id, resource_id)
+            schema_url = plugin.generate_download_url(id, validation_schema)
+            data_url = plugin.generate_download_url(id, resource_id)
             validation_url = "http://goodtables.okfnlabs.org/api/run?format=csv&schema={0}&data={1}&row_limit=100000&report_limit=1000&report_type=grouped".format(schema_url, data_url)
             req = requests.get(validation_url, verify=False)
             if req.status_code == requests.codes.ok:
