@@ -168,4 +168,5 @@ Feature: User APIs
 
     Scenario: Password reset works
         When I request a password reset for "publisher"
+        And I take a screenshot
         Then I should see an element with xpath "//div[contains(string(), 'Please check your inbox for a reset code')]"
