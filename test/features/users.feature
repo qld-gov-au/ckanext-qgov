@@ -164,3 +164,8 @@ Feature: User APIs
         When I go to the dashboard
         And I take a screenshot
         Then I should see an element with xpath "//*[contains(string(), 'Not authorised to see this page')]"
+
+
+    Scenario: Password reset works
+        When I request a password reset for "publisher"
+        Then I should see an element with xpath "//div[contains(string(), 'Please check your inbox for a reset code')]"
