@@ -11,11 +11,11 @@ RUN apk add --no-cache curl && curl -s -L -O http://github.com/jwilder/dockerize
     && rm dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz
 
 # Install CKAN.
-ENV CKAN_VERSION 2.8.3
+ENV CKAN_VERSION 2.8.4-qgov.2
 RUN . /app/ckan/default/bin/activate \
     && cd /app/ckan/default \
     && pip install setuptools==36.1 \
-    && pip install -e "git+https://github.com/ckan/ckan.git@ckan-${CKAN_VERSION}#egg=ckan" \
+    && pip install -e "git+https://github.com/qld-gov-au/ckan.git@ckan-${CKAN_VERSION}#egg=ckan" \
     && sed -i "s/psycopg2==2.4.5/psycopg2==2.7.7/g" "/app/ckan/default/src/ckan/requirements.txt" \
     && pip install -r "/app/ckan/default/src/ckan/requirements.txt" \
     && ln -s "/app/ckan/default/src/ckan/who.ini" "/app/ckan/default/who.ini" \
