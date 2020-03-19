@@ -6,5 +6,7 @@ dockerize -wait tcp://solr:8983 -timeout 1m
 
 sed -i "s@SITE_URL@${SITE_URL}@g" /app/ckan/default/production.ini
 
+python -m smtpd -n -c DebuggingServer localhost:1025 &
+
 . /app/ckan/default/bin/activate \
     && paster serve /app/ckan/default/production.ini
