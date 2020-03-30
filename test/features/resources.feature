@@ -5,8 +5,7 @@ Feature: Resource UI
         Given "Admin" as the persona
         When I create a resource with name "<name>" and URL "<url>"
         And I press the element with xpath "//a[contains(@title, '<name>') and contains(string(), '<name>')]"
-        Then I take a screenshot
-        And I should see "<url>"
+        Then I should see "<url>"
 
         Examples:
         | name | url |
@@ -20,14 +19,12 @@ Feature: Resource UI
         Given "Admin" as the persona
         When I create a resource with name "Non-HTTP link" and URL "git+https://github.com/ckan/ckan.git"
         And I press the element with xpath "//a[contains(@title, 'Non-HTTP link') and contains(string(), 'Non-HTTP link')]"
-        Then I take a screenshot
         And I should see "http://git+https://github.com/ckan/ckan.git"
 
     Scenario Outline: Link resource with private address should be rejected
         Given "Admin" as the persona
         When I create a resource with name "Bad link" and URL "<url>"
-        Then I take a screenshot
-        And I should see "URL: Domain is blocked"
+        Then I should see "URL: Domain is blocked"
 
         Examples:
         | url |
@@ -48,8 +45,7 @@ Feature: Resource UI
     Scenario Outline: Link resource resolving to private address should be rejected
         Given "Admin" as the persona
         When I create a resource with name "Bad link" and URL "<url>"
-        Then I take a screenshot
-        And I should see "URL: Domain is blocked"
+        Then I should see "URL: Domain is blocked"
 
         Examples:
         | url |
