@@ -49,6 +49,15 @@ def go_to_register_page(context):
     when_i_visit_url(context, '/user/register')
 
 
+@step('I request a password reset for "{username}"')
+def request_reset(context, username):
+    context.execute_steps(u"""
+        When I visit "/user/reset"
+        And I fill in "user" with "{}"
+        And I press the element with xpath "//button[contains(string(), 'Request Reset')]"
+    """.format(username))
+
+
 @step('I search the autocomplete API for user "{username}"')
 def go_to_user_autocomplete(context, username):
     when_i_visit_url(context, '/api/2/util/user/autocomplete?q={}'.format(username))
