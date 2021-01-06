@@ -17,7 +17,7 @@ import urlparse
 
 from ckan.common import config, request, response, g
 import ckan.lib.base as base
-from six import u as unicode
+import six
 
 LOG = getLogger(__name__)
 
@@ -135,7 +135,7 @@ def validate_token(token):
     if 'hash' not in token_values:
         return False
 
-    expected_hmac = unicode(get_digest(token_values['message']))
+    expected_hmac = six.u(get_digest(token_values['message']))
     if not hmac.compare_digest(expected_hmac, token_values['hash']):
         return False
 
@@ -161,7 +161,7 @@ def read_token_values(token):
 
     return {
         "message": message,
-        "hash": unicode(parts[0]),
+        "hash": six.u(parts[0]),
         "timestamp": int(message_parts[0]),
         "nonce": int(message_parts[1]),
         "username": message_parts[2]

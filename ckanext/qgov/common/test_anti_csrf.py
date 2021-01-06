@@ -7,7 +7,7 @@ import re
 import unittest
 
 import anti_csrf
-from six import u as unicode
+import six
 
 NUMBER_FIELDS = re.compile(r'(![0-9]+)/([0-9]+)/')
 STUB_TOKEN = 'some_token_or_other'
@@ -41,7 +41,7 @@ class TestAntiCsrfFilter(unittest.TestCase):
         """
         good_token = 'hash!123/456/someuser'
         expected_value = {
-            "hash": unicode("hash"),
+            "hash": six.u("hash"),
             "message": "123/456/someuser",
             "timestamp": 123,
             "nonce": 456,
