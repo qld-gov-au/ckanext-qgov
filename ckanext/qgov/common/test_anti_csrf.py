@@ -41,7 +41,7 @@ class TestAntiCsrfFilter(unittest.TestCase):
         """
         good_token = 'hash!123/456/someuser'
         expected_value = {
-            "hash": six.u("hash"),
+            "hash": six.ensure_text("hash"),
             "message": "123/456/someuser",
             "timestamp": 123,
             "nonce": 456,
