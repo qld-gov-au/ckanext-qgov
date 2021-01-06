@@ -117,7 +117,7 @@ class TestUrlValidation(unittest.TestCase):
                 url_type = 'upload'
             else:
                 url_type = 'link'
-            print "Testing URL {} of type '{}'".format(input_url, url_type)
+            print("Testing URL {} of type '{}'".format(input_url, url_type))
             flattened_data = {key: input_url, ('resources', 0, 'url_type'): url_type}
             plugin.valid_url(key, flattened_data, None, None)
             self.assertEqual(flattened_data[key], test.get('expected', input_url))
@@ -135,7 +135,7 @@ class TestUrlValidation(unittest.TestCase):
             qgov_plugin.configure(config)
             for case in test['url_cases']:
                 input_url = case.get('input')
-                print "Testing valid URL {} with whitelist [{}] and blacklist [{}]".format(input_url, test.get('whitelist', ''), test.get('blacklist', ''))
+                print("Testing valid URL {} with whitelist [{}] and blacklist [{}]".format(input_url, test.get('whitelist', ''), test.get('blacklist', '')))
                 flattened_data = {key: input_url, ('resources', 0, 'url_type'): test.get('url_type', 'link')}
                 plugin.valid_resource_url(key, flattened_data, None, None)
                 self.assertEqual(flattened_data[key], case.get('expected', input_url))
@@ -152,7 +152,7 @@ class TestUrlValidation(unittest.TestCase):
             qgov_plugin = plugin.QGOVPlugin()
             qgov_plugin.configure(config)
             for case in test['url_cases']:
-                print "Testing invalid URL {} with whitelist {} and blacklist {}".format(case, test.get('whitelist', ''), test.get('blacklist', ''))
+                print("Testing invalid URL {} with whitelist {} and blacklist {}".format(case, test.get('whitelist', ''), test.get('blacklist', '')))
                 flattened_data = {key: case, ('resources', 0, 'url_type'): test.get('url_type', 'link')}
                 self.assertRaises(df.Invalid, plugin.valid_resource_url, key, flattened_data, None, None)
 
@@ -164,7 +164,7 @@ class TestUrlValidation(unittest.TestCase):
         qgov_plugin.configure({})
         key = ('resources', 0, 'url')
         for input_url in ['http://127.0.0.1', 'localhost']:
-            print "Testing private URL {}".format(input_url)
+            print("Testing private URL {}".format(input_url))
             flattened_data = {key: input_url}
             self.assertRaises(df.Invalid, plugin.valid_resource_url, key, flattened_data, None, None)
 
@@ -179,7 +179,7 @@ class TestUrlValidation(unittest.TestCase):
             pattern = test.get('pattern')
             input_url = test.get('input')
             address_resolution = test.get('address_resolution')
-            print "Testing match for pattern {} on URL {} with DNS resolution {}".format(pattern, input_url, address_resolution)
+            print("Testing match for pattern {} on URL {} with DNS resolution {}".format(pattern, input_url, address_resolution))
             self.assertEqual(plugin._domain_match(input_url, pattern, address_resolution), True)
 
 
