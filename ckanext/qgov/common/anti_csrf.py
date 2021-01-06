@@ -136,7 +136,7 @@ def validate_token(token):
         return False
 
     expected_hmac = six.u(get_digest(token_values['message']))
-    if not hmac.compare_digest(expected_hmac, token_values['hash']):
+    if not hmac.compare_digest(expected_hmac, six.u(token_values['hash'])):
         return False
 
     now = int(time.time())
