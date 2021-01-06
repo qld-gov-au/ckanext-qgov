@@ -161,7 +161,7 @@ def read_token_values(token):
 
     return {
         "message": message,
-        "hash": six.u(parts[0]),
+        "hash": parts[0],
         "timestamp": int(message_parts[0]),
         "nonce": int(message_parts[1]),
         "username": message_parts[2]
