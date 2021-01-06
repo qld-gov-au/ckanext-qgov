@@ -3,6 +3,7 @@
 """
 from ckan import model
 from sqlalchemy import and_, func, select, Table
+from six import u as unicode
 
 
 def table(name):

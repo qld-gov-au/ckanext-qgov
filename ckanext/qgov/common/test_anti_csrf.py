@@ -7,6 +7,7 @@ import re
 import unittest
 
 import anti_csrf
+from six import u as unicode
 
 NUMBER_FIELDS = re.compile(r'(![0-9]+)/([0-9]+)/')
 STUB_TOKEN = 'some_token_or_other'
@@ -53,10 +54,10 @@ class TestAntiCsrfFilter(unittest.TestCase):
             NUMBER_FIELDS.sub(r'\1/\2a/', good_token)
         ]
 
-        print "Testing good token '{}'".format(good_token)
+        print("Testing good token '{}'".format(good_token))
         self.assertEqual(anti_csrf.read_token_values(good_token), expected_value)
         for bad_token in bad_tokens:
-            print "Testing bad token '{}'".format(bad_token)
+            print("Testing bad token '{}'".format(bad_token))
             self.assertEqual(anti_csrf.read_token_values(bad_token), {})
 
     def test_validate_token(self):
@@ -73,10 +74,10 @@ class TestAntiCsrfFilter(unittest.TestCase):
             NUMBER_FIELDS.sub(r'\1/123/', good_token)
         ]
 
-        print "Testing good token {}".format(good_token)
+        print("Testing good token {}".format(good_token))
         self.assertTrue(anti_csrf.validate_token(good_token))
         for bad_token in bad_tokens:
-            print "Testing invalid token '{}'".format(bad_token)
+            print("Testing invalid token '{}'".format(bad_token))
             self.assertFalse(anti_csrf.validate_token(bad_token))
             self.assertFalse(anti_csrf.is_soft_expired(bad_token))
 
@@ -91,7 +92,7 @@ class TestAntiCsrfFilter(unittest.TestCase):
         old_values = "{}/{}/{}".format(int(time.time()) - 11 * 60, 123, 'unit-test')
         old_token = "{}!{}".format(anti_csrf.get_digest(old_values), old_values)
 
-        print "Testing soft-expired token {}".format(old_token)
+        print("Testing soft-expired token {}".format(old_token))
         self.assertTrue(anti_csrf.is_soft_expired(old_token))
 
     def test_username_with_slash(self):
@@ -102,9 +103,9 @@ class TestAntiCsrfFilter(unittest.TestCase):
         mock_objects('abc/123')
         good_token = anti_csrf.create_response_token()
 
-        print "Testing good token '{}'".format(good_token)
+        print("Testing good token '{}'".format(good_token))
         self.assertTrue(anti_csrf.validate_token(good_token))
-        print "Testing wrong user token '{}'".format(bad_token)
+        print("Testing wrong user token '{}'".format(bad_token))
         self.assertFalse(anti_csrf.validate_token(bad_token))
 
     def test_inject_token(self):
@@ -135,7 +136,7 @@ class TestAntiCsrfFilter(unittest.TestCase):
         ]
         for case in html_cases:
             injected_html = anti_csrf.apply_token(case['input'])
-            print "Expecting exactly one token in {}".format(injected_html)
+            print("Expecting exactly one token in {}".format(injected_html))
             self.assertEqual(injected_html,
                              case['expected'].format(anti_csrf.TOKEN_FIELD_NAME, STUB_TOKEN))
             self.assertEqual(injected_html, anti_csrf.apply_token(injected_html))

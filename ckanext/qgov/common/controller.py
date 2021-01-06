@@ -92,7 +92,7 @@ def _feedback_mail_recipient(recipient_name, recipient_email,
         smtp_connection.sendmail(mail_from, recipient_email, msg.as_string())
         LOG.info("Sent email to %s", ','.join(recipient_email))
 
-    except smtplib.SMTPException, ex:
+    except smtplib.SMTPException as ex:
         msg = '%r' % ex
         LOG.exception(msg)
         raise MailerException(msg)
