@@ -98,7 +98,7 @@ If possible, upload the file in another format.
 If you continue to have problems, email
 Smart Service Queensland - online.products@smartservice.qld.gov.au
 '''
-IS_REMOTE_URL_PATTERN = re.compile(r'^[a-z]+:')
+IS_REMOTE_URL_PATTERN = re.compile(r'^[a-z]+://')
 
 EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
 
