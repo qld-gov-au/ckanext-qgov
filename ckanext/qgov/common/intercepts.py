@@ -24,7 +24,7 @@ import ckan.logic.schema as schemas
 import ckan.logic.validators as validators
 from ckan.model import Session
 from ckan.lib.base import c, request, abort, h
-from ckan.lib.uploader import Upload, ResourceUpload
+from ckan.lib.uploader import Upload
 import ckan.plugins.toolkit as toolkit
 from werkzeug.datastructures import FileStorage as FlaskFileStorage
 
@@ -138,7 +138,6 @@ def set_intercepts():
     schemas.default_resource_schema = default_resource_schema
 
     Upload.upload = upload_after_validation
-    ResourceUpload.upload = resource_upload_after_validation
     StorageController.file = storage_download_with_headers
     PackageController.resource_download = resource_download_with_headers
 
@@ -314,16 +313,6 @@ def upload_after_validation(self, max_size=2):
             {self.file_field: [INVALID_UPLOAD_MESSAGE]}
         )
     UPLOAD(self, max_size)
-
-
-def resource_upload_after_validation(self, id, max_size=10):
-    """ Validate file type against our whitelist before uploading.
-    """
-    if self.filename and not ALLOWED_EXTENSIONS_PATTERN.search(self.filename):
-        raise ckan.logic.ValidationError(
-            {'upload': [INVALID_UPLOAD_MESSAGE]}
-        )
-    RESOURCE_UPLOAD(self, id, max_size)
 
 
 def validate_resource_mimetype(resource):
