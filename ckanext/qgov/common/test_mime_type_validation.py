@@ -34,8 +34,10 @@ class TestMimeTypeValidation(unittest.TestCase):
         """
         self.assertEqual(intercepts.coalesce_mime_types(['text/plain', text_type]), text_type)
         self.assertEqual(intercepts.coalesce_mime_types([None, text_type, 'text/plain']), text_type)
+        self.assertEqual(intercepts.coalesce_mime_types([None, 'application/xml', 'text/plain']), 'application/xml')
         self.assertEqual(intercepts.coalesce_mime_types([application_type, 'application/octet-stream']), application_type)
         self.assertEqual(intercepts.coalesce_mime_types([None, application_type, 'application/octet-stream']), application_type)
+        self.assertEqual(intercepts.coalesce_mime_types([None, 'x-gis/x-shapefile', 'application/octet-stream']), 'x-gis/x-shapefile')
 
     def test_reject_override_not_configured(self):
         """ Test that more specific candidates cannot override
@@ -46,11 +48,10 @@ class TestMimeTypeValidation(unittest.TestCase):
         self.assertRaises(ckan.logic.ValidationError, intercepts.coalesce_mime_types, [application_type, 'application/octet-stream'], False)
 
     def test_reject_override_incompatible_prefix(self):
-        """ Test that candidates cannot override 'text/plain' and
-        'application/octet-stream' with a different prefix.
+        """ Test that candidates cannot override 'text/plain'
+        with a different prefix.
         """
         self.assertRaises(ckan.logic.ValidationError, intercepts.coalesce_mime_types, ['text/plain', application_type])
-        self.assertRaises(ckan.logic.ValidationError, intercepts.coalesce_mime_types, [text_type, 'application/octet-stream'])
 
 
 if __name__ == '__main__':

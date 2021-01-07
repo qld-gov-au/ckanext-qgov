@@ -45,45 +45,44 @@ DEFAULT_UPDATE_USER_SCHEMA = schemas.default_update_user_schema()
 RESOURCE_SCHEMA = schemas.default_resource_schema()
 
 UPLOAD = Upload.upload
-RESOURCE_UPLOAD = ResourceUpload.upload
 STORAGE_DOWNLOAD = StorageController.file
 RESOURCE_DOWNLOAD = PackageController.resource_download
 
 ALLOWED_EXTENSIONS = [
+    'accdb',
     'csv',
-    'xls',
-    'txt',
-    'kmz',
-    'xlsx',
-    'pdf',
-    'shp',
-    'tab',
-    'jp2',
-    'esri',
-    'gdb',
-    'jpg',
-    'png',
-    'tif',
-    'tiff',
-    'jpeg',
-    'xml',
-    'kml',
     'doc',
     'docx',
-    'rtf',
-    'json',
-    'accdb',
+    'esri',
+    'gdb',
     'geojson',
     'geotiff',
-    'topojson',
     'gpx',
     'html',
+    'jp2',
+    'jpeg',
+    'jpg',
+    'json',
+    'kml',
+    'kmz',
     'mtl',
     'obj',
+    'pdf',
+    'png',
     'ppt',
     'pptx',
+    'rtf',
+    'shp',
+    'tab',
+    'tif',
+    'tiff',
+    'topojson',
+    'txt',
     'wfs',
     'wmts',
+    'xls',
+    'xlsx',
+    'xml',
     'zip'
 ]
 ALLOWED_EXTENSIONS_PATTERN = re.compile(r'.*\.(' + '|'.join(ALLOWED_EXTENSIONS) + ')$', re.I)
@@ -120,6 +119,21 @@ def configure(config):
         r'.*[0-9].*,.*[a-z].*,.*[A-Z].*,.*[-`~!@#$%^&*()_+=|\\/ ].*'
     ).split(',')
     allowed_mime_types = config.get('ckan.mimetypes_allowed', '*').split(',')
+
+    # Add allowed upload types that don't seem to be standard.
+    # NB It's more important to match a sniffable type than an RFC type.
+    mimetypes.add_type('application/msaccess', '.accdb')
+    mimetypes.add_type('x-gis/x-shapefile', '.esri')
+    mimetypes.add_type('application/x-filegdb', '.gdb')
+    mimetypes.add_type('application/json', '.geojson')
+    mimetypes.add_type('image/tiff', '.geotiff')
+    mimetypes.add_type('application/xml', '.gpx')
+    mimetypes.add_type('model/mtl', '.mtl')
+    mimetypes.add_type('x-gis/x-shapefile', '.shp')
+    mimetypes.add_type('text/plain', '.tab')
+    mimetypes.add_type('application/json', '.topojson')
+    mimetypes.add_type('application/xml', '.wfs')
+    mimetypes.add_type('application/xml', '.wmts')
 
 
 def set_intercepts():
@@ -365,9 +379,9 @@ def coalesce_mime_types(mime_types, allow_override=True):
     Returns 'application/octet-stream' if all candidates are None.
 
     'allow_override' controls the treatment of 'application/octet-stream'
-    and 'text/plain' candidates. If True, then more specific 'text' and
-    'application' types will be able to override these types (but the
-    prefix must still match, eg 'text/csv' can override 'text/plain',
+    and 'text/plain' candidates. If True, then more specific types will
+    be able to override these types (but the prefix must still match for
+    text types, eg 'text/csv' can override 'text/plain',
     but 'application/pdf' cannot). If False, then all types must exactly
     match or ValidationError will be thrown.
     """
@@ -378,7 +392,7 @@ def coalesce_mime_types(mime_types, allow_override=True):
         if not best_candidate:
             best_candidate = mime_type
             continue
-        if allow_override and best_candidate.split('/')[0] == mime_type.split('/')[0]:
+        if allow_override and is_valid_override(best_candidate, mime_type):
             if best_candidate in GENERIC_MIMETYPES:
                 best_candidate = mime_type
                 continue
@@ -389,6 +403,20 @@ def coalesce_mime_types(mime_types, allow_override=True):
         )
 
     return best_candidate or 'application/octet-stream'
+
+
+def is_valid_override(mime_type1, mime_type2):
+    """ Returns True if one of the two types can be considered a subtype
+    of the other, eg 'text/csv' can override 'text/plain'.
+    """
+    if 'application/octet-stream' in [mime_type1, mime_type2]:
+        return True
+    if 'text/plain' in [mime_type1, mime_type2]:
+        if mime_type1.split('/')[0] == mime_type2.split('/')[0]:
+            return True
+        if 'application/xml' in [mime_type1, mime_type2]:
+            return True
+    return False
 
 
 def is_mimetype_allowed(mime_type):
