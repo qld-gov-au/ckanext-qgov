@@ -98,6 +98,7 @@ If possible, upload the file in another format.
 If you continue to have problems, email
 Smart Service Queensland - online.products@smartservice.qld.gov.au
 '''
+IS_REMOTE_URL_PATTERN = re.compile(r'^[a-z]+:')
 
 EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
 
@@ -333,22 +334,6 @@ def validate_resource_mimetype(resource):
     upload_field_storage = resource.get('upload', None)
     if isinstance(upload_field_storage, ALLOWED_UPLOAD_TYPES):
         filename = upload_field_storage.filename
-        if not ALLOWED_EXTENSIONS_PATTERN.search(filename):
-            raise ckan.logic.ValidationError(
-                {'upload': [INVALID_UPLOAD_MESSAGE]}
-            )
-
-        filename_mimetype = mimetypes.guess_type(filename, strict=False)[0]
-        LOG.debug("Upload filename indicates MIME type %s", filename_mimetype)
-
-        format_mimetype = mimetypes.guess_type('example.' + resource.get('format', ''), strict=False)[0]
-        LOG.debug("Upload format indicates MIME type %s", format_mimetype)
-
-        # If the file extension or format matches a generic type,
-        # then sniffing should say the same.
-        # This is to prevent attacks based on browser sniffing.
-        allow_override = filename_mimetype not in GENERIC_MIMETYPES\
-            and format_mimetype not in GENERIC_MIMETYPES
 
         mime = magic.Magic(mime=True)
         upload_file = _get_underlying_file(upload_field_storage)
@@ -356,19 +341,43 @@ def validate_resource_mimetype(resource):
         # go back to the beginning of the file buffer
         upload_file.seek(0, os.SEEK_SET)
         LOG.debug("Upload sniffing indicates MIME type %s", sniffed_mimetype)
+    elif IS_REMOTE_URL_PATTERN.search(resource.get('url', 'http://example.com')):
+        LOG.debug("%s is not an uploaded resource; don't validate", resource['id'])
+        return
+    else:
+        LOG.debug("No upload in progress for %s; just sanity-check metadata", resource['id'])
+        filename = resource.get('url')
+        sniffed_mimetype = None
 
-        claimed_mimetype = resource.get('mimetype')
-        LOG.debug("Upload claims to have MIME type %s", claimed_mimetype)
-
-        best_guess_mimetype = resource['mimetype'] = coalesce_mime_types(
-            [filename_mimetype, format_mimetype, sniffed_mimetype, claimed_mimetype],
-            allow_override=allow_override
+    if not ALLOWED_EXTENSIONS_PATTERN.search(filename):
+        raise ckan.logic.ValidationError(
+            {'upload': [INVALID_UPLOAD_MESSAGE]}
         )
-        LOG.debug("Best guess at MIME type is %s", best_guess_mimetype)
-        if not is_mimetype_allowed(best_guess_mimetype):
-            raise ckan.logic.ValidationError(
-                {'upload': [INVALID_UPLOAD_MESSAGE]}
-            )
+
+    filename_mimetype = mimetypes.guess_type(resource.get('url'), strict=False)[0]
+    LOG.debug("Upload filename indicates MIME type %s", filename_mimetype)
+
+    format_mimetype = mimetypes.guess_type('example.' + resource.get('format', ''), strict=False)[0]
+    LOG.debug("Upload format indicates MIME type %s", format_mimetype)
+
+    # If the file extension or format matches a generic type,
+    # then sniffing should say the same.
+    # This is to prevent attacks based on browser sniffing.
+    allow_override = filename_mimetype not in GENERIC_MIMETYPES\
+        and format_mimetype not in GENERIC_MIMETYPES
+
+    claimed_mimetype = resource.get('mimetype')
+    LOG.debug("Upload claims to have MIME type %s", claimed_mimetype)
+
+    best_guess_mimetype = resource['mimetype'] = coalesce_mime_types(
+        [filename_mimetype, format_mimetype, sniffed_mimetype, claimed_mimetype],
+        allow_override=allow_override
+    )
+    LOG.debug("Best guess at MIME type is %s", best_guess_mimetype)
+    if not is_mimetype_allowed(best_guess_mimetype):
+        raise ckan.logic.ValidationError(
+            {'upload': [INVALID_UPLOAD_MESSAGE]}
+        )
 
 
 def coalesce_mime_types(mime_types, allow_override=True):
@@ -380,10 +389,10 @@ def coalesce_mime_types(mime_types, allow_override=True):
 
     'allow_override' controls the treatment of 'application/octet-stream'
     and 'text/plain' candidates. If True, then more specific types will
-    be able to override these types (but the prefix must still match for
-    text types, eg 'text/csv' can override 'text/plain',
-    but 'application/pdf' cannot). If False, then all types must exactly
-    match or ValidationError will be thrown.
+    be able to override these types (within limits, eg 'text/csv' and
+    'application/xml' can override 'text/plain', but 'application/pdf'
+    cannot). If False, then all types must exactly match, or
+    ValidationError will be thrown.
     """
     best_candidate = None
     for mime_type in mime_types:
