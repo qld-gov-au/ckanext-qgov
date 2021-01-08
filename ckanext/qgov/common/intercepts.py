@@ -342,10 +342,10 @@ def validate_resource_mimetype(resource):
         upload_file.seek(0, os.SEEK_SET)
         LOG.debug("Upload sniffing indicates MIME type %s", sniffed_mimetype)
     elif IS_REMOTE_URL_PATTERN.search(resource.get('url', 'http://example.com')):
-        LOG.debug("%s is not an uploaded resource; don't validate", resource['id'])
+        LOG.debug("%s is not an uploaded resource; don't validate", resource.get('id', 'New resource'))
         return
     else:
-        LOG.debug("No upload in progress for %s; just sanity-check metadata", resource['id'])
+        LOG.debug("No upload in progress for %s; just sanity-check metadata", resource.get('id', 'new resource'))
         filename = resource.get('url')
         sniffed_mimetype = None
 
