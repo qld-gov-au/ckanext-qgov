@@ -92,9 +92,10 @@ If possible, upload the file in another format.
 If you continue to have problems, email
 Smart Service Queensland - online.products@smartservice.qld.gov.au
 '''
-MISMATCHING_UPLOAD_MESSAGE = '''Unable to determine whether the file is
-of type '{}' or '{}'.
-If possible, upload the file in another format.
+MISMATCHING_UPLOAD_MESSAGE = '''Mismatched file type. Please ensure that
+the selected format is compatible with the file extension and file
+contents. Unable to determine whether the file is of type '{}' or '{}'.
+If possible, upload the file with a different format.
 If you continue to have problems, email
 Smart Service Queensland - online.products@smartservice.qld.gov.au
 '''
