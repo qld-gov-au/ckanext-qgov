@@ -1,0 +1,34 @@
+{
+    "allowed_extensions": [
+        "accdb", "csv", "doc", "docx", "esri", "fgdb", "gdb", "geojson",
+        "geotiff", "gpkg", "gpx", "html", "jp2", "jpeg", "jpg", "json",
+        "kml", "kmz", "mtl", "n3", "obj", "pdf", "png", "ppt", "pptx",
+        "rdf", "rtf", "shp", "sparql", "tab", "tif", "tiff", "ttf",
+        "topojson", "txt", "wfs", "wmts", "xls", "xlsx", "xml", "zip"
+    ],
+    "generic_mimetypes": ["application/octet-stream", "text/plain"],
+    "allowed_overrides": {
+        "application/octet-stream": ["*"],
+        "text/plain": ["application/xml", "application/sparql-query"]
+    },
+    "extra_mimetypes": {
+        ".accdb": "application/msaccess",
+        ".esri": "x-gis/x-shapefile",
+        ".fgdb": "application/x-filegdb",
+        ".gdb": "application/x-filegdb",
+        ".geojson": "application/json",
+        ".geotiff": "image/tiff",
+        ".gpkg": "application/x-sqlite3",
+        ".gpx": "application/xml",
+        ".mtl": "model/mtl",
+        ".n3": "text/n3",
+        ".rdf": "text/xml",
+        ".shp": "x-gis/x-shapefile",
+        ".sparql": "application/sparql-query",
+        ".tab": "text/plain",
+        ".topojson": "application/json",
+        ".ttf": "text/plain",
+        ".wfs": "application/xml",
+        ".wmts": "application/xml"
+    }
+}
