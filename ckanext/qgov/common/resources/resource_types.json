@@ -1,17 +1,24 @@
 {
     "allowed_extensions": [
-        "accdb", "csv", "doc", "docx", "esri", "fgdb", "gdb", "geojson",
-        "geotiff", "gpkg", "gpx", "html", "jp2", "jpeg", "jpg", "json",
-        "kml", "kmz", "mtl", "n3", "obj", "pdf", "png", "ppt", "pptx",
-        "rdf", "rtf", "shp", "sparql", "tab", "tif", "tiff", "ttf",
-        "topojson", "txt", "wfs", "wmts", "xls", "xlsx", "xml", "zip"
+        "accdb", "asc", "cdf", "csv", "doc", "docx", "ecw", "esri",
+        "fgdb", "gdb", "geojson", "geotiff", "gpkg", "gpx", "html",
+        "jp2", "jpeg", "jpg", "json", "kml", "kmz", "mdb", "mtl", "n3",
+        "nc", "obj", "pdf", "png", "ppt", "pptx", "rdf", "rtf", "shp",
+        "sparql", "tab", "tif", "tiff", "topojson", "tsv", "ttf", "txt",
+        "wfs", "wmts", "xls", "xlsx", "xml", "zip"
     ],
     "allowed_overrides": {
         "application/octet-stream": ["*"],
-        "text/plain": ["application/xml", "application/sparql-query"]
+        "text/plain": [
+            "application/sparql-query",
+            "application/x-ascii-grid",
+            "application/xml"
+        ]
     },
     "extra_mimetypes": {
         ".accdb": "application/msaccess",
+        ".asc": "application/x-ascii-grid",
+        ".ecw": "application/x-ecw",
         ".esri": "x-gis/x-shapefile",
         ".fgdb": "application/x-filegdb",
         ".gdb": "application/x-filegdb",
