@@ -11,8 +11,8 @@
         "application/octet-stream": ["*"],
         "text/plain": [
             "application/sparql-query",
-            "application/x-ascii-grid"
-            "application/xml",
+            "application/x-ascii-grid",
+            "application/xml"
         ]
     },
     "extra_mimetypes": {
