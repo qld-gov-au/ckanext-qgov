@@ -61,7 +61,9 @@ ALLOWED_EXTENSIONS = file_mime_config.get('allowed_extensions', [])
 ALLOWED_EXTENSIONS_PATTERN = re.compile(r'.*\.(' + '|'.join(ALLOWED_EXTENSIONS) + ')$', re.I)
 ALLOWED_OVERRIDES = file_mime_config.get('allowed_overrides', {})
 ARCHIVE_MIMETYPES = file_mime_config.get('archive_types', [])
-GENERIC_MIMETYPES = ALLOWED_OVERRIDES.keys() + ARCHIVE_MIMETYPES
+for archive_type in ARCHIVE_MIMETYPES:
+    ALLOWED_OVERRIDES[archive_type] = ["*"]
+GENERIC_MIMETYPES = ALLOWED_OVERRIDES.keys()
 
 INVALID_UPLOAD_MESSAGE = '''This file type is not supported.
 If possible, upload the file in another format.
