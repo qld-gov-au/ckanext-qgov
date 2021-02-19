@@ -104,6 +104,14 @@ class TestMimeTypeValidation(unittest.TestCase):
         resource['format'] = 'CSV'
         intercepts.validate_resource_mimetype(resource)
 
+    def test_no_validation_on_link_resources(self):
+        """ Test that link-type resources do not have their file types
+        validated, since they're not under our control.
+        """
+        resource = {'url': 'http://example.com/foo.csv', 'format': 'PDF'}
+        intercepts.validate_resource_mimetype(resource)
+        self.assertIsNone(resource.get('mimetype'))
+
 
 if __name__ == '__main__':
     unittest.main()
