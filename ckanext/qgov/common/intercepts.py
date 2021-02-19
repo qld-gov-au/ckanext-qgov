@@ -49,7 +49,7 @@ STORAGE_DOWNLOAD = StorageController.file
 RESOURCE_DOWNLOAD = PackageController.resource_download
 
 file_mime_config = json.load(open(
-    os.path.dirname(__file__), 'resources', 'resource_types.json'
+    os.path.join(os.path.dirname(__file__), 'resources', 'resource_types.json')
 ))
 
 # Add allowed upload types that don't seem to be standard.
