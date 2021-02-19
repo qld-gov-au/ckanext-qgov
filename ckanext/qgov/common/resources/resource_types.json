@@ -6,7 +6,6 @@
         "rdf", "rtf", "shp", "sparql", "tab", "tif", "tiff", "ttf",
         "topojson", "txt", "wfs", "wmts", "xls", "xlsx", "xml", "zip"
     ],
-    "generic_mimetypes": ["application/octet-stream", "text/plain"],
     "allowed_overrides": {
         "application/octet-stream": ["*"],
         "text/plain": ["application/xml", "application/sparql-query"]
