@@ -48,53 +48,20 @@ UPLOAD = Upload.upload
 STORAGE_DOWNLOAD = StorageController.file
 RESOURCE_DOWNLOAD = PackageController.resource_download
 
-ALLOWED_EXTENSIONS = [
-    'accdb',
-    'csv',
-    'doc',
-    'docx',
-    'esri',
-    'fgdb',
-    'gdb',
-    'geojson',
-    'geotiff',
-    'gpkg',
-    'gpx',
-    'html',
-    'jp2',
-    'jpeg',
-    'jpg',
-    'json',
-    'kml',
-    'kmz',
-    'mtl',
-    'n3',
-    'obj',
-    'pdf',
-    'png',
-    'ppt',
-    'pptx',
-    'rdf',
-    'rtf',
-    'shp',
-    'sparql',
-    'tab',
-    'tif',
-    'tiff',
-    'ttf',
-    'topojson',
-    'txt',
-    'wfs',
-    'wmts',
-    'xls',
-    'xlsx',
-    'xml',
-    'zip'
-]
+file_mime_config = json.load(open(
+    os.path.join(os.path.dirname(__file__), 'resources', 'resource_types.json')
+))
+
+# Add allowed upload types that don't seem to be standard.
+# NB It's more important to match a sniffable type than an RFC type.
+for extension, mime_type in six.iteritems(file_mime_config.get('extra_mimetypes', {})):
+    mimetypes.add_type(mime_type, extension)
+
+ALLOWED_EXTENSIONS = file_mime_config.get('allowed_extensions', [])
 ALLOWED_EXTENSIONS_PATTERN = re.compile(r'.*\.(' + '|'.join(ALLOWED_EXTENSIONS) + ')$', re.I)
-GENERIC_MIMETYPES = ['application/octet-stream', 'text/plain']
-# MIME types that sniff as plain text but have non-text MIME prefixes
-PLAIN_TEXT_MIMETYPES = ['application/xml', 'application/sparql-query']
+ALLOWED_OVERRIDES = file_mime_config.get('allowed_overrides', {})
+GENERIC_MIMETYPES = ALLOWED_OVERRIDES.keys()
+
 INVALID_UPLOAD_MESSAGE = '''This file type is not supported.
 If possible, upload the file in another format.
 If you continue to have problems, email
@@ -129,28 +96,6 @@ def configure(config):
         r'.*[0-9].*,.*[a-z].*,.*[A-Z].*,.*[-`~!@#$%^&*()_+=|\\/ ].*'
     ).split(',')
     allowed_mime_types = config.get('ckan.mimetypes_allowed', '*').split(',')
-
-    # Add allowed upload types that don't seem to be standard.
-    # NB It's more important to match a sniffable type than an RFC type.
-    mimetypes.add_type('application/msaccess', '.accdb')
-    mimetypes.add_type('x-gis/x-shapefile', '.esri')
-    mimetypes.add_type('application/x-filegdb', '.fgdb')
-    mimetypes.add_type('application/x-filegdb', '.gdb')
-    mimetypes.add_type('application/json', '.geojson')
-    mimetypes.add_type('image/tiff', '.geotiff')
-    mimetypes.add_type('application/x-sqlite3', '.gpkg')
-    mimetypes.add_type('application/xml', '.gpx')
-    mimetypes.add_type('model/mtl', '.mtl')
-    mimetypes.add_type('text/n3', '.n3')
-    mimetypes.add_type('text/xml', '.rdf')
-    mimetypes.add_type('x-gis/x-shapefile', '.shp')
-    mimetypes.add_type('application/sparql-query', '.sparql')
-    mimetypes.add_type('text/plain', '.tab')
-    mimetypes.add_type('application/json', '.topojson')
-    # Quarto Tabular Text File, not to be confused with TrueType Font
-    mimetypes.add_type('text/plain', '.ttf')
-    mimetypes.add_type('application/xml', '.wfs')
-    mimetypes.add_type('application/xml', '.wmts')
 
 
 def set_intercepts():
@@ -434,16 +379,16 @@ def is_valid_override(mime_type1, mime_type2):
     """ Returns True if one of the two types can be considered a subtype
     of the other, eg 'text/csv' can override 'text/plain'.
     """
-    if 'application/octet-stream' in [mime_type1, mime_type2]:
-        return True
-    if 'text/plain' in [mime_type1, mime_type2]:
-        if mime_type1.split('/')[0] == mime_type2.split('/')[0]:
-            # same prefix as the generic type we sniffed
-            return True
-        for text_type in PLAIN_TEXT_MIMETYPES:
-            if text_type in [mime_type1, mime_type2]:
+    for generic_type, override_list in six.iteritems(ALLOWED_OVERRIDES):
+        if generic_type in [mime_type1, mime_type2]:
+            if mime_type1.split('/')[0] == mime_type2.split('/')[0]:
+                # same prefix as the generic type we sniffed
                 return True
-    return False
+            for override_type in override_list:
+                if override_type == '*' or override_type in [mime_type1, mime_type2]:
+                    return True
+    else:
+        return False
 
 
 def is_mimetype_allowed(mime_type):
