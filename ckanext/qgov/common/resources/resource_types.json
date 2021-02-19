@@ -15,6 +15,7 @@
             "application/xml"
         ]
     },
+    "archive_types": ["application/zip", "application/x-tar"],
     "extra_mimetypes": {
         ".accdb": "application/msaccess",
         ".asc": "application/x-ascii-grid",

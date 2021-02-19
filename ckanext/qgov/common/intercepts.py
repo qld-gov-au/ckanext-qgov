@@ -60,7 +60,8 @@ for extension, mime_type in six.iteritems(file_mime_config.get('extra_mimetypes'
 ALLOWED_EXTENSIONS = file_mime_config.get('allowed_extensions', [])
 ALLOWED_EXTENSIONS_PATTERN = re.compile(r'.*\.(' + '|'.join(ALLOWED_EXTENSIONS) + ')$', re.I)
 ALLOWED_OVERRIDES = file_mime_config.get('allowed_overrides', {})
-GENERIC_MIMETYPES = ALLOWED_OVERRIDES.keys()
+ARCHIVE_MIMETYPES = file_mime_config.get('archive_types', [])
+GENERIC_MIMETYPES = ALLOWED_OVERRIDES.keys() + ARCHIVE_MIMETYPES
 
 INVALID_UPLOAD_MESSAGE = '''This file type is not supported.
 If possible, upload the file in another format.
@@ -321,11 +322,20 @@ def validate_resource_mimetype(resource):
     format_mimetype = mimetypes.guess_type('example.' + resource.get('format', ''), strict=False)[0]
     LOG.debug("Upload format indicates MIME type %s", format_mimetype)
 
+    # Archives can declare any format, but only if they're well formed
+    if (filename_mimetype in ARCHIVE_MIMETYPES
+        or sniffed_mimetype in ARCHIVE_MIMETYPES)\
+            and filename_mimetype != sniffed_mimetype:
+        raise ckan.logic.ValidationError(
+            {'upload': [MISMATCHING_UPLOAD_MESSAGE.format(filename_mimetype, sniffed_mimetype)]}
+        )
+
     # If the file extension or format matches a generic type,
     # then sniffing should say the same.
     # This is to prevent attacks based on browser sniffing.
     allow_override = filename_mimetype not in GENERIC_MIMETYPES\
-        and format_mimetype not in GENERIC_MIMETYPES
+        and format_mimetype not in GENERIC_MIMETYPES\
+        or filename_mimetype in ARCHIVE_MIMETYPES
 
     claimed_mimetype = resource.get('mimetype')
     LOG.debug("Upload claims to have MIME type %s", claimed_mimetype)
