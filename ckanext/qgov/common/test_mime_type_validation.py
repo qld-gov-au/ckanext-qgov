@@ -5,8 +5,9 @@
 
 import unittest
 
-import intercepts
-import ckan.logic
+from resource_type_validation import configure,\
+    coalesce_mime_types, validate_resource_mimetype
+from ckan.logic import ValidationError
 from werkzeug.datastructures import FileStorage as FlaskFileStorage
 
 
@@ -25,40 +26,40 @@ class TestMimeTypeValidation(unittest.TestCase):
     def test_coalesce_candidates(self):
         """ Test that missing candidates are gracefully ignored.
         """
-        self.assertEqual(intercepts.coalesce_mime_types([text_type]), text_type)
-        self.assertEqual(intercepts.coalesce_mime_types([text_type, None]), text_type)
-        self.assertEqual(intercepts.coalesce_mime_types([application_type, None]), application_type)
-        self.assertEqual(intercepts.coalesce_mime_types([None, text_type]), text_type)
-        self.assertEqual(intercepts.coalesce_mime_types([None, application_type]), application_type)
-        self.assertEqual(intercepts.coalesce_mime_types([None, text_type, None, text_type, None]), text_type)
+        self.assertEqual(coalesce_mime_types([text_type]), text_type)
+        self.assertEqual(coalesce_mime_types([text_type, None]), text_type)
+        self.assertEqual(coalesce_mime_types([application_type, None]), application_type)
+        self.assertEqual(coalesce_mime_types([None, text_type]), text_type)
+        self.assertEqual(coalesce_mime_types([None, application_type]), application_type)
+        self.assertEqual(coalesce_mime_types([None, text_type, None, text_type, None]), text_type)
 
     def test_override_candidates(self):
         """ Test that more specific candidates can override 'text/plain'
         and 'application/octet-stream' if 'allow_override' is set.
         """
-        self.assertEqual(intercepts.coalesce_mime_types([generic_text_type, text_type]), text_type)
-        self.assertEqual(intercepts.coalesce_mime_types([None, generic_text_type]), generic_text_type)
-        self.assertEqual(intercepts.coalesce_mime_types([None, text_type, generic_text_type]), text_type)
-        self.assertEqual(intercepts.coalesce_mime_types([None, 'application/xml', generic_text_type]), 'application/xml')
-        self.assertEqual(intercepts.coalesce_mime_types([application_type, generic_binary_type]), application_type)
-        self.assertEqual(intercepts.coalesce_mime_types([None, application_type, generic_binary_type]), application_type)
-        self.assertEqual(intercepts.coalesce_mime_types([None, 'x-gis/x-shapefile', generic_binary_type]), 'x-gis/x-shapefile')
-        self.assertEqual(intercepts.coalesce_mime_types([None, archive_type]), archive_type)
-        self.assertEqual(intercepts.coalesce_mime_types([None, 'x-gis/x-shapefile', archive_type]), 'x-gis/x-shapefile')
+        self.assertEqual(coalesce_mime_types([generic_text_type, text_type]), text_type)
+        self.assertEqual(coalesce_mime_types([None, generic_text_type]), generic_text_type)
+        self.assertEqual(coalesce_mime_types([None, text_type, generic_text_type]), text_type)
+        self.assertEqual(coalesce_mime_types([None, 'application/xml', generic_text_type]), 'application/xml')
+        self.assertEqual(coalesce_mime_types([application_type, generic_binary_type]), application_type)
+        self.assertEqual(coalesce_mime_types([None, application_type, generic_binary_type]), application_type)
+        self.assertEqual(coalesce_mime_types([None, 'x-gis/x-shapefile', generic_binary_type]), 'x-gis/x-shapefile')
+        self.assertEqual(coalesce_mime_types([None, archive_type]), archive_type)
+        self.assertEqual(coalesce_mime_types([None, 'x-gis/x-shapefile', archive_type]), 'x-gis/x-shapefile')
 
     def test_reject_override_not_configured(self):
         """ Test that more specific candidates cannot override
         'text/plain' and 'application/octet-stream' if 'allow_override'
         is set to False.
         """
-        self.assertRaises(ckan.logic.ValidationError, intercepts.coalesce_mime_types, [generic_text_type, text_type], False)
-        self.assertRaises(ckan.logic.ValidationError, intercepts.coalesce_mime_types, [application_type, generic_binary_type], False)
+        self.assertRaises(ValidationError, coalesce_mime_types, [generic_text_type, text_type], False)
+        self.assertRaises(ValidationError, coalesce_mime_types, [application_type, generic_binary_type], False)
 
     def test_reject_override_incompatible_prefix(self):
         """ Test that candidates cannot override 'text/plain'
         with a different prefix.
         """
-        self.assertRaises(ckan.logic.ValidationError, intercepts.coalesce_mime_types, [generic_text_type, application_type])
+        self.assertRaises(ValidationError, coalesce_mime_types, [generic_text_type, application_type])
 
     # Full validation tests
 
@@ -66,29 +67,29 @@ class TestMimeTypeValidation(unittest.TestCase):
         """ Test that uploaded resources have their file extension and
         format compared to each other.
         """
-        intercepts.configure({})
+        configure({})
 
         # file contents and format are PDF, but extension is CSV - fail
         upload = FlaskFileStorage(filename="dummy.pdf", stream=open("test/resources/dummy.pdf"))
         resource = {'url': 'example.csv', 'format': 'PDF', 'upload': upload}
-        self.assertRaises(ckan.logic.ValidationError, intercepts.validate_resource_mimetype, resource)
+        self.assertRaises(ValidationError, validate_resource_mimetype, resource)
         self.assertIsNone(resource.get('mimetype'))
 
         # file contents and extension are PDF, but format is XML - fail
         resource['url'] = 'example.pdf'
         resource['format'] = 'XML'
-        self.assertRaises(ckan.logic.ValidationError, intercepts.validate_resource_mimetype, resource)
+        self.assertRaises(ValidationError, validate_resource_mimetype, resource)
         self.assertIsNone(resource.get('mimetype'))
 
         # format is now PDF - succeed
         resource['format'] = 'PDF'
-        intercepts.validate_resource_mimetype(resource)
+        validate_resource_mimetype(resource)
         self.assertEqual(resource['mimetype'], 'application/pdf')
 
         # file extension, format and contents are CSV - succeed
         upload = FlaskFileStorage(filename="example.csv", stream=open("test/resources/foo.csv"))
         resource = {'url': 'example.csv', 'format': 'CSV', 'upload': upload}
-        intercepts.validate_resource_mimetype(resource)
+        validate_resource_mimetype(resource)
         self.assertEqual(resource['mimetype'], 'text/csv')
 
     def test_validate_upload_content(self):
@@ -98,12 +99,12 @@ class TestMimeTypeValidation(unittest.TestCase):
         # file extension and format are PDF, but contents are text - fail
         upload = FlaskFileStorage(filename="eicar.com.pdf", stream=open("test/resources/eicar.com.pdf"))
         resource = {'url': 'example.pdf', 'format': 'PDF', 'upload': upload}
-        self.assertRaises(ckan.logic.ValidationError, intercepts.validate_resource_mimetype, resource)
+        self.assertRaises(ValidationError, validate_resource_mimetype, resource)
 
         # file extension, format and contents are now plain text - succeed
         resource['url'] = 'example.txt'
         resource['format'] = 'TXT'
-        intercepts.validate_resource_mimetype(resource)
+        validate_resource_mimetype(resource)
         self.assertEqual(resource['mimetype'], 'text/plain')
 
     def test_validate_upload_archive(self):
@@ -113,43 +114,43 @@ class TestMimeTypeValidation(unittest.TestCase):
         # file is an archive, but has a different extension - fail
         upload = FlaskFileStorage(filename="example.zip", stream=open("test/resources/example.zip"))
         resource = {'url': 'example.pdf', 'format': 'PDF', 'upload': upload}
-        self.assertRaises(ckan.logic.ValidationError, intercepts.validate_resource_mimetype, resource)
+        self.assertRaises(ValidationError, validate_resource_mimetype, resource)
 
         # extension fixed, but format is PDF - succeed
         resource['url'] = 'example.zip'
-        intercepts.validate_resource_mimetype(resource)
+        validate_resource_mimetype(resource)
         self.assertEqual(resource['mimetype'], 'application/pdf')
 
         # extension and contents are ZIP, format is DOC - succeed
         del resource['mimetype']
         resource['format'] = 'DOC'
-        intercepts.validate_resource_mimetype(resource)
+        validate_resource_mimetype(resource)
         self.assertEqual(resource['mimetype'], 'application/msword')
 
         # extension is ZIP, but file isn't really an archive - fail
         upload = FlaskFileStorage(filename="eicar.zip", stream=open("test/resources/eicar.com.pdf"))
         resource = {'url': 'example.zip', 'format': 'PDF', 'upload': upload}
-        self.assertRaises(ckan.logic.ValidationError, intercepts.validate_resource_mimetype, resource)
+        self.assertRaises(ValidationError, validate_resource_mimetype, resource)
         resource['format'] = 'ZIP'
-        self.assertRaises(ckan.logic.ValidationError, intercepts.validate_resource_mimetype, resource)
+        self.assertRaises(ValidationError, validate_resource_mimetype, resource)
 
     def test_revalidate_uploads_without_file(self):
         """ Test that resource of type 'upload' with no upload data
         have their URL and format compared, just no content sniffing.
         """
-        intercepts.configure({})
+        configure({})
         resource = {'url': 'example.csv', 'format': 'PDF'}
-        self.assertRaises(ckan.logic.ValidationError, intercepts.validate_resource_mimetype, resource)
+        self.assertRaises(ValidationError, validate_resource_mimetype, resource)
 
         resource['format'] = 'CSV'
-        intercepts.validate_resource_mimetype(resource)
+        validate_resource_mimetype(resource)
 
     def test_no_validation_on_link_resources(self):
         """ Test that link-type resources do not have their file types
         validated, since they're not under our control.
         """
         resource = {'url': 'http://example.com/foo.csv', 'format': 'PDF'}
-        intercepts.validate_resource_mimetype(resource)
+        validate_resource_mimetype(resource)
         self.assertIsNone(resource.get('mimetype'))
 
 
