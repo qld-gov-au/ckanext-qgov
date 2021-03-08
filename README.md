@@ -36,6 +36,6 @@ ckan.mimetypes_allowed = *
 
 The 'develop' branch is automatically pushed to dev.data.qld.gov.au and dev.publications.qld.gov.au.
 
-The 'master' branch is automatically pushed to test.data.qld.gov.au.
+The 'master' branch is automatically pushed to test-dev.data.qld.gov.au.
 
 For deploying to higher environments, releases should be tagged and updated in the CloudFormation templates.
