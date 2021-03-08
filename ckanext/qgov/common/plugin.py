@@ -31,6 +31,7 @@ import anti_csrf
 import authenticator
 import urlm
 import intercepts
+import resource_type_validation
 from ckanext.qgov.common.stats import Stats
 
 LOG = getLogger(__name__)
@@ -568,6 +569,7 @@ class QGOVPlugin(SingletonPlugin):
         LOG.info("Resources must come from: %s and cannot come from %s", RESOURCE_WHITELIST, RESOURCE_BLACKLIST)
 
         intercepts.configure(config)
+        resource_type_validation.configure(config)
 
     def before_map(self, route_map):
         """ Add some custom routes for Queensland Government portals.
@@ -643,9 +645,9 @@ class QGOVPlugin(SingletonPlugin):
     def before_create(self, context, data_dict):
         """ Check that uploads have an acceptable mime type.
         """
-        intercepts.validate_resource_mimetype(data_dict)
+        resource_type_validation.validate_resource_mimetype(data_dict)
 
     def before_update(self, context, existing_resource, data_dict):
         """ Check that uploads have an acceptable mime type.
         """
-        intercepts.validate_resource_mimetype(data_dict)
+        resource_type_validation.validate_resource_mimetype(data_dict)
