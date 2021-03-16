@@ -92,6 +92,17 @@ class TestMimeTypeValidation(unittest.TestCase):
         validate_resource_mimetype(resource)
         self.assertEqual(resource['mimetype'], 'text/csv')
 
+    def test_recognise_docx(self):
+        """ Test that DOCX files are correctly sniffed and not mistaken
+        for plain ZIP archives.
+        """
+        configure({})
+        upload = FlaskFileStorage(filename="example.docx", stream=open("test/resources/example.docx"))
+        resource = {'url': 'example.docx', 'format': 'DOCX', 'upload': upload}
+
+        validate_resource_mimetype(resource)
+        self.assertEqual(resource['mimetype'], 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+
     def test_validate_upload_content(self):
         """ Test that uploaded resources have their contents compared
         to their claimed file format and extension.
