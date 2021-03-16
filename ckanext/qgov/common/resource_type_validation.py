@@ -68,7 +68,8 @@ def validate_resource_mimetype(resource):
 
         mime = magic.Magic(mime=True)
         upload_file = _get_underlying_file(upload_field_storage)
-        sniffed_mimetype = mime.from_buffer(upload_file.read(512))
+        # needs to be at least 2048 bytes to recognise DOCX properly
+        sniffed_mimetype = mime.from_buffer(upload_file.read(2048))
         # go back to the beginning of the file buffer
         upload_file.seek(0, os.SEEK_SET)
         LOG.debug("Upload sniffing indicates MIME type %s", sniffed_mimetype)
