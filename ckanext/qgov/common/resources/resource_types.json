@@ -13,7 +13,8 @@
             "application/sparql-query",
             "application/x-ascii-grid",
             "application/xml"
-        ]
+        ],
+        "application/zip": ["application/vnd.google-earth.kmz"]
     },
     "archive_types": ["application/zip", "application/x-tar"],
     "extra_mimetypes": {
