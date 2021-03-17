@@ -93,9 +93,10 @@ def validate_resource_mimetype(resource):
     LOG.debug("Upload format indicates MIME type %s", format_mimetype)
 
     # Archives can declare any format, but only if they're well formed
-    if (filename_mimetype in ARCHIVE_MIMETYPES
-        or sniffed_mimetype in ARCHIVE_MIMETYPES)\
-            and filename_mimetype != sniffed_mimetype:
+    if any(type in ARCHIVE_MIMETYPES
+           for type in (filename_mimetype, sniffed_mimetype))\
+            and filename_mimetype != sniffed_mimetype\
+            and not is_valid_override(filename_mimetype, sniffed_mimetype):
         raise ckan.logic.ValidationError(
             {'upload': [MISMATCHING_UPLOAD_MESSAGE.format(filename_mimetype, sniffed_mimetype)]}
         )
