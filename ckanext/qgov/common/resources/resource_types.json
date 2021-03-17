@@ -28,6 +28,7 @@
         ".geotiff": "image/tiff",
         ".gpkg": "application/x-sqlite3",
         ".gpx": "application/xml",
+        ".kmz": "application/vnd.google-earth.kmz",
         ".mtl": "model/mtl",
         ".n3": "text/n3",
         ".rdf": "text/xml",
