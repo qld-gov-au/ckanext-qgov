@@ -19,8 +19,7 @@ archive_type = 'application/zip'
 sample_files = [
     ('foo.csv', 'CSV', 'text/csv'),
     ('example.docx', 'DOCX', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
-    ('example.kmz', 'KMZ', 'application/vnd.google-earth.kmz'),
-    ('example.txt', 'TXT', 'text/plain')
+    ('example.kmz', 'KMZ', 'application/vnd.google-earth.kmz')
 ]
 
 
@@ -111,6 +110,12 @@ class TestMimeTypeValidation(unittest.TestCase):
         upload = FlaskFileStorage(filename="eicar.com.pdf", stream=open("test/resources/eicar.com.pdf"))
         resource = {'url': 'example.pdf', 'format': 'PDF', 'upload': upload}
         self.assertRaises(ValidationError, validate_resource_mimetype, resource)
+
+        # file extension, format and contents are now plain text - succeed
+        resource['url'] = 'example.txt'
+        resource['format'] = 'TXT'
+        validate_resource_mimetype(resource)
+        self.assertEqual(resource['mimetype'], 'text/plain')
 
     def test_validate_upload_archive(self):
         """ Test that uploaded archives can claim any resource format,
