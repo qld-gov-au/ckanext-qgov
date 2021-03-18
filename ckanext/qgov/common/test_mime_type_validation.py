@@ -169,21 +169,15 @@ class TestMimeTypeValidation(unittest.TestCase):
         self.assertEqual(INVALID_UPLOAD_MESSAGE,
                          '''This file type is not supported.
                          If possible, upload the file in another format.
-                         If you continue to have problems, contact
-                         Smart Service Queensland -
-                         onlineproducts@smartservice.qld.gov.au
+                         If you continue to have problems, contact Smart Service Queensland - onlineproducts@smartservice.qld.gov.au
                          ''')
 
         self.assertEqual(MISMATCHING_UPLOAD_MESSAGE,
-                         '''Mismatched file type.
-                         Please ensure that the selected format is
-                         compatible with the file extension and file
-                         contents. Unable to determine whether the file
-                         is of type '{}' or '{}'.
+                         '''Mismatched file type. Please ensure that
+                         the selected format is compatible with the file extension and file
+                         contents. Unable to determine whether the file is of type '{}' or '{}'.
                          If possible, upload the file in another format.
-                         If you continue to have problems, contact
-                         Smart Service Queensland -
-                         onlineproducts@smartservice.qld.gov.au
+                         If you continue to have problems, contact Smart Service Queensland - onlineproducts@smartservice.qld.gov.au
                          ''')
 
 
