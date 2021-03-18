@@ -6,7 +6,7 @@
 import unittest
 
 from resource_type_validation import configure,\
-    coalesce_mime_types, validate_resource_mimetype,
+    coalesce_mime_types, validate_resource_mimetype,\
     INVALID_UPLOAD_MESSAGE, MISMATCHING_UPLOAD_MESSAGE
 from ckan.logic import ValidationError
 from werkzeug.datastructures import FileStorage as FlaskFileStorage
@@ -166,23 +166,25 @@ class TestMimeTypeValidation(unittest.TestCase):
     def test_error_contact(self):
         """ Test that the error messages are populated correctly.
         """
-        assertEqual(INVALID_UPLOAD_MESSAGE,
-                    '''This file type is not supported.
-                    If possible, upload the file in another format.
-                    If you continue to have problems, contact
-                    Smart Service Queensland -
-                    onlineproducts@smartservice.qld.gov.au
-                    ''')
-        assertEqual(MISMATCHING_UPLOAD_MESSAGE,
-                    '''Mismatched file type.
-                    Please ensure that the selected format is compatible
-                    with the file extension and file contents. Unable to
-                    determine whether the file is of type '{}' or '{}'.
-                    If possible, upload the file in another format.
-                    If you continue to have problems, contact
-                    Smart Service Queensland -
-                    onlineproducts@smartservice.qld.gov.au
-                    ''')
+        self.assertEqual(INVALID_UPLOAD_MESSAGE,
+                         '''This file type is not supported.
+                         If possible, upload the file in another format.
+                         If you continue to have problems, contact
+                         Smart Service Queensland -
+                         onlineproducts@smartservice.qld.gov.au
+                         ''')
+
+        self.assertEqual(MISMATCHING_UPLOAD_MESSAGE,
+                         '''Mismatched file type.
+                         Please ensure that the selected format is
+                         compatible with the file extension and file
+                         contents. Unable to determine whether the file
+                         is of type '{}' or '{}'.
+                         If possible, upload the file in another format.
+                         If you continue to have problems, contact
+                         Smart Service Queensland -
+                         onlineproducts@smartservice.qld.gov.au
+                         ''')
 
 
 if __name__ == '__main__':
