@@ -31,19 +31,18 @@ ALLOWED_EXTENSIONS_PATTERN = re.compile(r'.*\.(' + '|'.join(ALLOWED_EXTENSIONS) 
 ALLOWED_OVERRIDES = file_mime_config.get('allowed_overrides', {})
 ARCHIVE_MIMETYPES = file_mime_config.get('archive_types', [])
 GENERIC_MIMETYPES = ALLOWED_OVERRIDES.keys()
+ERROR_CONTACT = file_mime_config.get('error_contact', 'the site owner.')
 
 INVALID_UPLOAD_MESSAGE = '''This file type is not supported.
 If possible, upload the file in another format.
-If you continue to have problems, email
-Smart Service Queensland - online.products@smartservice.qld.gov.au
-'''
+If you continue to have problems, contact {}
+'''.format(ERROR_CONTACT)
 MISMATCHING_UPLOAD_MESSAGE = '''Mismatched file type. Please ensure that
 the selected format is compatible with the file extension and file
 contents. Unable to determine whether the file is of type '{}' or '{}'.
 If possible, upload the file with a different format.
-If you continue to have problems, email
-Smart Service Queensland - online.products@smartservice.qld.gov.au
-'''
+If you continue to have problems, contact {}
+'''.format(ERROR_CONTACT)
 IS_REMOTE_URL_PATTERN = re.compile(r'^[a-z+]+://')
 
 
