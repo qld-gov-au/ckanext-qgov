@@ -50,7 +50,6 @@ class TestMimeTypeValidation(unittest.TestCase):
         self.assertEqual(coalesce_mime_types([None, application_type, generic_binary_type]), application_type)
         self.assertEqual(coalesce_mime_types([None, 'x-gis/x-shapefile', generic_binary_type]), 'x-gis/x-shapefile')
         self.assertEqual(coalesce_mime_types([None, archive_type]), archive_type)
-        self.assertEqual(coalesce_mime_types([None, 'x-gis/x-shapefile', archive_type]), 'x-gis/x-shapefile')
 
     def test_reject_override_not_configured(self):
         """ Test that more specific candidates cannot override
