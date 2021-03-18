@@ -12,7 +12,8 @@
         "text/plain": [
             "application/sparql-query",
             "application/x-ascii-grid",
-            "application/xml"
+            "application/xml",
+            "text/*"
         ],
         "application/zip": ["application/vnd.google-earth.kmz"]
     },

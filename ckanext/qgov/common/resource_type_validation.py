@@ -160,14 +160,23 @@ def is_valid_override(mime_type1, mime_type2):
     """ Returns True if one of the two types can be considered a subtype
     of the other, eg 'text/csv' can override 'text/plain'.
     """
-    for generic_type, override_list in six.iteritems(ALLOWED_OVERRIDES):
-        if generic_type in [mime_type1, mime_type2]:
-            if mime_type1.split('/')[0] == mime_type2.split('/')[0]:
-                # same prefix as the generic type we sniffed
+    def matches_override_list(mime_type, override_list):
+        for override_type in override_list:
+            if override_type == '*' or override_type == mime_type:
                 return True
-            for override_type in override_list:
-                if override_type == '*' or override_type in [mime_type1, mime_type2]:
-                    return True
+            override_parts = override_type.split('/', 1)
+            if len(override_parts) == 2 and override_parts[1] == '*'\
+                    and override_parts[0] == mime_type.split('/')[0]:
+                return True
+        else:
+            return False
+
+    for generic_type, override_list in six.iteritems(ALLOWED_OVERRIDES):
+        if generic_type == mime_type1\
+            and matches_override_list(mime_type2, override_list)\
+            or generic_type == mime_type2\
+                and matches_override_list(mime_type1, override_list):
+            return True
     else:
         return False
 
