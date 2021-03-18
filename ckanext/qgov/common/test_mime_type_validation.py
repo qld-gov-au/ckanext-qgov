@@ -167,19 +167,15 @@ class TestMimeTypeValidation(unittest.TestCase):
     def test_error_contact(self):
         """ Test that the error messages are populated correctly.
         """
-        self.assertEqual(INVALID_UPLOAD_MESSAGE, textwrap.dedent('''
-                         This file type is not supported.
+        self.assertEqual(INVALID_UPLOAD_MESSAGE, textwrap.dedent('''This file type is not supported.
                          If possible, upload the file in another format.
-                         If you continue to have problems, contact Smart Service Queensland - onlineproducts@smartservice.qld.gov.au
-                         '''))
+                         If you continue to have problems, contact Smart Service Queensland - onlineproducts@smartservice.qld.gov.au'''))
 
-        self.assertEqual(MISMATCHING_UPLOAD_MESSAGE, textwrap.dedent('''
-                         Mismatched file type. Please ensure that
+        self.assertEqual(MISMATCHING_UPLOAD_MESSAGE, textwrap.dedent('''Mismatched file type. Please ensure that
                          the selected format is compatible with the file extension and file
                          contents. Unable to determine whether the file is of type '{}' or '{}'.
                          If possible, upload the file in another format.
-                         If you continue to have problems, contact Smart Service Queensland - onlineproducts@smartservice.qld.gov.au
-                         '''))
+                         If you continue to have problems, contact Smart Service Queensland - onlineproducts@smartservice.qld.gov.au'''))
 
 
 if __name__ == '__main__':
