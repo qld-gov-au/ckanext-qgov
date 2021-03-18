@@ -12,8 +12,10 @@
         "text/plain": [
             "application/sparql-query",
             "application/x-ascii-grid",
-            "application/xml"
-        ]
+            "application/xml",
+            "text/*"
+        ],
+        "application/zip": ["application/vnd.google-earth.kmz"]
     },
     "archive_types": ["application/zip", "application/x-tar"],
     "extra_mimetypes": {
@@ -27,6 +29,7 @@
         ".geotiff": "image/tiff",
         ".gpkg": "application/x-sqlite3",
         ".gpx": "application/xml",
+        ".kmz": "application/vnd.google-earth.kmz",
         ".mtl": "model/mtl",
         ".n3": "text/n3",
         ".rdf": "text/xml",

@@ -30,8 +30,6 @@ ALLOWED_EXTENSIONS = file_mime_config.get('allowed_extensions', [])
 ALLOWED_EXTENSIONS_PATTERN = re.compile(r'.*\.(' + '|'.join(ALLOWED_EXTENSIONS) + ')$', re.I)
 ALLOWED_OVERRIDES = file_mime_config.get('allowed_overrides', {})
 ARCHIVE_MIMETYPES = file_mime_config.get('archive_types', [])
-for archive_type in ARCHIVE_MIMETYPES:
-    ALLOWED_OVERRIDES[archive_type] = ["*"]
 GENERIC_MIMETYPES = ALLOWED_OVERRIDES.keys()
 
 INVALID_UPLOAD_MESSAGE = '''This file type is not supported.
@@ -86,6 +84,9 @@ def validate_resource_mimetype(resource):
             {'upload': [INVALID_UPLOAD_MESSAGE]}
         )
 
+    claimed_mimetype = resource.get('mimetype')
+    LOG.debug("Upload claims to have MIME type %s", claimed_mimetype)
+
     filename_mimetype = mimetypes.guess_type(resource.get('url'), strict=False)[0]
     LOG.debug("Upload filename indicates MIME type %s", filename_mimetype)
 
@@ -93,12 +94,17 @@ def validate_resource_mimetype(resource):
     LOG.debug("Upload format indicates MIME type %s", format_mimetype)
 
     # Archives can declare any format, but only if they're well formed
-    if (filename_mimetype in ARCHIVE_MIMETYPES
-        or sniffed_mimetype in ARCHIVE_MIMETYPES)\
-            and filename_mimetype != sniffed_mimetype:
-        raise ckan.logic.ValidationError(
-            {'upload': [MISMATCHING_UPLOAD_MESSAGE.format(filename_mimetype, sniffed_mimetype)]}
-        )
+    if any(type in ARCHIVE_MIMETYPES
+           for type in (filename_mimetype, sniffed_mimetype)):
+        if filename_mimetype == sniffed_mimetype\
+                or is_valid_override(filename_mimetype, sniffed_mimetype):
+            # well-formed archives can specify any format they want
+            sniffed_mimetype = filename_mimetype = claimed_mimetype =\
+                format_mimetype or claimed_mimetype or filename_mimetype
+        else:
+            raise ckan.logic.ValidationError(
+                {'upload': [MISMATCHING_UPLOAD_MESSAGE.format(filename_mimetype, sniffed_mimetype)]}
+            )
 
     # If the file extension or format matches a generic type,
     # then sniffing should say the same.
@@ -106,9 +112,6 @@ def validate_resource_mimetype(resource):
     allow_override = filename_mimetype not in GENERIC_MIMETYPES\
         and format_mimetype not in GENERIC_MIMETYPES\
         or filename_mimetype in ARCHIVE_MIMETYPES
-
-    claimed_mimetype = resource.get('mimetype')
-    LOG.debug("Upload claims to have MIME type %s", claimed_mimetype)
 
     best_guess_mimetype = resource['mimetype'] = coalesce_mime_types(
         [filename_mimetype, format_mimetype, sniffed_mimetype, claimed_mimetype],
@@ -159,14 +162,23 @@ def is_valid_override(mime_type1, mime_type2):
     """ Returns True if one of the two types can be considered a subtype
     of the other, eg 'text/csv' can override 'text/plain'.
     """
-    for generic_type, override_list in six.iteritems(ALLOWED_OVERRIDES):
-        if generic_type in [mime_type1, mime_type2]:
-            if mime_type1.split('/')[0] == mime_type2.split('/')[0]:
-                # same prefix as the generic type we sniffed
+    def matches_override_list(mime_type, override_list):
+        for override_type in override_list:
+            if override_type == '*' or override_type == mime_type:
                 return True
-            for override_type in override_list:
-                if override_type == '*' or override_type in [mime_type1, mime_type2]:
-                    return True
+            override_parts = override_type.split('/', 1)
+            if len(override_parts) == 2 and override_parts[1] == '*'\
+                    and override_parts[0] == mime_type.split('/')[0]:
+                return True
+        else:
+            return False
+
+    for generic_type, override_list in six.iteritems(ALLOWED_OVERRIDES):
+        if generic_type == mime_type1\
+            and matches_override_list(mime_type2, override_list)\
+            or generic_type == mime_type2\
+                and matches_override_list(mime_type1, override_list):
+            return True
     else:
         return False
 
