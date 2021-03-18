@@ -30,8 +30,6 @@ ALLOWED_EXTENSIONS = file_mime_config.get('allowed_extensions', [])
 ALLOWED_EXTENSIONS_PATTERN = re.compile(r'.*\.(' + '|'.join(ALLOWED_EXTENSIONS) + ')$', re.I)
 ALLOWED_OVERRIDES = file_mime_config.get('allowed_overrides', {})
 ARCHIVE_MIMETYPES = file_mime_config.get('archive_types', [])
-for archive_type in ARCHIVE_MIMETYPES:
-    ALLOWED_OVERRIDES[archive_type] = ["*"]
 GENERIC_MIMETYPES = ALLOWED_OVERRIDES.keys()
 
 INVALID_UPLOAD_MESSAGE = '''This file type is not supported.
@@ -86,6 +84,9 @@ def validate_resource_mimetype(resource):
             {'upload': [INVALID_UPLOAD_MESSAGE]}
         )
 
+    claimed_mimetype = resource.get('mimetype')
+    LOG.debug("Upload claims to have MIME type %s", claimed_mimetype)
+
     filename_mimetype = mimetypes.guess_type(resource.get('url'), strict=False)[0]
     LOG.debug("Upload filename indicates MIME type %s", filename_mimetype)
 
@@ -94,12 +95,16 @@ def validate_resource_mimetype(resource):
 
     # Archives can declare any format, but only if they're well formed
     if any(type in ARCHIVE_MIMETYPES
-           for type in (filename_mimetype, sniffed_mimetype))\
-            and filename_mimetype != sniffed_mimetype\
-            and not is_valid_override(filename_mimetype, sniffed_mimetype):
-        raise ckan.logic.ValidationError(
-            {'upload': [MISMATCHING_UPLOAD_MESSAGE.format(filename_mimetype, sniffed_mimetype)]}
-        )
+           for type in (filename_mimetype, sniffed_mimetype)):
+        if filename_mimetype == sniffed_mimetype\
+                or is_valid_override(filename_mimetype, sniffed_mimetype):
+            # well-formed archives can specify any format they want
+            sniffed_mimetype = filename_mimetype = claimed_mimetype =\
+                format_mimetype or claimed_mimetype or filename_mimetype
+        else:
+            raise ckan.logic.ValidationError(
+                {'upload': [MISMATCHING_UPLOAD_MESSAGE.format(filename_mimetype, sniffed_mimetype)]}
+            )
 
     # If the file extension or format matches a generic type,
     # then sniffing should say the same.
@@ -107,9 +112,6 @@ def validate_resource_mimetype(resource):
     allow_override = filename_mimetype not in GENERIC_MIMETYPES\
         and format_mimetype not in GENERIC_MIMETYPES\
         or filename_mimetype in ARCHIVE_MIMETYPES
-
-    claimed_mimetype = resource.get('mimetype')
-    LOG.debug("Upload claims to have MIME type %s", claimed_mimetype)
 
     best_guess_mimetype = resource['mimetype'] = coalesce_mime_types(
         [filename_mimetype, format_mimetype, sniffed_mimetype, claimed_mimetype],
