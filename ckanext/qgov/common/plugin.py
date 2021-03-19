@@ -12,17 +12,16 @@ import re
 import socket
 import urlparse
 
-import ckan.authz as authz
+from ckan import authz, model
 from ckan.common import _, c
 from ckan.lib.base import h
-import ckan.lib.formatters as formatters
+from ckan.lib import formatters
 import ckan.lib.navl.dictization_functions as df
 import ckan.logic.auth as logic_auth
 from ckan.logic import get_action
 from ckan.plugins import implements, toolkit, SingletonPlugin, IConfigurer,\
     ITemplateHelpers, IActions, IAuthFunctions, IRoutes, IConfigurable,\
     IValidators, IResourceController
-import ckan.model as model
 from routes.mapper import SubMapper
 import requests
 from paste.deploy.converters import asbool
