@@ -14,7 +14,7 @@ import requests
 
 from ckan import __version__
 import ckan.lib.helpers as h
-import ckan.model as model
+from ckan import model
 from ckan.common import _, c, g, config, request
 from ckan.logic import get_action
 from ckan.lib.base import abort, BaseController, render
@@ -46,9 +46,12 @@ class MailerException(Exception):
 
 def _feedback_mail_recipient(recipient_name, recipient_email,
                              sender_name, sender_url, subject, body,
-                             headers={}):
+                             headers):
     """ Assemble and send a feedback email from the provided parts.
     """
+    # Flake8 B006: Don't initialize this in the parameter, because
+    # default parameters are shared between calls, and dict is mutable.
+    headers = headers or {}
     mail_from = config.get('smtp.mail_from')
     body = add_msg_niceties(recipient_name, body, sender_name, sender_url)
     msg = MIMEText(body.encode('utf-8'), 'plain', 'utf-8')

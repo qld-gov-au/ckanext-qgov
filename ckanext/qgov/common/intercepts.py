@@ -17,11 +17,11 @@ from ckan.lib.navl.dictization_functions import Missing
 import ckan.logic
 import ckan.logic.action.update
 import ckan.logic.schema as schemas
-import ckan.logic.validators as validators
+from ckan.logic import validators
 from ckan.model import Session
 from ckan.lib.base import c, request, abort, h
 from ckan.lib.uploader import Upload
-import ckan.plugins.toolkit as toolkit
+from ckan.plugins import toolkit
 
 import plugin
 from authenticator import QGOVUser

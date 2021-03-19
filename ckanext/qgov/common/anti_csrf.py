@@ -16,7 +16,7 @@ from logging import getLogger
 import urlparse
 
 from ckan.common import config, request, response, g
-import ckan.lib.base as base
+from ckan.lib import base
 import six
 
 LOG = getLogger(__name__)
