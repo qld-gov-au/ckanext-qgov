@@ -19,7 +19,8 @@ archive_type = 'application/zip'
 sample_files = [
     ('foo.csv', 'CSV', 'text/csv'),
     ('example.docx', 'DOCX', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
-    ('example.kmz', 'KMZ', 'application/vnd.google-earth.kmz')
+    ('example.kmz', 'KMZ', 'application/vnd.google-earth.kmz'),
+    ('example.xml', 'XML', 'text/xml')
 ]
 
 
