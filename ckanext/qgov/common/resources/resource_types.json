@@ -40,5 +40,6 @@
         ".ttf": "text/plain",
         ".wfs": "application/xml",
         ".wmts": "application/xml"
-    }
+    },
+    "error_contact": "Smart Service Queensland - onlineproducts@smartservice.qld.gov.au"
 }
