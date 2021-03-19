@@ -21,7 +21,26 @@ sample_files = [
     ('foo.csv', 'CSV', 'text/csv'),
     ('example.docx', 'DOCX', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
     ('example.kmz', 'KMZ', 'application/vnd.google-earth.kmz'),
-    ('example.xml', 'XML', 'text/xml')
+    ('example.xml', 'XML', 'text/xml'),
+    ('dummy.pdf', 'PDF', 'application/pdf'),
+    # well-formed archives can specify any format, since they can contain anything
+    ('example.zip', 'ZIP', 'application/zip'),
+    ('example.zip', 'PDF', 'application/pdf'),
+    ('example.zip', 'DOC', 'application/msword'),
+]
+
+sample_file_rejections = [
+    # file contents and format are PDF, but extension is CSV
+    ('dummy.pdf', 'example.csv', 'PDF'),
+    # file contents and extension are PDF, but format is XML
+    ('dummy.pdf', 'example.pdf', 'XML'),
+    # file extension and format are PDF, but contents are text
+    ('eicar.com.pdf', 'example.pdf', 'PDF'),
+    # file is an archive, but has a different extension
+    ('example.zip', 'example.pdf', 'PDF'),
+    # extension is ZIP, but file isn't really an archive
+    ('eicar.com.pdf', 'example.zip', 'PDF'),
+    ('eicar.com.pdf', 'example.zip', 'ZIP'),
 ]
 
 
@@ -69,81 +88,34 @@ class TestMimeTypeValidation(unittest.TestCase):
 
     # Full validation tests
 
-    def test_validate_upload_filename_and_format(self):
-        """ Test that uploaded resources have their file extension and
-        format compared to each other.
-        """
-        configure({})
-
-        # file contents and format are PDF, but extension is CSV - fail
-        upload = FlaskFileStorage(filename="dummy.pdf", stream=open("test/resources/dummy.pdf"))
-        resource = {'url': 'example.csv', 'format': 'PDF', 'upload': upload}
-        self.assertRaises(ValidationError, validate_resource_mimetype, resource)
-        self.assertIsNone(resource.get('mimetype'))
-
-        # file contents and extension are PDF, but format is XML - fail
-        resource['url'] = 'example.pdf'
-        resource['format'] = 'XML'
-        self.assertRaises(ValidationError, validate_resource_mimetype, resource)
-        self.assertIsNone(resource.get('mimetype'))
-
-        # format is now PDF - succeed
-        resource['format'] = 'PDF'
-        validate_resource_mimetype(resource)
-        self.assertEqual(resource['mimetype'], 'application/pdf')
-
     def test_recognise_file_types(self):
         """ Test that sample files are correctly sniffed.
         """
         configure({})
-        for sample_file, sample_format, expected_type in sample_files:
-            upload = FlaskFileStorage(filename=sample_file, stream=open("test/resources/" + sample_file))
-            resource = {'url': sample_file, 'format': sample_format, 'upload': upload}
+        for sample_filename, sample_format, expected_type in sample_files:
+            sample_file = open("test/resources/" + sample_filename, "rb")
+            upload = FlaskFileStorage(filename=sample_filename, stream=sample_file)
+            resource = {'url': sample_filename, 'format': sample_format, 'upload': upload}
 
-            validate_resource_mimetype(resource)
-            self.assertEqual(resource['mimetype'], expected_type)
+            try:
+                validate_resource_mimetype(resource)
+                self.assertEqual(resource['mimetype'], expected_type)
+            finally:
+                sample_file.close()
 
-    def test_validate_upload_content(self):
-        """ Test that uploaded resources have their contents compared
-        to their claimed file format and extension.
+    def test_reject_bad_file_types(self):
+        """ Test that invalid filename/format/content combinations are rejected.
         """
-        # file extension and format are PDF, but contents are text - fail
-        upload = FlaskFileStorage(filename="eicar.com.pdf", stream=open("test/resources/eicar.com.pdf"))
-        resource = {'url': 'example.pdf', 'format': 'PDF', 'upload': upload}
-        self.assertRaises(ValidationError, validate_resource_mimetype, resource)
-
-        # file extension, format and contents are now plain text - succeed
-        resource['url'] = 'example.txt'
-        resource['format'] = 'TXT'
-        validate_resource_mimetype(resource)
-        self.assertEqual(resource['mimetype'], 'text/plain')
-
-    def test_validate_upload_archive(self):
-        """ Test that uploaded archives can claim any resource format,
-        but must still be well formed with matching file extension.
-        """
-        # file is an archive, but has a different extension - fail
-        upload = FlaskFileStorage(filename="example.zip", stream=open("test/resources/example.zip"))
-        resource = {'url': 'example.pdf', 'format': 'PDF', 'upload': upload}
-        self.assertRaises(ValidationError, validate_resource_mimetype, resource)
-
-        # extension fixed, but format is PDF - succeed
-        resource['url'] = 'example.zip'
-        validate_resource_mimetype(resource)
-        self.assertEqual(resource['mimetype'], 'application/pdf')
-
-        # extension and contents are ZIP, format is DOC - succeed
-        del resource['mimetype']
-        resource['format'] = 'DOC'
-        validate_resource_mimetype(resource)
-        self.assertEqual(resource['mimetype'], 'application/msword')
-
-        # extension is ZIP, but file isn't really an archive - fail
-        upload = FlaskFileStorage(filename="eicar.zip", stream=open("test/resources/eicar.com.pdf"))
-        resource = {'url': 'example.zip', 'format': 'PDF', 'upload': upload}
-        self.assertRaises(ValidationError, validate_resource_mimetype, resource)
-        resource['format'] = 'ZIP'
-        self.assertRaises(ValidationError, validate_resource_mimetype, resource)
+        configure({})
+        for sample_filename, sample_url, sample_format in sample_file_rejections:
+            sample_file = open("test/resources/" + sample_filename, "rb")
+            upload = FlaskFileStorage(filename=sample_filename, stream=sample_file)
+            resource = {'url': sample_url, 'format': sample_format, 'upload': upload}
+            try:
+                self.assertRaises(ValidationError, validate_resource_mimetype, resource)
+                self.assertIsNone(resource.get('mimetype'))
+            finally:
+                sample_file.close()
 
     def test_revalidate_uploads_without_file(self):
         """ Test that resource of type 'upload' with no upload data
@@ -167,15 +139,27 @@ class TestMimeTypeValidation(unittest.TestCase):
     def test_error_contact(self):
         """ Test that the error messages are populated correctly.
         """
-        self.assertEqual(INVALID_UPLOAD_MESSAGE, '''This file type is not supported.
-If possible, upload the file in another format.
-If you continue to have problems, contact Smart Service Queensland - onlineproducts@smartservice.qld.gov.au''')
+        def normalize_whitespace(text):
+            return ' '.join(text.split())
 
-        self.assertEqual(MISMATCHING_UPLOAD_MESSAGE, '''Mismatched file type. Please ensure that
-the selected format is compatible with the file extension and file
-contents. Unable to determine whether the file is of type '{}' or '{}'.
-If possible, upload the file in another format.
-If you continue to have problems, contact Smart Service Queensland - onlineproducts@smartservice.qld.gov.au''')
+        self.assertEqual(
+            normalize_whitespace(INVALID_UPLOAD_MESSAGE),
+            normalize_whitespace(
+                '''This file type is not supported.
+                If possible, upload the file in another format.
+                If you continue to have problems, contact Smart Service Queensland
+                - onlineproducts@smartservice.qld.gov.au'''))
+
+        self.assertEqual(
+            normalize_whitespace(MISMATCHING_UPLOAD_MESSAGE),
+            normalize_whitespace(
+                '''Mismatched file type. Please ensure that the selected
+                format is compatible with the file extension and file contents.
+                Unable to determine whether the file is of type '{}' or '{}'.
+                If possible, upload the file in another format.
+                If you continue to have problems, contact Smart Service Queensland
+                - onlineproducts@smartservice.qld.gov.au''')
+        )
 
 
 if __name__ == '__main__':

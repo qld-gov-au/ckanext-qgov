@@ -3,11 +3,10 @@
 """
 from logging import getLogger
 
-import ckan.lib.base as base
-import ckan.controllers.group as group
-import ckan.controllers.package as package
-import ckan.controllers.user as user
-import ckan.lib.helpers as helpers
+from ckan.lib import base
+from ckan.controllers import group
+from ckan.controllers import package, user
+from ckan.lib import helpers
 
 LOG = getLogger(__name__)
 
