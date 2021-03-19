@@ -23,6 +23,7 @@ sample_files = [
     ('example.kmz', 'KMZ', 'application/vnd.google-earth.kmz'),
     ('example.xml', 'XML', 'text/xml'),
     ('dummy.pdf', 'PDF', 'application/pdf'),
+    # well-formed archives can specify any format, since they can contain anything
     ('example.zip', 'PDF', 'application/pdf'),
     ('example.zip', 'DOC', 'application/msword'),
 ]
