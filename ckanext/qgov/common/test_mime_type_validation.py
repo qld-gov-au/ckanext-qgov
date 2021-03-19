@@ -24,6 +24,7 @@ sample_files = [
     ('example.xml', 'XML', 'text/xml'),
     ('dummy.pdf', 'PDF', 'application/pdf'),
     # well-formed archives can specify any format, since they can contain anything
+    ('example.zip', 'ZIP', 'application/zip'),
     ('example.zip', 'PDF', 'application/pdf'),
     ('example.zip', 'DOC', 'application/msword'),
 ]
