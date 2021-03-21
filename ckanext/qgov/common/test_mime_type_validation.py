@@ -5,7 +5,7 @@
 
 import unittest
 
-from resource_type_validation import configure,\
+from resource_type_validation import configure, type_equals,\
     coalesce_mime_types, validate_resource_mimetype,\
     INVALID_UPLOAD_MESSAGE, MISMATCHING_UPLOAD_MESSAGE
 from ckan.logic import ValidationError
@@ -55,6 +55,14 @@ class TestMimeTypeValidation(unittest.TestCase):
     to a best fit.
     """
 
+    def test_equal_types(self):
+        """ Test that equal types are treated as interchangeable.
+        """
+        self.assertTrue(type_equals('application/xml', 'text/xml'))
+        self.assertFalse(type_equals('application/xml', 'text/plain'))
+        self.assertEqual(coalesce_mime_types(['text/xml', 'application/xml']), 'text/xml')
+        self.assertEqual(coalesce_mime_types(['application/xml', 'text/xml']), 'application/xml')
+
     def test_coalesce_candidates(self):
         """ Test that missing candidates are gracefully ignored.
         """
@@ -77,6 +85,8 @@ class TestMimeTypeValidation(unittest.TestCase):
         self.assertEqual(coalesce_mime_types([None, application_type, generic_binary_type]), application_type)
         self.assertEqual(coalesce_mime_types([None, 'x-gis/x-shapefile', generic_binary_type]), 'x-gis/x-shapefile')
         self.assertEqual(coalesce_mime_types([None, archive_type]), archive_type)
+        self.assertEqual(coalesce_mime_types(['text/xml', 'application/xml', generic_text_type]), 'text/xml')
+        self.assertEqual(coalesce_mime_types([generic_text_type, 'application/xml', 'text/xml']), 'application/xml')
 
     def test_reject_override_not_configured(self):
         """ Test that more specific candidates cannot override
