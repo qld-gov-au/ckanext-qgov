@@ -13,10 +13,14 @@
             "application/sparql-query",
             "application/x-ascii-grid",
             "application/xml",
+            "application/rdf+xml",
             "text/*"
         ],
         "application/zip": ["application/vnd.google-earth.kmz"]
     },
+    "equal_types": [
+        ["text/xml", "application/xml"]
+    ],
     "archive_types": ["application/zip", "application/x-tar"],
     "extra_mimetypes": {
         ".accdb": "application/msaccess",
@@ -32,7 +36,6 @@
         ".kmz": "application/vnd.google-earth.kmz",
         ".mtl": "model/mtl",
         ".n3": "text/n3",
-        ".rdf": "text/xml",
         ".shp": "x-gis/x-shapefile",
         ".sparql": "application/sparql-query",
         ".tab": "text/plain",

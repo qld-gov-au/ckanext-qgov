@@ -29,6 +29,7 @@ for extension, mime_type in six.iteritems(file_mime_config.get('extra_mimetypes'
 ALLOWED_EXTENSIONS = file_mime_config.get('allowed_extensions', [])
 ALLOWED_EXTENSIONS_PATTERN = re.compile(r'.*\.(' + '|'.join(ALLOWED_EXTENSIONS) + ')$', re.I)
 ALLOWED_OVERRIDES = file_mime_config.get('allowed_overrides', {})
+EQUAL_TYPES = file_mime_config.get('equal_types', [])
 ARCHIVE_MIMETYPES = file_mime_config.get('archive_types', [])
 GENERIC_MIMETYPES = ALLOWED_OVERRIDES.keys()
 ERROR_CONTACT = file_mime_config.get('error_contact', 'the site owner.')
@@ -93,7 +94,7 @@ def validate_resource_mimetype(resource):
     # Archives can declare any format, but only if they're well formed
     if any(type in ARCHIVE_MIMETYPES
            for type in (filename_mimetype, sniffed_mimetype)):
-        if filename_mimetype == sniffed_mimetype\
+        if type_equals(filename_mimetype, sniffed_mimetype)\
                 or is_valid_override(filename_mimetype, sniffed_mimetype):
             # well-formed archives can specify any format they want
             sniffed_mimetype = filename_mimetype = claimed_mimetype =\
@@ -137,7 +138,7 @@ def coalesce_mime_types(mime_types, allow_override=True):
     """
     best_candidate = None
     for mime_type in mime_types:
-        if not mime_type or mime_type == best_candidate:
+        if not mime_type or type_equals(mime_type, best_candidate):
             continue
         if not best_candidate:
             best_candidate = mime_type
@@ -155,13 +156,26 @@ def coalesce_mime_types(mime_types, allow_override=True):
     return best_candidate or 'application/octet-stream'
 
 
+def type_equals(type1, type2):
+    """ Checks whether type1 and type2 are to be considered the same.
+    Eg 'text/xml' and 'application/xml' are interchangeable.
+    """
+    if type1 == type2:
+        return True
+    for type_list in EQUAL_TYPES:
+        if type1 in type_list and type2 in type_list:
+            return True
+    else:
+        return False
+
+
 def is_valid_override(mime_type1, mime_type2):
     """ Returns True if one of the two types can be considered a subtype
     of the other, eg 'text/csv' can override 'text/plain'.
     """
     def matches_override_list(mime_type, override_list):
         for override_type in override_list:
-            if override_type == '*' or override_type == mime_type:
+            if override_type == '*' or type_equals(override_type, mime_type):
                 return True
             override_parts = override_type.split('/', 1)
             if len(override_parts) == 2 and override_parts[1] == '*'\
@@ -171,9 +185,9 @@ def is_valid_override(mime_type1, mime_type2):
             return False
 
     for generic_type, override_list in six.iteritems(ALLOWED_OVERRIDES):
-        if generic_type == mime_type1\
+        if type_equals(generic_type, mime_type1)\
             and matches_override_list(mime_type2, override_list)\
-            or generic_type == mime_type2\
+            or type_equals(generic_type, mime_type2)\
                 and matches_override_list(mime_type1, override_list):
             return True
     else:
@@ -182,6 +196,6 @@ def is_valid_override(mime_type1, mime_type2):
 
 def is_mimetype_allowed(mime_type):
     for allowed_mime_type in allowed_mime_types:
-        if allowed_mime_type == '*' or allowed_mime_type == mime_type:
+        if allowed_mime_type == '*' or type_equals(allowed_mime_type, mime_type):
             return True
     return False
