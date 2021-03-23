@@ -30,7 +30,6 @@ import anti_csrf
 import authenticator
 import urlm
 import intercepts
-import resource_type_validation
 from ckanext.qgov.common.stats import Stats
 
 LOG = getLogger(__name__)
