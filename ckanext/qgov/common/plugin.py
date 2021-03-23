@@ -21,7 +21,7 @@ import ckan.logic.auth as logic_auth
 from ckan.logic import get_action
 from ckan.plugins import implements, toolkit, SingletonPlugin, IConfigurer,\
     ITemplateHelpers, IActions, IAuthFunctions, IRoutes, IConfigurable,\
-    IValidators, IResourceController
+    IValidators
 from routes.mapper import SubMapper
 import requests
 from paste.deploy.converters import asbool
@@ -489,7 +489,6 @@ class QGOVPlugin(SingletonPlugin):
     implements(IAuthFunctions, inherit=True)
     implements(IRoutes, inherit=True)
     implements(IValidators, inherit=True)
-    implements(IResourceController, inherit=True)
 
     def update_config_schema(self, schema):
         """ Don't allow customisation of site CSS via the web interface.
@@ -638,15 +637,3 @@ class QGOVPlugin(SingletonPlugin):
             'valid_url': valid_url,
             'valid_resource_url': valid_resource_url
         }
-
-    # IResourceController
-
-    def before_create(self, context, data_dict):
-        """ Check that uploads have an acceptable mime type.
-        """
-        resource_type_validation.validate_resource_mimetype(data_dict)
-
-    def before_update(self, context, existing_resource, data_dict):
-        """ Check that uploads have an acceptable mime type.
-        """
-        resource_type_validation.validate_resource_mimetype(data_dict)
