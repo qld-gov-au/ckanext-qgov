@@ -566,7 +566,6 @@ class QGOVPlugin(SingletonPlugin):
         LOG.info("Resources must come from: %s and cannot come from %s", RESOURCE_WHITELIST, RESOURCE_BLACKLIST)
 
         intercepts.configure(config)
-        resource_type_validation.configure(config)
 
     def before_map(self, route_map):
         """ Add some custom routes for Queensland Government portals.
