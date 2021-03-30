@@ -10,7 +10,9 @@ CKAN_USER_PASSWORD="${CKAN_USER_PASSWORD:-Password123!}"
 CKAN_USER_EMAIL="${CKAN_USER_EMAIL:-admin@localhost}"
 
 . /app/ckan/default/bin/activate
-which ckan || (function ckan { paster --plugin=ckan $* -c /app/ckan/default/production.ini || exit 1 })
+which ckan || ckan () {
+    paster --plugin=ckan $* -c /app/ckan/default/production.ini
+}
 cd /app/ckan/default/src/ckan
 ckan db clean || exit 1
 ckan db init || exit 1
