@@ -14,6 +14,7 @@ from ckan.controllers.user import UserController
 from ckan.controllers.package import PackageController
 from ckan.controllers.storage import StorageController
 from ckan.lib.navl.dictization_functions import Missing
+from ckan.lib.navl.validators import ignore_missing, not_empty
 import ckan.logic
 import ckan.logic.action.update
 import ckan.logic.schema as schemas
@@ -105,13 +106,28 @@ def _apply_schema_validator(user_schema, field_name, validator_name='user_passwo
         for idx, user_schema_func in enumerate(user_schema[field_name]):
             if user_schema_func.__name__ == validator_name:
                 user_schema[field_name][idx] = validator
+                break
+        else:
+            user_schema[field_name].append(validator)
+    return user_schema
+
+
+def _remove_schema_validator(user_schema, field_name, validator):
+    if field_name in user_schema\
+            and validator in user_schema[field_name]:
+        user_schema[field_name].remove(validator)
     return user_schema
 
 
 def default_user_schema():
     """ Add our password validator function to the default list.
     """
-    return _apply_schema_validator(DEFAULT_USER_SCHEMA, 'password')
+    user_schema = DEFAULT_USER_SCHEMA
+    user_schema = _apply_schema_validator(user_schema, 'password')
+    _remove_schema_validator(user_schema, 'fullname', ignore_missing)
+    user_schema = _apply_schema_validator(
+        user_schema, 'fullname',
+        validator_name='not_empty', validator=not_empty)
 
 
 def user_new_form_schema():
@@ -120,6 +136,10 @@ def user_new_form_schema():
     user_schema = USER_NEW_FORM_SCHEMA
     user_schema = _apply_schema_validator(user_schema, 'password')
     user_schema = _apply_schema_validator(user_schema, 'password1')
+    _remove_schema_validator(user_schema, 'fullname', ignore_missing)
+    user_schema = _apply_schema_validator(
+        user_schema, 'fullname',
+        validator_name='not_empty', validator=not_empty)
     return user_schema
 
 
@@ -129,13 +149,23 @@ def user_edit_form_schema():
     user_schema = USER_EDIT_FORM_SCHEMA
     user_schema = _apply_schema_validator(user_schema, 'password')
     user_schema = _apply_schema_validator(user_schema, 'password1')
+    _remove_schema_validator(user_schema, 'fullname', ignore_missing)
+    user_schema = _apply_schema_validator(
+        user_schema, 'fullname',
+        validator_name='not_empty', validator=not_empty)
     return user_schema
 
 
 def default_update_user_schema():
     """ Apply our password validator function when updating a user.
     """
-    return _apply_schema_validator(DEFAULT_UPDATE_USER_SCHEMA, 'password')
+    user_schema = DEFAULT_UPDATE_USER_SCHEMA
+    user_schema = _apply_schema_validator(user_schema, 'password')
+    _remove_schema_validator(user_schema, 'fullname', ignore_missing)
+    user_schema = _apply_schema_validator(
+        user_schema, 'fullname',
+        validator_name='not_empty', validator=not_empty)
+    return user_schema
 
 
 def default_resource_schema():
