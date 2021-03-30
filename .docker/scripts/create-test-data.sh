@@ -20,11 +20,11 @@ paster create-test-data hierarchy -c ${CKAN_INI_FILE}
 # Creating basic test data which has datasets with resources
 paster create-test-data -c ${CKAN_INI_FILE}
 
-paster --plugin=ckan user add organisation_admin email=organisation_admin@localhost password="Password123!" -c ${CKAN_INI_FILE}
-paster --plugin=ckan user add publisher email=publisher@localhost password="Password123!" -c ${CKAN_INI_FILE}
-paster --plugin=ckan user add foodie email=foodie@localhost password="Password123!" -c ${CKAN_INI_FILE}
-paster --plugin=ckan user add group_admin email=group_admin@localhost password="Password123!" -c ${CKAN_INI_FILE}
-paster --plugin=ckan user add walker email=walker@localhost password="Password123!" -c ${CKAN_INI_FILE}
+paster --plugin=ckan user add organisation_admin fullname="Organisation admin" email=organisation_admin@localhost password="Password123!" -c ${CKAN_INI_FILE}
+paster --plugin=ckan user add publisher fullname="Publisher" email=publisher@localhost password="Password123!" -c ${CKAN_INI_FILE}
+paster --plugin=ckan user add foodie fullname="Foodie" email=foodie@localhost password="Password123!" -c ${CKAN_INI_FILE}
+paster --plugin=ckan user add group_admin fullname="Group admin" email=group_admin@localhost password="Password123!" -c ${CKAN_INI_FILE}
+paster --plugin=ckan user add walker fullname="Walker" email=walker@localhost password="Password123!" -c ${CKAN_INI_FILE}
 
 echo "Updating annakarenina to use department-of-health Organisation:"
 package_owner_org_update=$( \
