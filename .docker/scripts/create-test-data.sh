@@ -12,9 +12,9 @@ CKAN_INI_FILE=/app/ckan/default/production.ini
 
 ckan_cli () {
     if (which ckan > /dev/null); then
-        ckan -c ${CKAN_INI_FILE} $*
+        ckan -c ${CKAN_INI_FILE} "$@"
     else
-        paster --plugin=ckan $* -c ${CKAN_INI_FILE}
+        paster --plugin=ckan "$@" -c ${CKAN_INI_FILE}
     fi
 }
 
