@@ -15,6 +15,7 @@ ckan_cli () {
         ckan -c ${CKAN_INI_FILE} $*
     else
         paster --plugin=ckan $* -c ${CKAN_INI_FILE}
+    fi
 }
 
 # We know the "admin" sysadmin account exists, so we'll use her API KEY to create further data

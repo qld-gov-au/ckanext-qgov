@@ -17,6 +17,7 @@ ckan_cli () {
         ckan -c ${CKAN_INI_FILE} $*
     else
         paster --plugin=ckan $* -c ${CKAN_INI_FILE}
+    fi
 }
 cd /app/ckan/default/src/ckan
 ckan_cli db clean || exit 1

@@ -12,6 +12,7 @@ CKAN_INI_FILE=/app/ckan/default/production.ini
 
 . /app/ckan/default/bin/activate
 if (which ckan > /dev/null); then
-    ckan serve ${CKAN_INI_FILE}
+    ckan -c ${CKAN_INI_FILE} run
 else
     paster serve ${CKAN_INI_FILE}
+fi
