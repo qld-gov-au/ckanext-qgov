@@ -128,6 +128,7 @@ def default_user_schema():
     user_schema = _apply_schema_validator(
         user_schema, 'fullname',
         validator_name='not_empty', validator=not_empty)
+    return user_schema
 
 
 def user_new_form_schema():
