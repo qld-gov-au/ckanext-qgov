@@ -9,7 +9,6 @@ Queensland Government has developed this plugin to be used with data.qld.gov.au 
 * Static Routing on all index.html found in static-content directory
 * CSRF Protection
 * Restrict access to user APIs; only admins should be able to view profiles other than their own
-* File upload type verification; ensure that apparent file type matches claimed format, restrict allowed types
 * Resource URL filtering (domain whitelist/blacklist)
 * Statistics helpers
 * Custom feedback route
