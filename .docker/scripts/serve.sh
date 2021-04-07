@@ -8,5 +8,11 @@ sed -i "s@SITE_URL@${SITE_URL}@g" /app/ckan/default/production.ini
 
 python -m smtpd -n -c DebuggingServer localhost:25 &
 
-. /app/ckan/default/bin/activate \
-    && paster serve /app/ckan/default/production.ini
+CKAN_INI_FILE=/app/ckan/default/production.ini
+
+. /app/ckan/default/bin/activate
+if (which ckan > /dev/null); then
+    ckan -c ${CKAN_INI_FILE} run
+else
+    paster serve ${CKAN_INI_FILE}
+fi

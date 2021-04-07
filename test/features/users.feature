@@ -100,25 +100,25 @@ Feature: User APIs
         Given "Admin" as the persona
         When I log in
         And I go to the "admin" profile page
-        Then I should see an element with xpath "//h1[string() = 'admin']"
+        Then I should see an element with xpath "//h1[string() = 'Administrator']"
 
     Scenario: User profile page is accessible to organisation admins
         Given "Organisation Admin" as the persona
         When I log in
         And I go to the "publisher" profile page
-        Then I should see an element with xpath "//h1[string() = 'publisher']"
+        Then I should see an element with xpath "//h1[string() = 'Publisher']"
 
     Scenario: User profile page is accessible to group admins
         Given "Organisation Admin" as the persona
         When I log in
         And I go to the "publisher" profile page
-        Then I should see an element with xpath "//h1[string() = 'publisher']"
+        Then I should see an element with xpath "//h1[string() = 'Publisher']"
 
     Scenario: User profile page for self is accessible to non-admins
         Given "Publisher" as the persona
         When I log in
         And I go to the "publisher" profile page
-        Then I should see an element with xpath "//h1[string() = 'publisher']"
+        Then I should see an element with xpath "//h1[string() = 'Publisher']"
 
     Scenario: Non-self user profile page is not accessible to non-admins
         Given "Publisher" as the persona

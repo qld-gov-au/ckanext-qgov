@@ -12,17 +12,16 @@ import re
 import socket
 import urlparse
 
-import ckan.authz as authz
+from ckan import authz, model
 from ckan.common import _, c
 from ckan.lib.base import h
-import ckan.lib.formatters as formatters
+from ckan.lib import formatters
 import ckan.lib.navl.dictization_functions as df
 import ckan.logic.auth as logic_auth
 from ckan.logic import get_action
 from ckan.plugins import implements, toolkit, SingletonPlugin, IConfigurer,\
     ITemplateHelpers, IActions, IAuthFunctions, IRoutes, IConfigurable,\
-    IValidators, IResourceController
-import ckan.model as model
+    IValidators
 from routes.mapper import SubMapper
 import requests
 from paste.deploy.converters import asbool
@@ -31,7 +30,6 @@ import anti_csrf
 import authenticator
 import urlm
 import intercepts
-import resource_type_validation
 from ckanext.qgov.common.stats import Stats
 
 LOG = getLogger(__name__)
@@ -490,7 +488,6 @@ class QGOVPlugin(SingletonPlugin):
     implements(IAuthFunctions, inherit=True)
     implements(IRoutes, inherit=True)
     implements(IValidators, inherit=True)
-    implements(IResourceController, inherit=True)
 
     def update_config_schema(self, schema):
         """ Don't allow customisation of site CSS via the web interface.
@@ -569,7 +566,6 @@ class QGOVPlugin(SingletonPlugin):
         LOG.info("Resources must come from: %s and cannot come from %s", RESOURCE_WHITELIST, RESOURCE_BLACKLIST)
 
         intercepts.configure(config)
-        resource_type_validation.configure(config)
 
     def before_map(self, route_map):
         """ Add some custom routes for Queensland Government portals.
@@ -639,15 +635,3 @@ class QGOVPlugin(SingletonPlugin):
             'valid_url': valid_url,
             'valid_resource_url': valid_resource_url
         }
-
-    # IResourceController
-
-    def before_create(self, context, data_dict):
-        """ Check that uploads have an acceptable mime type.
-        """
-        resource_type_validation.validate_resource_mimetype(data_dict)
-
-    def before_update(self, context, existing_resource, data_dict):
-        """ Check that uploads have an acceptable mime type.
-        """
-        resource_type_validation.validate_resource_mimetype(data_dict)
