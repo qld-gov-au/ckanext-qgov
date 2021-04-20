@@ -21,7 +21,7 @@ import six
 
 LOG = getLogger(__name__)
 
-RAW_RENDER_JINJA = base.render_jinja2
+RAW_RENDER = base.render
 RAW_BEFORE = base.BaseController.__before__
 
 """ Used as the cookie name and input field name.
@@ -61,10 +61,11 @@ def is_logged_in():
     return _get_user()
 
 
-def anti_csrf_render_jinja2(template_name, extra_vars=None):
-    """ Wrap the core page-rendering function and inject tokens into HTML where appropriate.
+def anti_csrf_render(template_name, extra_vars=None, *pargs, **kwargs):
+    """ Wrap the core page-rendering function and
+    inject tokens into HTML where appropriate.
     """
-    html = apply_token(RAW_RENDER_JINJA(template_name, extra_vars))
+    html = apply_token(RAW_RENDER(template_name, extra_vars, *pargs, **kwargs))
     return html
 
 
@@ -311,5 +312,5 @@ def _get_post_token():
 def intercept_csrf():
     """ Monkey-patch the core rendering methods to apply our CSRF tokens.
     """
-    base.render_jinja2 = anti_csrf_render_jinja2
+    base.render = anti_csrf_render
     base.BaseController.__before__ = anti_csrf_before
