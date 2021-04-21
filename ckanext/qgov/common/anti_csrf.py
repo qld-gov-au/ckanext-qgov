@@ -100,7 +100,7 @@ def apply_token(html):
 def _get_cookie_token():
     """ Retrieve the token expected by the server.
 
-    This will be retrieved from the 'token' cookie, if it exists.
+    This will be retrieved from the token cookie, if it exists.
     If not, an error will occur.
     """
     token = None
@@ -172,7 +172,7 @@ def read_token_values(token):
 def _get_response_token():
     """Retrieve the token to be injected into pages.
 
-    This will be retrieved from the 'token' cookie, if it exists and is fresh.
+    This will be retrieved from the token cookie, if it exists and is valid.
     If not, a new token will be generated and a new cookie set.
     """
     # ensure that the same token is used when a page is assembled from pieces
@@ -315,6 +315,16 @@ def _get_query_params(field_name):
         return request.GET.getall(field_name)
 
 
+def _delete_param(field_name):
+    """ Remove the parameter with the specified name from the current
+    request. This requires the request parameters to be mutable.
+    """
+    for collection_name in ['args', 'form', 'GET', 'POST']:
+        collection = getattr(request, collection_name, {})
+        if field_name in collection:
+            del collection[field_name]
+
+
 def _request_attrs():
     return request.environ['webob.adhoc_attrs']
 
@@ -349,6 +359,7 @@ def _get_post_token():
         csrf_fail("Invalid token format")
 
     _request_attrs()[TOKEN_FIELD_NAME] = token
+    _delete_param(TOKEN_FIELD_NAME)
     return token
 
 
