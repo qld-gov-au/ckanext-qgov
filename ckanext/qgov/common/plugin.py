@@ -13,7 +13,7 @@ import socket
 import urlparse
 
 from ckan import authz, model
-from ckan.common import _, c, request
+from ckan.common import _, c
 from ckan.lib.base import h
 from ckan.lib import formatters
 import ckan.lib.navl.dictization_functions as df
@@ -33,6 +33,7 @@ import authenticator
 import urlm
 import intercepts
 from ckanext.qgov.common.stats import Stats
+from request_helpers import scoped_attrs
 
 LOG = getLogger(__name__)
 
@@ -619,8 +620,8 @@ class QGOVPlugin(SingletonPlugin):
         def set_csrf_token(response):
             """ Set the CSRF token cookie if needed.
             """
-            if request.environ['webob.adhoc_attrs'].get('created_token', False):
-                token = request.environ['webob.adhoc_attrs']['response_token']
+            if scoped_attrs().get('created_token', False):
+                token = scoped_attrs()['response_token']
                 anti_csrf.set_response_token_cookie(token, response)
             return response
 

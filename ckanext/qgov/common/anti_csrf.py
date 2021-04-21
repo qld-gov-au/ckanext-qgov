@@ -14,10 +14,11 @@ import time
 import urllib
 from logging import getLogger
 import urlparse
+import six
 
 from ckan.common import config, request, response as pylons_response, g
 from ckan.lib import base
-import six
+import request_helpers
 
 LOG = getLogger(__name__)
 
@@ -176,22 +177,22 @@ def _get_response_token():
     If not, a new token will be generated and a new cookie set.
     """
     # ensure that the same token is used when a page is assembled from pieces
-    if 'response_token' in _request_attrs():
+    if 'response_token' in request_helpers.scoped_attrs():
         LOG.debug("Reusing response token from request attributes")
-        token = _request_attrs()['response_token']
+        token = request_helpers.scoped_attrs()['response_token']
     elif TOKEN_FIELD_NAME in request.cookies:
         LOG.debug("Obtaining token from cookie")
         token = request.cookies.get(TOKEN_FIELD_NAME)
         if not validate_token(token) or is_soft_expired(token):
             LOG.debug("Invalid or expired cookie token; making new token cookie")
             token = create_response_token()
-            _request_attrs()['created_token'] = True
-        _request_attrs()['response_token'] = token
+            request_helpers.scoped_attrs()['created_token'] = True
+        request_helpers.scoped_attrs()['response_token'] = token
     else:
         LOG.debug("No valid token found; making new token cookie")
         token = create_response_token()
-        _request_attrs()['created_token'] = True
-        _request_attrs()['response_token'] = token
+        request_helpers.scoped_attrs()['created_token'] = True
+        request_helpers.scoped_attrs()['response_token'] = token
 
     return token
 
@@ -291,44 +292,6 @@ def csrf_fail(message):
     base.abort(403, "Your form submission could not be validated")
 
 
-def _get_post_params(field_name):
-    """ Retrieve a list of all POST parameters with the specified name
-    for the current request.
-
-    This uses 'request.POST' for Pylons and 'request.form' for Flask.
-    """
-    if hasattr(request, 'form'):
-        return request.form.getlist(field_name)
-    else:
-        return request.POST.getall(field_name)
-
-
-def _get_query_params(field_name):
-    """ Retrieve a list of all GET parameters with the specified name
-    for the current request.
-
-    This uses 'request.GET' for Pylons and 'request.args' for Flask.
-    """
-    if hasattr(request, 'args'):
-        return request.args.getlist(field_name)
-    else:
-        return request.GET.getall(field_name)
-
-
-def _delete_param(field_name):
-    """ Remove the parameter with the specified name from the current
-    request. This requires the request parameters to be mutable.
-    """
-    for collection_name in ['args', 'form', 'GET', 'POST']:
-        collection = getattr(request, collection_name, {})
-        if field_name in collection:
-            del collection[field_name]
-
-
-def _request_attrs():
-    return request.environ['webob.adhoc_attrs']
-
-
 def _get_post_token():
     """Retrieve the token provided by the client.
 
@@ -336,10 +299,10 @@ def _get_post_token():
     However, for compatibility with 'confirm-action' links,
     it is also acceptable to provide the token as a query string parameter.
     """
-    if TOKEN_FIELD_NAME in _request_attrs():
-        return _request_attrs()[TOKEN_FIELD_NAME]
+    if TOKEN_FIELD_NAME in request_helpers.scoped_attrs():
+        return request_helpers.scoped_attrs()[TOKEN_FIELD_NAME]
 
-    post_tokens = _get_post_params(TOKEN_FIELD_NAME)
+    post_tokens = request_helpers.get_post_params(TOKEN_FIELD_NAME)
 
     if post_tokens:
         if len(post_tokens) > 1:
@@ -347,7 +310,7 @@ def _get_post_token():
         else:
             token = post_tokens[0]
     else:
-        get_tokens = _get_query_params(TOKEN_FIELD_NAME)
+        get_tokens = request_helpers.get_query_params(TOKEN_FIELD_NAME)
         if len(get_tokens) == 1:
             # handle query string token if there are no POST parameters
             # this is needed for the 'confirm-action' JavaScript module
@@ -358,8 +321,8 @@ def _get_post_token():
     if not validate_token(token):
         csrf_fail("Invalid token format")
 
-    _request_attrs()[TOKEN_FIELD_NAME] = token
-    _delete_param(TOKEN_FIELD_NAME)
+    request_helpers.scoped_attrs()[TOKEN_FIELD_NAME] = token
+    request_helpers.delete_param(TOKEN_FIELD_NAME)
     return token
 
 
