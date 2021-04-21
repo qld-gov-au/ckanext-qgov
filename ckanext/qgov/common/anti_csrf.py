@@ -15,7 +15,7 @@ import urllib
 from logging import getLogger
 import urlparse
 
-from ckan.common import config, request, response, g
+from ckan.common import config, request, response as pylons_response, g
 from ckan.lib import base
 import six
 
@@ -176,20 +176,22 @@ def _get_response_token():
     If not, a new token will be generated and a new cookie set.
     """
     # ensure that the same token is used when a page is assembled from pieces
-    if 'response_token' in request.environ['webob.adhoc_attrs']:
+    if 'response_token' in _request_attrs():
         LOG.debug("Reusing response token from request attributes")
-        token = request.response_token
+        token = _request_attrs()['response_token']
     elif TOKEN_FIELD_NAME in request.cookies:
         LOG.debug("Obtaining token from cookie")
         token = request.cookies.get(TOKEN_FIELD_NAME)
         if not validate_token(token) or is_soft_expired(token):
             LOG.debug("Invalid or expired cookie token; making new token cookie")
             token = create_response_token()
-        request.response_token = token
+            _request_attrs()['created_token'] = True
+        _request_attrs()['response_token'] = token
     else:
         LOG.debug("No valid token found; making new token cookie")
         token = create_response_token()
-        request.response_token = token
+        _request_attrs()['created_token'] = True
+        _request_attrs()['response_token'] = token
 
     return token
 
@@ -233,11 +235,17 @@ def create_response_token():
     message = "{}/{}/{}".format(timestamp, nonce, username)
     token = "{}!{}".format(get_digest(message), message)
 
-    _set_response_token_cookie(token)
+    # pre-emptively set the token cookie if using Pylons,
+    # otherwise assume the after_app_request hook will do it
+    try:
+        set_response_token_cookie(token, pylons_response)
+    except Exception as e:
+        LOG.warn("Unable to set CSRF token cookie via Pylons: %s", e)
+        pass
     return token
 
 
-def _set_response_token_cookie(token):
+def set_response_token_cookie(token, response):
     """ Add a generated token cookie to the HTTP response.
     """
     site_url = urlparse.urlparse(config.get('ckan.site_url', ''))
@@ -252,10 +260,19 @@ def _set_response_token_cookie(token):
 
 def is_request_exempt():
     """ Determine whether a request needs to provide a token.
-    HTTP methods without side effects (GET, HEAD, OPTIONS) are exempt, as are API calls
-    (which should instead provide an API key).
+    HTTP methods without side effects (GET, HEAD, OPTIONS) are exempt,
+    as are API calls (which should instead provide an API key).
     """
-    return not is_logged_in() or API_URL.match(request.path) or request.method in {'GET', 'HEAD', 'OPTIONS'}
+    return not is_logged_in()\
+        or API_URL.match(request.path)\
+        or request.method in {'GET', 'HEAD', 'OPTIONS'}
+
+
+def check_csrf():
+    """ Check whether the request passes (or is exempt from) CSRF checks.
+    """
+    return is_request_exempt()\
+        or _get_cookie_token() == _get_post_token()
 
 
 def anti_csrf_before(obj, action, **params):
@@ -263,7 +280,7 @@ def anti_csrf_before(obj, action, **params):
     """
     RAW_BEFORE(obj, action)
 
-    if not is_request_exempt() and _get_cookie_token() != _get_post_token():
+    if not check_csrf():
         csrf_fail("Could not match session token with form token")
 
 
@@ -274,39 +291,65 @@ def csrf_fail(message):
     base.abort(403, "Your form submission could not be validated")
 
 
+def _get_post_params(field_name):
+    """ Retrieve a list of all POST parameters with the specified name
+    for the current request.
+
+    This uses 'request.POST' for Pylons and 'request.form' for Flask.
+    """
+    if hasattr(request, 'form'):
+        return request.form.getlist(field_name)
+    else:
+        return request.POST.getall(field_name)
+
+
+def _get_query_params(field_name):
+    """ Retrieve a list of all GET parameters with the specified name
+    for the current request.
+
+    This uses 'request.GET' for Pylons and 'request.args' for Flask.
+    """
+    if hasattr(request, 'args'):
+        return request.args.getlist(field_name)
+    else:
+        return request.GET.getall(field_name)
+
+
+def _request_attrs():
+    return request.environ['webob.adhoc_attrs']
+
+
 def _get_post_token():
     """Retrieve the token provided by the client.
 
     This is normally a single 'token' parameter in the POST body.
     However, for compatibility with 'confirm-action' links,
-    it is also acceptable to provide the token as a query string parameter,
-    if there is no POST body.
+    it is also acceptable to provide the token as a query string parameter.
     """
-    if TOKEN_FIELD_NAME in request.environ['webob.adhoc_attrs']:
-        return request.token
+    if TOKEN_FIELD_NAME in _request_attrs():
+        return _request_attrs()[TOKEN_FIELD_NAME]
 
-    # handle query string token if there are no POST parameters
-    # this is needed for the 'confirm-action' JavaScript module
-    if not request.POST and len(request.GET.getall(TOKEN_FIELD_NAME)) == 1:
-        request.token = request.GET.getone(TOKEN_FIELD_NAME)
-        del request.GET[TOKEN_FIELD_NAME]
-        return request.token
+    post_tokens = _get_post_params(TOKEN_FIELD_NAME)
 
-    post_tokens = request.POST.getall(TOKEN_FIELD_NAME)
-    if not post_tokens:
-        csrf_fail("Missing CSRF token in form submission")
-    elif len(post_tokens) > 1:
-        csrf_fail("More than one CSRF token in form submission")
+    if post_tokens:
+        if len(post_tokens) > 1:
+            csrf_fail("More than one CSRF token in form submission")
+        else:
+            token = post_tokens[0]
     else:
-        request.token = post_tokens[0]
+        get_tokens = _get_query_params(TOKEN_FIELD_NAME)
+        if len(get_tokens) == 1:
+            # handle query string token if there are no POST parameters
+            # this is needed for the 'confirm-action' JavaScript module
+            token = get_tokens[0]
+        else:
+            csrf_fail("Missing CSRF token in form submission")
 
-    # drop token from request so it doesn't populate resource extras
-    del request.POST[TOKEN_FIELD_NAME]
-
-    if not validate_token(request.token):
+    if not validate_token(token):
         csrf_fail("Invalid token format")
 
-    return request.token
+    _request_attrs()[TOKEN_FIELD_NAME] = token
+    return token
 
 
 def intercept_csrf():
