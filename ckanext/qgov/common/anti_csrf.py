@@ -270,7 +270,7 @@ def _anti_csrf_render_jinja(template_name, extra_vars=None):
     return apply_token(RAW_RENDER_JINJA(template_name, extra_vars))
 
 
-def _anti_csrf_render_flask(template_name, extra_vars=None):
+def _anti_csrf_render_flask(template_name, **extra_vars):
     return apply_token(RAW_RENDER_FLASK(template_name, **extra_vars))
 
 
