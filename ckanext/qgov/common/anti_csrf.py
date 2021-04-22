@@ -270,10 +270,6 @@ def _anti_csrf_render_jinja(template_name, extra_vars=None):
     return apply_token(RAW_RENDER_JINJA(template_name, extra_vars))
 
 
-def _anti_csrf_render_flask(template_name, **extra_vars):
-    return apply_token(RAW_RENDER_FLASK(template_name, **extra_vars))
-
-
 def _anti_csrf_before(obj, action, **params):
     """ Wrap the core pre-rendering function to require tokens on applicable requests.
     """
@@ -328,5 +324,4 @@ def intercept_csrf():
     """ Monkey-patch the core rendering methods to apply our CSRF tokens.
     """
     base.render_jinja2 = _anti_csrf_render_jinja
-    base.flask_render_template = _anti_csrf_render_flask
     base.BaseController.__before__ = _anti_csrf_before

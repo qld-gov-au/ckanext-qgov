@@ -618,11 +618,13 @@ class QGOVPlugin(SingletonPlugin):
 
         @blueprint.after_app_request
         def set_csrf_token(response):
-            """ Set the CSRF token cookie if needed.
+            """ Apply a CSRF token to all response bodies.
             """
-            if scoped_attrs().get('created_token', False):
-                token = scoped_attrs()['response_token']
-                anti_csrf.set_response_token_cookie(token, response)
+            if response.data:
+                response.data = anti_csrf.apply_token(response.data)
+                if scoped_attrs().get('created_token', False):
+                    token = scoped_attrs()['response_token']
+                    anti_csrf.set_response_token_cookie(token, response)
             return response
 
         return blueprint
