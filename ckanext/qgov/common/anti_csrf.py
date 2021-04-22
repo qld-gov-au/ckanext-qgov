@@ -22,7 +22,6 @@ import request_helpers
 
 LOG = getLogger(__name__)
 
-RAW_RENDER = base.render
 RAW_BEFORE = base.BaseController.__before__
 
 """ Used as the cookie name and input field name.
@@ -60,14 +59,6 @@ def is_logged_in():
     TODO Also require a token on login/logout forms.
     """
     return _get_user()
-
-
-def anti_csrf_render(template_name, extra_vars=None, *pargs, **kwargs):
-    """ Wrap the core page-rendering function and
-    inject tokens into HTML where appropriate.
-    """
-    html = apply_token(RAW_RENDER(template_name, extra_vars, *pargs, **kwargs))
-    return html
 
 
 def apply_token(html):
@@ -326,5 +317,11 @@ def _get_post_token():
 def intercept_csrf():
     """ Monkey-patch the core rendering methods to apply our CSRF tokens.
     """
-    base.render = anti_csrf_render
+    def _compose_renderer(raw_function):
+        def _anti_csrf_function(*args, **kwargs):
+            return apply_token(raw_function(*args, **kwargs))
+        return _anti_csrf_function
+
+    base.render_jinja2 = _compose_renderer(base.render_jinja2)
+    base.flask_render_template = _compose_renderer(base.render_jinja2)
     base.BaseController.__before__ = anti_csrf_before
