@@ -22,6 +22,8 @@ import request_helpers
 
 LOG = getLogger(__name__)
 
+RAW_RENDER_JINJA = base.render_jinja2
+RAW_RENDER_FLASK = base.flask_render_template
 RAW_BEFORE = base.BaseController.__before__
 
 """ Used as the cookie name and input field name.
@@ -264,7 +266,15 @@ def check_csrf():
         or _get_cookie_token() == _get_post_token()
 
 
-def anti_csrf_before(obj, action, **params):
+def _anti_csrf_render_jinja(template_name, extra_vars=None):
+    return apply_token(RAW_RENDER_JINJA(template_name, extra_vars))
+
+
+def _anti_csrf_render_flask(template_name, extra_vars=None):
+    return apply_token(RAW_RENDER_FLASK(template_name, **extra_vars))
+
+
+def _anti_csrf_before(obj, action, **params):
     """ Wrap the core pre-rendering function to require tokens on applicable requests.
     """
     RAW_BEFORE(obj, action)
@@ -317,11 +327,6 @@ def _get_post_token():
 def intercept_csrf():
     """ Monkey-patch the core rendering methods to apply our CSRF tokens.
     """
-    def _compose_renderer(raw_function):
-        def _anti_csrf_function(*args, **kwargs):
-            return apply_token(raw_function(*args, **kwargs))
-        return _anti_csrf_function
-
-    base.render_jinja2 = _compose_renderer(base.render_jinja2)
-    base.flask_render_template = _compose_renderer(base.render_jinja2)
-    base.BaseController.__before__ = anti_csrf_before
+    base.render_jinja2 = _anti_csrf_render_jinja
+    base.flask_render_template = _anti_csrf_render_flask
+    base.BaseController.__before__ = _anti_csrf_before
