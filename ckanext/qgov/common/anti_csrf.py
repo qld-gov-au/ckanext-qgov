@@ -238,11 +238,8 @@ def create_response_token():
 
     # pre-emptively set the token cookie if using Pylons,
     # otherwise assume the after_app_request hook will do it
-    try:
+    if 'set_cookie' in dir(pylons_response):
         set_response_token_cookie(token, pylons_response)
-    except Exception as e:
-        LOG.warn("Unable to set CSRF token cookie via Pylons: %s", e)
-        pass
     return token
 
 
