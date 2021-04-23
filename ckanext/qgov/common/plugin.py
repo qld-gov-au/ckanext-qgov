@@ -21,16 +21,19 @@ import ckan.logic.auth as logic_auth
 from ckan.logic import get_action
 from ckan.plugins import implements, toolkit, SingletonPlugin, IConfigurer,\
     ITemplateHelpers, IActions, IAuthFunctions, IRoutes, IConfigurable,\
-    IValidators
+    IValidators, IBlueprint, IMiddleware
+from flask import Blueprint, Request
 from routes.mapper import SubMapper
 import requests
 from paste.deploy.converters import asbool
+from werkzeug.datastructures import MultiDict, ImmutableMultiDict
 
 import anti_csrf
 import authenticator
 import urlm
 import intercepts
 from ckanext.qgov.common.stats import Stats
+from request_helpers import scoped_attrs
 
 LOG = getLogger(__name__)
 
@@ -487,7 +490,11 @@ class QGOVPlugin(SingletonPlugin):
     implements(IActions, inherit=True)
     implements(IAuthFunctions, inherit=True)
     implements(IRoutes, inherit=True)
+    implements(IBlueprint, inherit=True)
+    implements(IMiddleware, inherit=True)
     implements(IValidators, inherit=True)
+
+    # IConfigurer
 
     def update_config_schema(self, schema):
         """ Don't allow customisation of site CSS via the web interface.
@@ -555,6 +562,8 @@ class QGOVPlugin(SingletonPlugin):
             Page.pager = legacy_pager
         return ckan_config
 
+    # IConfigurable
+
     def configure(self, config):
         """ Monkey-patch functions that don't have standard extension
         points.
@@ -567,6 +576,7 @@ class QGOVPlugin(SingletonPlugin):
 
         intercepts.configure(config)
 
+    # IRoutes
     def before_map(self, route_map):
         """ Add some custom routes for Queensland Government portals.
         """
@@ -589,6 +599,59 @@ class QGOVPlugin(SingletonPlugin):
         intercepts.set_intercepts()
         return route_map
 
+    # IBlueprint
+
+    def get_blueprint(self):
+        """ Create a blueprint that uses a Flask rule to intercept all
+        requests and set/check CSRF tokens.
+        """
+
+        blueprint = Blueprint(self.name, self.__module__)
+
+        @blueprint.before_app_request
+        def check_csrf():
+            """ Abort invalid Flask requests based on CSRF token.
+            """
+            if not anti_csrf.check_csrf():
+                anti_csrf.csrf_fail(
+                    "Could not match session token with form token")
+
+        @blueprint.after_app_request
+        def set_csrf_token(response):
+            """ Apply a CSRF token to all response bodies.
+            """
+            if response.data:
+                response.data = anti_csrf.apply_token(response.data)
+                if scoped_attrs().get('created_token', False):
+                    token = scoped_attrs()['response_token']
+                    anti_csrf.set_response_token_cookie(token, response)
+            return response
+
+        return blueprint
+
+    # IMiddleware
+
+    def make_middleware(self, app, config):
+        """ Configure the Flask app to permit deletion of the CSRF token
+        from the request parameters. Otherwise the token ends up getting
+        populated in dataset and resource 'extras'.
+        """
+        flask_app = None
+        if hasattr(app, 'request_class'):
+            flask_app = app
+        elif hasattr(app, 'app') and hasattr(app.app, 'request_class'):
+            flask_app = app.app
+
+        if flask_app:
+            LOG.debug("Configuring app %s to use CSRFAwareRequest",
+                      flask_app)
+            flask_app.request_class = CSRFAwareRequest
+            return flask_app
+
+        return app
+
+    # ITemplateHelpers
+
     def get_helpers(self):
         """ A dictionary of extra helpers that will be available
         to provide QGOV-specific helpers to the templates.
@@ -610,12 +673,16 @@ class QGOVPlugin(SingletonPlugin):
 
         return helper_dict
 
+    # IActions
+
     def get_actions(self):
         """Extend actions API
         """
         return {
             'user_update': intercepts.user_update
         }
+
+    # IAuthFunctions
 
     def get_auth_functions(self):
         """ Override the 'related' auth functions with our own.
@@ -628,6 +695,8 @@ class QGOVPlugin(SingletonPlugin):
             'group_show': auth_group_show
         }
 
+    # IValidators
+
     def get_validators(self):
         """ Add URL validators.
         """
@@ -635,3 +704,21 @@ class QGOVPlugin(SingletonPlugin):
             'valid_url': valid_url,
             'valid_resource_url': valid_resource_url
         }
+
+
+class MostlyImmutableMultiDict(ImmutableMultiDict):
+    """ Allows a single mutating operation, to delete the CSRF token.
+    """
+    mutable_fields = [anti_csrf.TOKEN_FIELD_NAME]
+
+    def __delitem__(self, key):
+        if key in self.mutable_fields:
+            return MultiDict.__delitem__(self, key)
+        else:
+            return super.__delitem__(key)
+
+
+class CSRFAwareRequest(Request):
+    """ Adjust parameter storage so we can delete CSRF tokens.
+    """
+    parameter_storage_class = MostlyImmutableMultiDict
