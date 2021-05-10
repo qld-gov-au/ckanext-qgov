@@ -26,7 +26,6 @@ from routes.mapper import SubMapper
 import requests
 from paste.deploy.converters import asbool
 
-import anti_csrf
 import authenticator
 import urlm
 import intercepts
@@ -489,6 +488,8 @@ class QGOVPlugin(SingletonPlugin):
     implements(IRoutes, inherit=True)
     implements(IValidators, inherit=True)
 
+    # IConfigurer
+
     def update_config_schema(self, schema):
         """ Don't allow customisation of site CSS via the web interface.
         These fields represent a persistent XSS risk.
@@ -555,6 +556,8 @@ class QGOVPlugin(SingletonPlugin):
             Page.pager = legacy_pager
         return ckan_config
 
+    # IConfigurable
+
     def configure(self, config):
         """ Monkey-patch functions that don't have standard extension
         points.
@@ -567,6 +570,7 @@ class QGOVPlugin(SingletonPlugin):
 
         intercepts.configure(config)
 
+    # IRoutes
     def before_map(self, route_map):
         """ Add some custom routes for Queensland Government portals.
         """
@@ -583,11 +587,12 @@ class QGOVPlugin(SingletonPlugin):
     def after_map(self, route_map):
         """ Add monkey-patches after routing is set up.
         """
-        anti_csrf.intercept_csrf()
         authenticator.intercept_authenticator()
         urlm.intercept_404()
         intercepts.set_intercepts()
         return route_map
+
+    # ITemplateHelpers
 
     def get_helpers(self):
         """ A dictionary of extra helpers that will be available
@@ -610,12 +615,16 @@ class QGOVPlugin(SingletonPlugin):
 
         return helper_dict
 
+    # IActions
+
     def get_actions(self):
         """Extend actions API
         """
         return {
             'user_update': intercepts.user_update
         }
+
+    # IAuthFunctions
 
     def get_auth_functions(self):
         """ Override the 'related' auth functions with our own.
@@ -627,6 +636,8 @@ class QGOVPlugin(SingletonPlugin):
             'user_show': auth_user_show,
             'group_show': auth_group_show
         }
+
+    # IValidators
 
     def get_validators(self):
         """ Add URL validators.

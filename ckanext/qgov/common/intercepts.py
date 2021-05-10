@@ -12,7 +12,11 @@ import requests
 from ckan.common import _, response
 from ckan.controllers.user import UserController
 from ckan.controllers.package import PackageController
-from ckan.controllers.storage import StorageController
+try:
+    from ckan.controllers.storage import StorageController
+    storage_enabled = True
+except ImportError:
+    storage_enabled = False
 from ckan.lib.navl.dictization_functions import Missing
 from ckan.lib.navl.validators import ignore_missing, not_empty
 import ckan.logic
@@ -41,7 +45,8 @@ DEFAULT_UPDATE_USER_SCHEMA = schemas.default_update_user_schema()
 RESOURCE_SCHEMA = schemas.default_resource_schema()
 
 UPLOAD = Upload.upload
-STORAGE_DOWNLOAD = StorageController.file
+if storage_enabled:
+    STORAGE_DOWNLOAD = StorageController.file
 RESOURCE_DOWNLOAD = PackageController.resource_download
 
 EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
@@ -73,7 +78,8 @@ def set_intercepts():
 
     schemas.default_resource_schema = default_resource_schema
 
-    StorageController.file = storage_download_with_headers
+    if storage_enabled:
+        StorageController.file = storage_download_with_headers
     PackageController.resource_download = resource_download_with_headers
 
 
