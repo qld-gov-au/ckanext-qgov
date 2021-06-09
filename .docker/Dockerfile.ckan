@@ -26,10 +26,14 @@ RUN . ${APP_DIR}/bin/activate \
 
 COPY .docker/test.ini $APP_DIR/production.ini
 
+COPY .docker/scripts $WORKDIR/scripts
+
 COPY .docker/scripts/ckan_cli ${APP_DIR}/bin/
 
 # Add current extension and files.
-COPY ckanext .docker/scripts requirements.txt requirements-dev.txt setup.py .flake8 $WORKDIR/
+COPY ckanext $WORKDIR/ckanext
+
+COPY requirements.txt requirements-dev.txt setup.py .flake8 $WORKDIR/
 
 RUN fix-permissions /app/ckan \
     && chmod +x $WORKDIR/scripts/*.sh\
