@@ -6,17 +6,8 @@
 set -e
 
 CKAN_ACTION_URL=http://ckan:3000/api/action
-CKAN_INI_FILE=/app/ckan/default/production.ini
 
-. /app/ckan/default/bin/activate
-
-ckan_cli () {
-    if (which ckan > /dev/null); then
-        ckan -c ${CKAN_INI_FILE} "$@"
-    else
-        paster --plugin=ckan "$@" -c ${CKAN_INI_FILE}
-    fi
-}
+. ${APP_DIR}/bin/activate
 
 # We know the "admin" sysadmin account exists, so we'll use her API KEY to create further data
 API_KEY=$(ckan_cli user admin | tr -d '\n' | sed -r 's/^(.*)apikey=(\S*)(.*)/\2/')
