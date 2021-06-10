@@ -1,5 +1,7 @@
-Version 1.1
-#ckanext-qgov - Queensland Government CKAN Extensions
+[![Tests](https://github.com/qld-gov-au/ckan-ex-qgov/actions/workflows/test.yml/badge.svg)](https://github.com/qld-gov-au/ckan-ex-qgov/actions/workflows/test.yml)
+============
+ckanext-qgov - Queensland Government CKAN Extensions
+============
 
 
 #About

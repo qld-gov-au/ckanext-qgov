@@ -14,6 +14,7 @@ RUN apk add --no-cache curl && curl -s -L -O https://github.com/jwilder/dockeriz
 
 # Install CKAN.
 ENV CKAN_VERSION 2.8.8-qgov.2
+
 RUN . ${APP_DIR}/bin/activate \
     && cd ${APP_DIR} \
     && pip install setuptools==36.1 \
@@ -35,7 +36,7 @@ COPY ckanext $WORKDIR/ckanext
 
 COPY requirements.txt requirements-dev.txt setup.py .flake8 $WORKDIR/
 
-RUN fix-permissions /app/ckan \
+RUN fix-permissions $WORKDIR/ckan \
     && chmod +x $WORKDIR/scripts/*.sh\
     && chmod +x ${APP_DIR}/bin/ckan_cli
 
