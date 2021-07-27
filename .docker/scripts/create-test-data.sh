@@ -6,25 +6,23 @@
 set -e
 
 CKAN_ACTION_URL=http://ckan:3000/api/action
-CKAN_INI_FILE=/app/ckan/default/production.ini
 
-. /app/ckan/default/bin/activate \
-    && cd /app/ckan/default/src/ckan
+. ${APP_DIR}/bin/activate
 
 # We know the "admin" sysadmin account exists, so we'll use her API KEY to create further data
-API_KEY=$(paster --plugin=ckan user admin -c ${CKAN_INI_FILE} | tr -d '\n' | sed -r 's/^(.*)apikey=(\S*)(.*)/\2/')
+API_KEY=$(ckan_cli user admin | tr -d '\n' | sed -r 's/^(.*)apikey=(\S*)(.*)/\2/')
 
 # Creating test data hierarchy which creates organisations assigned to datasets
-paster create-test-data hierarchy -c ${CKAN_INI_FILE}
+ckan_cli create-test-data hierarchy
 
 # Creating basic test data which has datasets with resources
-paster create-test-data -c ${CKAN_INI_FILE}
+ckan_cli create-test-data
 
-paster --plugin=ckan user add organisation_admin email=organisation_admin@localhost password="Password123!" -c ${CKAN_INI_FILE}
-paster --plugin=ckan user add publisher email=publisher@localhost password="Password123!" -c ${CKAN_INI_FILE}
-paster --plugin=ckan user add foodie email=foodie@localhost password="Password123!" -c ${CKAN_INI_FILE}
-paster --plugin=ckan user add group_admin email=group_admin@localhost password="Password123!" -c ${CKAN_INI_FILE}
-paster --plugin=ckan user add walker email=walker@localhost password="Password123!" -c ${CKAN_INI_FILE}
+ckan_cli user add organisation_admin fullname="Organisation Admin" email=organisation_admin@localhost password="Password123!"
+ckan_cli user add publisher fullname="Publisher" email=publisher@localhost password="Password123!"
+ckan_cli user add foodie fullname="Foodie" email=foodie@localhost password="Password123!"
+ckan_cli user add group_admin fullname="Group Admin" email=group_admin@localhost password="Password123!"
+ckan_cli user add walker fullname="Walker" email=walker@localhost password="Password123!"
 
 echo "Updating annakarenina to use department-of-health Organisation:"
 package_owner_org_update=$( \

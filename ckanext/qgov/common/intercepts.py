@@ -2,25 +2,31 @@
 """ Monkey-patch CKAN core functions with our own implementations.
 """
 
-import re
 import json
 from logging import getLogger
+import re
+import six
 
 import requests
 
 from ckan.common import _, response
 from ckan.controllers.user import UserController
 from ckan.controllers.package import PackageController
-from ckan.controllers.storage import StorageController
+try:
+    from ckan.controllers.storage import StorageController
+    storage_enabled = True
+except ImportError:
+    storage_enabled = False
 from ckan.lib.navl.dictization_functions import Missing
+from ckan.lib.navl.validators import ignore_missing, not_empty
 import ckan.logic
 import ckan.logic.action.update
 import ckan.logic.schema as schemas
-import ckan.logic.validators as validators
+from ckan.logic import validators
 from ckan.model import Session
 from ckan.lib.base import c, request, abort, h
-from ckan.lib.uploader import Upload, ResourceUpload
-import ckan.plugins.toolkit as toolkit
+from ckan.lib.uploader import Upload
+from ckan.plugins import toolkit
 
 import plugin
 from authenticator import QGOVUser
@@ -39,53 +45,9 @@ DEFAULT_UPDATE_USER_SCHEMA = schemas.default_update_user_schema()
 RESOURCE_SCHEMA = schemas.default_resource_schema()
 
 UPLOAD = Upload.upload
-RESOURCE_UPLOAD = ResourceUpload.upload
-STORAGE_DOWNLOAD = StorageController.file
+if storage_enabled:
+    STORAGE_DOWNLOAD = StorageController.file
 RESOURCE_DOWNLOAD = PackageController.resource_download
-
-ALLOWED_EXTENSIONS = [
-    'csv',
-    'xls',
-    'txt',
-    'kmz',
-    'xlsx',
-    'pdf',
-    'shp',
-    'tab',
-    'jp2',
-    'esri',
-    'gdb',
-    'jpg',
-    'png',
-    'tif',
-    'tiff',
-    'jpeg',
-    'xml',
-    'kml',
-    'doc',
-    'docx',
-    'rtf',
-    'json',
-    'accdb',
-    'geojson',
-    'geotiff',
-    'topojson',
-    'gpx',
-    'html',
-    'mtl',
-    'obj',
-    'ppt',
-    'pptx',
-    'wfs',
-    'wmts',
-    'zip'
-]
-ALLOWED_EXTENSIONS_PATTERN = re.compile(r'.*\.(' + '|'.join(ALLOWED_EXTENSIONS) + ')$', re.I)
-INVALID_UPLOAD_MESSAGE = '''This file type is not supported.
-If possible, upload the file in another format.
-If you continue to have problems, email
-One Stop Shop - oss.online@dsiti.qld.gov.au
-'''
 
 EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
 
@@ -116,9 +78,8 @@ def set_intercepts():
 
     schemas.default_resource_schema = default_resource_schema
 
-    Upload.upload = upload_after_validation
-    ResourceUpload.upload = resource_upload_after_validation
-    StorageController.file = storage_download_with_headers
+    if storage_enabled:
+        StorageController.file = storage_download_with_headers
     PackageController.resource_download = resource_download_with_headers
 
 
@@ -129,7 +90,7 @@ def user_password_validator(key, data, errors, context):
 
     if isinstance(value, Missing):
         pass
-    elif not isinstance(value, basestring):
+    elif not isinstance(value, six.string_types):
         errors[('password',)].append(_('Passwords must be strings'))
     elif value == '':
         pass
@@ -151,13 +112,29 @@ def _apply_schema_validator(user_schema, field_name, validator_name='user_passwo
         for idx, user_schema_func in enumerate(user_schema[field_name]):
             if user_schema_func.__name__ == validator_name:
                 user_schema[field_name][idx] = validator
+                break
+        else:
+            user_schema[field_name].append(validator)
+    return user_schema
+
+
+def _remove_schema_validator(user_schema, field_name, validator):
+    if field_name in user_schema\
+            and validator in user_schema[field_name]:
+        user_schema[field_name].remove(validator)
     return user_schema
 
 
 def default_user_schema():
     """ Add our password validator function to the default list.
     """
-    return _apply_schema_validator(DEFAULT_USER_SCHEMA, 'password')
+    user_schema = DEFAULT_USER_SCHEMA
+    user_schema = _apply_schema_validator(user_schema, 'password')
+    _remove_schema_validator(user_schema, 'fullname', ignore_missing)
+    user_schema = _apply_schema_validator(
+        user_schema, 'fullname',
+        validator_name='not_empty', validator=not_empty)
+    return user_schema
 
 
 def user_new_form_schema():
@@ -166,6 +143,10 @@ def user_new_form_schema():
     user_schema = USER_NEW_FORM_SCHEMA
     user_schema = _apply_schema_validator(user_schema, 'password')
     user_schema = _apply_schema_validator(user_schema, 'password1')
+    _remove_schema_validator(user_schema, 'fullname', ignore_missing)
+    user_schema = _apply_schema_validator(
+        user_schema, 'fullname',
+        validator_name='not_empty', validator=not_empty)
     return user_schema
 
 
@@ -175,13 +156,23 @@ def user_edit_form_schema():
     user_schema = USER_EDIT_FORM_SCHEMA
     user_schema = _apply_schema_validator(user_schema, 'password')
     user_schema = _apply_schema_validator(user_schema, 'password1')
+    _remove_schema_validator(user_schema, 'fullname', ignore_missing)
+    user_schema = _apply_schema_validator(
+        user_schema, 'fullname',
+        validator_name='not_empty', validator=not_empty)
     return user_schema
 
 
 def default_update_user_schema():
     """ Apply our password validator function when updating a user.
     """
-    return _apply_schema_validator(DEFAULT_UPDATE_USER_SCHEMA, 'password')
+    user_schema = DEFAULT_UPDATE_USER_SCHEMA
+    user_schema = _apply_schema_validator(user_schema, 'password')
+    _remove_schema_validator(user_schema, 'fullname', ignore_missing)
+    user_schema = _apply_schema_validator(
+        user_schema, 'fullname',
+        validator_name='not_empty', validator=not_empty)
+    return user_schema
 
 
 def default_resource_schema():
@@ -283,26 +274,6 @@ def validate_resource_edit(self, id, resource_id,
                     h.flash_error("CSV was NOT validated against the selected schema")
 
     return RESOURCE_EDIT(self, id, resource_id, data, errors, error_summary)
-
-
-def upload_after_validation(self, max_size=2):
-    """ Validate file type against our whitelist before uploading.
-    """
-    if self.upload_field_storage and self.upload_field_storage.filename and not ALLOWED_EXTENSIONS_PATTERN.search(self.upload_field_storage.filename):
-        raise ckan.logic.ValidationError(
-            {self.file_field: [INVALID_UPLOAD_MESSAGE]}
-        )
-    UPLOAD(self, max_size)
-
-
-def resource_upload_after_validation(self, id, max_size=10):
-    """ Validate file type against our whitelist before uploading.
-    """
-    if self.filename and not ALLOWED_EXTENSIONS_PATTERN.search(self.filename):
-        raise ckan.logic.ValidationError(
-            {'upload': [INVALID_UPLOAD_MESSAGE]}
-        )
-    RESOURCE_UPLOAD(self, id, max_size)
 
 
 def _set_download_headers(response):

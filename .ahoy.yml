@@ -31,6 +31,8 @@ commands:
     usage: Build and start Docker containers.
     cmd: |
       docker-compose up -d "$@"
+      sleep 10
+      docker-compose logs
       ahoy cli "dockerize -wait tcp://ckan:3000 -timeout 1m"
       if docker-compose logs | grep -q "\[Error\]"; then docker-compose logs; exit 1; fi
       if docker-compose logs | grep -q "Exception"; then docker-compose logs; exit 1; fi
@@ -39,7 +41,7 @@ commands:
 
   down:
     usage: Stop Docker containers and remove container, images, volumes and networks.
-    cmd: "if [ -f \"docker-compose.yml\" ]; then docker-compose down --volumes; fi"
+    cmd: 'if [ -f "docker-compose.yml" ]; then docker-compose down --volumes; fi'
 
   start:
     usage: Start existing Docker containers.
@@ -51,7 +53,7 @@ commands:
 
   restart:
     usage: Restart all stopped and running Docker containers.
-    cmd: docker-compose restart
+    cmd: docker-compose restart "$@"
 
   logs:
     usage: Show Docker logs.
@@ -63,12 +65,11 @@ commands:
 
   cli:
     usage: Start a shell inside CLI container or run a command.
-    cmd: if \[ "${#}" -ne 0 \]; then docker exec -i $(docker-compose ps -q ckan) sh -c ". /app/ckan/default/bin/activate; $*"; else docker exec -it $(docker-compose ps -q ckan) sh -c ". /app/ckan/default/bin/activate && sh"; fi
+    cmd: if \[ "${#}" -ne 0 \]; then docker exec $(docker-compose ps -q ckan) sh -c ". /app/ckan/default/bin/activate; cd /app/; $*"; else docker exec $(docker-compose ps -q ckan) sh -c ". /app/ckan/default/bin/activate && cd /app/ && sh"; fi
 
   doctor:
     usage: Find problems with current project setup.
     cmd: .docker/scripts/doctor.sh "$@"
-
 
   install-site:
     usage: Install a site.
