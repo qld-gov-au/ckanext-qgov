@@ -4,4 +4,4 @@ Feature: Dataset APIs
         Given "SysAdmin" as the persona
         When I log in
         And I edit the "warandpeace" dataset
-        Then I should see an element with xpath "//li//*[text() = 'Creative Commons Attribution-NonCommercial-ShareAlike 4.0']"
+        Then I should see an element with xpath "//option[@value='cc-by-nc-sa-4']"
