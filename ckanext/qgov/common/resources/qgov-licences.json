@@ -22,7 +22,7 @@
     "is_osi_compliant": false,
     "maintainer": "",
     "status": "active",
-    "title": "Creative Commons Attribution Share-Alike 4.0",
+    "title": "Creative Commons Attribution-ShareAlike 4.0",
     "url": "https://creativecommons.org/licenses/by-sa/4.0/"
   },
   {
@@ -100,7 +100,7 @@
     "is_osi_compliant": false,
     "maintainer": "",
     "status": "active",
-    "title": "Creative Commons Attribution Share-Alike 3.0",
+    "title": "Creative Commons Attribution-ShareAlike 3.0",
     "url": "https://creativecommons.org/licenses/by-sa/3.0/au/"
   },
   {
@@ -113,7 +113,7 @@
     "is_osi_compliant": false,
     "maintainer": "",
     "status": "active",
-    "title": "Creative Commons Non-Commercial 3.0",
+    "title": "Creative Commons Attribution-NonCommercial 3.0",
     "url": "https://creativecommons.org/licenses/by-nc/3.0/au/"
   },
   {
@@ -130,5 +130,5 @@
     "title": "Other (Open)",
     "url": ""
   }
-  
+
 ]
