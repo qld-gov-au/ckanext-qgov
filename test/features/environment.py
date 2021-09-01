@@ -14,36 +14,36 @@ REMOTE_CHROME_URL = 'http://chrome:4444/wd/hub'
 
 # @see .docker/scripts/init.sh for credentials.
 PERSONAS = {
-    'Admin': dict(
-        name=u'admin',
-        email=u'admin@localhost',
-        password=u'Password123!'
-    ),
-    'Organisation Admin': dict(
-        name=u'organisation_admin',
-        email=u'organisation_admin@localhost',
-        password=u'Password123!'
-    ),
-    'Group Admin': dict(
-        name=u'group_admin',
-        email=u'group_admin@localhost',
-        password=u'Password123!'
-    ),
-    'Publisher': dict(
-        name=u'publisher',
-        email=u'publisher@localhost',
-        password=u'Password123!'
-    ),
-    'Walker': dict(
-        name=u'walker',
-        email=u'walker@localhost',
-        password=u'Password123!'
-    ),
-    'Foodie': dict(
-        name=u'foodie',
-        email=u'foodie@localhost',
-        password=u'Password123!'
-    )
+    'SysAdmin': {
+        'name': u'admin',
+        'email': u'admin@localhost',
+        'password': u'Password123!'
+    },
+    'Organisation Admin': {
+        'name': u'organisation_admin',
+        'email': u'organisation_admin@localhost',
+        'password': u'Password123!'
+    },
+    'Group Admin': {
+        'name': u'group_admin',
+        'email': u'group_admin@localhost',
+        'password': u'Password123!'
+    },
+    'Publisher': {
+        'name': u'publisher',
+        'email': u'publisher@localhost',
+        'password': u'Password123!'
+    },
+    'Walker': {
+        'name': u'walker',
+        'email': u'walker@localhost',
+        'password': u'Password123!'
+    },
+    'Foodie': {
+        'name': u'foodie',
+        'email': u'foodie@localhost',
+        'password': u'Password123!'
+    }
 }
 
 

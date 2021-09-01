@@ -2,7 +2,7 @@
 Feature: Group APIs
 
     Scenario: Group membership is accessible to sysadmins
-        Given "Admin" as the persona
+        Given "SysAdmin" as the persona
         When I log in
         And I view the "silly-walks" group API "including" users
         Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "group_admin"') and contains(string(), '"name": "walker"')]"

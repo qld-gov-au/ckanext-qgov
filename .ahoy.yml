@@ -10,13 +10,18 @@ commands:
       ahoy title "Building project"
       ahoy pre-flight
       ahoy clean
-      (docker network prune -f > /dev/null && docker network inspect amazeeio-network > /dev/null || docker network create amazeeio-network)
+      ahoy build-network
       ahoy up -- --build --force-recreate
-      ahoy install-dev
       ahoy install-site
       ahoy title "Build complete"
       ahoy doctor
       ahoy info 1
+
+  build-network:
+    usage: Ensure that the amazeeio network exists.
+    cmd: |
+      docker network prune -f > /dev/null
+      docker network inspect amazeeio-network > /dev/null || docker network create amazeeio-network
 
   info:
     usage: Print information about this project.
@@ -31,6 +36,8 @@ commands:
     usage: Build and start Docker containers.
     cmd: |
       docker-compose up -d "$@"
+      sleep 10
+      docker-compose logs
       ahoy cli "dockerize -wait tcp://ckan:3000 -timeout 1m"
       if docker-compose logs | grep -q "\[Error\]"; then docker-compose logs; exit 1; fi
       if docker-compose logs | grep -q "Exception"; then docker-compose logs; exit 1; fi
@@ -39,7 +46,7 @@ commands:
 
   down:
     usage: Stop Docker containers and remove container, images, volumes and networks.
-    cmd: "if [ -f \"docker-compose.yml\" ]; then docker-compose down --volumes; fi"
+    cmd: 'if [ -f "docker-compose.yml" ]; then docker-compose down --volumes; fi'
 
   start:
     usage: Start existing Docker containers.
@@ -51,7 +58,7 @@ commands:
 
   restart:
     usage: Restart all stopped and running Docker containers.
-    cmd: docker-compose restart
+    cmd: docker-compose restart "$@"
 
   logs:
     usage: Show Docker logs.
@@ -63,19 +70,17 @@ commands:
 
   cli:
     usage: Start a shell inside CLI container or run a command.
-    cmd: if \[ "${#}" -ne 0 \]; then docker exec -i $(docker-compose ps -q ckan) sh -c ". /app/ckan/default/bin/activate; $*"; else docker exec -it $(docker-compose ps -q ckan) sh -c ". /app/ckan/default/bin/activate && sh"; fi
+    cmd: if \[ "${#}" -ne 0 \]; then docker exec $(docker-compose ps -q ckan) sh -c '. ${VENV_DIR}/bin/activate; cd $APP_DIR;'" $*"; else docker exec $(docker-compose ps -q ckan) sh -c '. ${VENV_DIR}/bin/activate && cd $APP_DIR && sh'; fi
 
   doctor:
     usage: Find problems with current project setup.
     cmd: .docker/scripts/doctor.sh "$@"
 
-
   install-site:
     usage: Install a site.
     cmd: |
       ahoy title "Installing a fresh site"
-      docker cp -L .docker/test.ini $(docker-compose ps -q ckan):/app/ckan/default/production.ini
-      ahoy cli "/app/scripts/init.sh"
+      ahoy cli "./scripts/init.sh"
 
   clean:
     usage: Remove containers and all build files.
@@ -94,15 +99,6 @@ commands:
       git ls-files --others -i --exclude-from=.git/info/exclude | xargs rm -Rf
       find . -type d -not -path "./.git/*" -empty -delete
 
-  install-dev:
-    usage: Install dependencies.
-    cmd: |
-      docker cp -L requirements-dev.txt $(docker-compose ps -q ckan):/app/.
-      docker cp -L .flake8 $(docker-compose ps -q ckan):/app/.
-      docker cp -L test $(docker-compose ps -q ckan):/app/.
-      ahoy cli "pip install -r /app/requirements-dev.txt"
-    hide: true
-
   flush-redis:
     usage: Flush Redis cache.
     cmd: docker exec -i $(docker-compose ps -q redis) redis-cli flushall > /dev/null
@@ -110,19 +106,19 @@ commands:
   lint:
     usage: Lint code.
     cmd: |
-      ahoy cli "flake8 ${@:-/app/ckanext}" || \
+      ahoy cli "flake8 ${@:-ckanext}" || \
       [ "${ALLOW_LINT_FAIL:-0}" -eq 1 ]
 
   test-unit:
     usage: Run unit tests.
     cmd: |
-      ahoy cli "nosetests" || \
+      ahoy cli 'nosetests --with-pylons=${CKAN_INI}' || \
       [ "${ALLOW_UNIT_FAIL:-0}" -eq 1 ]
 
   test-bdd:
     usage: Run BDD tests.
     cmd: |
-      ahoy cli "behave ${*:-/app/test/features}" || \
+      ahoy cli "behave ${*:-test/features}" || \
       [ "${ALLOW_BDD_FAIL:-0}" -eq 1 ]
 
   # Utilities.
