@@ -2,7 +2,7 @@
 Feature: User APIs
 
     Scenario: User autocomplete is accessible to sysadmins
-        Given "Admin" as the persona
+        Given "SysAdmin" as the persona
         When I log in
         And I search the autocomplete API for user "admin"
         Then I should see an element with xpath "//*[contains(string(), '"name": "admin"')]"
@@ -33,7 +33,7 @@ Feature: User APIs
 
 
     Scenario: User list is accessible to sysadmins
-        Given "Admin" as the persona
+        Given "SysAdmin" as the persona
         When I log in
         And I go to the user list API
         Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "admin"')]"
@@ -62,7 +62,7 @@ Feature: User APIs
 
 
     Scenario: User detail is accessible to sysadmins
-        Given "Admin" as the persona
+        Given "SysAdmin" as the persona
         When I log in
         And I go to the "admin" user API
         Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "admin"')]"
@@ -97,7 +97,7 @@ Feature: User APIs
 
 
     Scenario: User profile page is accessible to sysadmins
-        Given "Admin" as the persona
+        Given "SysAdmin" as the persona
         When I log in
         And I go to the "admin" profile page
         Then I should see an element with xpath "//h1[string() = 'Administrator']"
@@ -145,3 +145,23 @@ Feature: User APIs
     Scenario: Password reset works
         When I request a password reset for "publisher"
         Then I should see an element with xpath "//div[contains(string(), 'A reset link has been emailed to you')]"
+
+    Scenario: Register user password must be 10 characters or longer
+        When I go to register page
+        And I fill in "name" with "name"
+        And I fill in "fullname" with "fullname"
+        And I fill in "email" with "email@test.com"
+        And I fill in "password1" with "pass"
+        And I fill in "password2" with "pass"
+        And I press "Create Account"
+        Then I should see "Password: Your password must be 10 characters or longer"
+
+    Scenario: Register user password must contain at least one number, lowercase letter, capital letter, and symbol
+        When I go to register page
+        And I fill in "name" with "name"
+        And I fill in "fullname" with "fullname"
+        And I fill in "email" with "email@test.com"
+        And I fill in "password1" with "password1234"
+        And I fill in "password2" with "password1234"
+        And I press "Create Account"
+        Then I should see "Password: Must contain at least one number, lowercase letter, capital letter, and symbol"

@@ -2,7 +2,7 @@
 Feature: Organization APIs
 
     Scenario: Organisation membership is accessible to sysadmins
-        Given "Admin" as the persona
+        Given "SysAdmin" as the persona
         When I log in
         And I view the "department-of-health" organisation API "including" users
         Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "organisation_admin"') and contains(string(), '"name": "publisher"')]"
