@@ -12,7 +12,7 @@ CKAN_USER_EMAIL="${CKAN_USER_EMAIL:-admin@localhost}"
 if [ "$VENV_DIR" != "" ]; then
   . ${VENV_DIR}/bin/activate
 fi
-ckan_cli db clean --yes
+CLICK_ARGS="--yes" ckan_cli db clean
 ckan_cli db init
 ckan_cli user add "${CKAN_USER_NAME}"\
  fullname="${CKAN_DISPLAY_NAME}"\
