@@ -4,6 +4,9 @@
 #
 set -e
 
+CKAN_USER_NAME="${CKAN_USER_NAME:-admin}"
+CKAN_DISPLAY_NAME="${CKAN_DISPLAY_NAME:-Administrator}"
+CKAN_USER_EMAIL="${CKAN_USER_EMAIL:-admin@localhost}"
 CKAN_ACTION_URL=http://ckan:3000/api/action
 
 if [ "$VENV_DIR" != "" ]; then
@@ -18,8 +21,10 @@ add_user_if_needed () {
         password="${4:-Password123!}"
 }
 
-# We know the "admin" sysadmin account exists, so we'll use her API KEY to create further data
-API_KEY=$(ckan_cli user admin | tr -d '\n' | sed -r 's/^(.*)apikey=(\S*)(.*)/\2/')
+add_user_if_needed "${CKAN_USER_NAME}" "${CKAN_DISPLAY_NAME}" "${CKAN_USER_EMAIL}"
+ckan_cli sysadmin add "${CKAN_USER_NAME}"
+
+API_KEY=$(ckan_cli user "${CKAN_USER_NAME}" | tr -d '\n' | sed -r 's/^(.*)apikey=(\S*)(.*)/\2/')
 
 # Creating test data hierarchy which creates organisations assigned to datasets
 ckan_cli create-test-data hierarchy
