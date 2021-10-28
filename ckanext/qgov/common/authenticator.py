@@ -30,6 +30,12 @@ def unlock_account(login_name):
         LOG.debug("Account %s not found", login_name)
 
 
+def intercept_authenticator():
+    """ Replaces the existing authenticate function with our custom one.
+    """
+    UsernamePasswordAuthenticator.authenticate = QGOVAuthenticator().authenticate
+
+
 class QGOVAuthenticator(UsernamePasswordAuthenticator):
     """ Extend UsernamePasswordAuthenticator so it's possible to
     configure this via who.ini.
