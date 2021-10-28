@@ -8,7 +8,7 @@ set -e
 if [ "$VENV_DIR" != "" ]; then
   . ${VENV_DIR}/bin/activate
 fi
-CLICK_ARGS="--yes" ckan_cli db clean
+ckan_cli db clean --yes
 ckan_cli db init
 
 # Create some base test data
