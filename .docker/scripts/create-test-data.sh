@@ -15,7 +15,7 @@ fi
 
 add_user_if_needed () {
     echo "Adding user '$2' ($1) with email address [$3]"
-    ckan_cli user "$1" | grep "$1" || ckan_cli user add "$1"\
+    ckan_cli user show "$1" | grep "$1" || ckan_cli user add "$1"\
         fullname="$2"\
         email="$3"\
         password="${4:-Password123!}"
@@ -24,7 +24,7 @@ add_user_if_needed () {
 add_user_if_needed "${CKAN_USER_NAME}" "${CKAN_DISPLAY_NAME}" "${CKAN_USER_EMAIL}"
 ckan_cli sysadmin add "${CKAN_USER_NAME}"
 
-API_KEY=$(ckan_cli user "${CKAN_USER_NAME}" | tr -d '\n' | sed -r 's/^(.*)apikey=(\S*)(.*)/\2/')
+API_KEY=$(ckan_cli user show "${CKAN_USER_NAME}" | tr -d '\n' | sed -r 's/^(.*)apikey=(\S*)(.*)/\2/')
 
 # Creating test data hierarchy which creates organisations assigned to datasets
 ckan_cli create-test-data hierarchy
