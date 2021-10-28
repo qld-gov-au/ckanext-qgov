@@ -5,8 +5,9 @@
 import logging
 from ckan.lib.authenticator import UsernamePasswordAuthenticator
 from ckan.model import User, Session
+from ckan.model.meta import metadata
 
-from sqlalchemy import Column, types, MetaData, DDL
+from sqlalchemy import Column, types, DDL
 from sqlalchemy.ext.declarative import declarative_base
 
 from zope.interface import implements
@@ -20,8 +21,7 @@ LOG = logging.getLogger(__name__)
 def intercept_authenticator():
     """ Replaces the existing authenticate function with our custom one.
     """
-    meta = MetaData(bind=Session.get_bind(), reflect=True)
-    if 'user' in meta.tables and 'login_attempts' not in meta.tables['user'].columns:
+    if 'user' in metadata.tables and 'login_attempts' not in metadata.tables['user'].columns:
         LOG.warn("'login_attempts' field does not exist, adding...")
         DDL("ALTER TABLE public.user ADD COLUMN login_attempts SMALLINT DEFAULT 0").execute(Session.get_bind())
     UsernamePasswordAuthenticator.authenticate = QGOVAuthenticator().authenticate
