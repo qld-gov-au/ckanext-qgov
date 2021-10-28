@@ -32,7 +32,7 @@ def log_in_directly(context):
         When I fill in "login" with "$name"
         And I fill in "password" with "$password"
         And I press the element with xpath "//button[contains(string(), 'Login')]"
-        Then I should see an element with xpath "//a[contains(string(), 'Log out')]"
+        Then I should see an element with xpath "//a[@title='Log out']"
     """)
 
 

@@ -223,10 +223,10 @@ def save_edit(self, name_or_id, context, package_type=None):
     '''
     try:
         author_email = request.POST.getone('author_email')
-        if not EMAIL_REGEX.match(author_email):
-            abort(400, _('Invalid email.'))
     except Exception:
         abort(400, _('No author email or multiple author emails provided'))
+    if not EMAIL_REGEX.match(author_email):
+        abort(400, _('Invalid email.'))
 
     if 'author' in request.POST:
         request.POST.__delitem__('author')

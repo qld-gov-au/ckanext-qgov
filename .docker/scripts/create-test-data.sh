@@ -15,7 +15,6 @@ fi
 
 add_user_if_needed () {
     echo "Adding user '$2' ($1) with email address [$3]"
-    echo "Existing user: "`ckan_cli user show $1`
     ckan_cli user show "$1" | grep "$1" || ckan_cli user add "$1"\
         fullname="$2"\
         email="$3"\
@@ -31,7 +30,7 @@ API_KEY=$(ckan_cli user show "${CKAN_USER_NAME}" | tr -d '\n' | sed -r 's/^(.*)a
 ckan_cli create-test-data hierarchy
 
 # Creating basic test data which has datasets with resources
-ckan_cli create-test-data
+ckan_cli create-test-data basic
 
 add_user_if_needed organisation_admin "Organisation Admin" organisation_admin@localhost
 add_user_if_needed publisher "Publisher" publisher@localhost
