@@ -3,9 +3,10 @@
 """
 
 import logging
+from ckan.common import g
 from ckan.lib.authenticator import UsernamePasswordAuthenticator
 from ckan.lib.redis import connect_to_redis
-from ckan.model import User
+from ckan.model import User, Session
 
 from zope.interface import implements
 from repoze.who.interfaces import IAuthenticator
@@ -13,6 +14,20 @@ from repoze.who.interfaces import IAuthenticator
 LOG = logging.getLogger(__name__)
 
 LOGIN_THROTTLE_EXPIRY = 1800
+
+
+def unlock_account(login_name):
+    """ Unlock an account (erase the failed login attempts).
+    """
+    qgov_user = Session.query(User).filter(User.id == login_name).first()
+    if qgov_user:
+        cache_key = '{}.ckanext.qgov.login_attempts.{}'.format(g.site_id, login_name)
+        redis_conn = connect_to_redis()
+        if redis_conn.get(cache_key):
+            LOG.debug("Clearing failed login attempts for %s", login_name)
+            redis_conn.delete(cache_key)
+    else:
+        LOG.debug("Account %s not found", login_name)
 
 
 class QGOVAuthenticator(UsernamePasswordAuthenticator):
@@ -33,14 +48,16 @@ class QGOVAuthenticator(UsernamePasswordAuthenticator):
             LOG.debug('Login failed - username %r not found', login_name)
             return None
 
-        cache_key = 'ckanext.qgov.login_attempts.{}'.format(login_name)
+        cache_key = '{}.ckanext.qgov.login_attempts.{}'.format(g.site_id, login_name)
         redis_conn = connect_to_redis()
         login_attempts = redis_conn.get(cache_key) or 0
         if login_attempts >= 10:
             LOG.debug('Login as %r failed - account is locked', login_name)
         elif user.validate_password(identity.get('password')):
-            # reset attempt count to 0
-            redis_conn.delete(cache_key)
+            if login_attempts > 0:
+                LOG.debug("Clearing failed login attempts for %s", login_name)
+                # reset attempt count to 0
+                redis_conn.delete(cache_key)
             return user.name
         else:
             LOG.debug('Login as %r failed - password not valid', login_name)
