@@ -15,6 +15,7 @@ fi
 
 add_user_if_needed () {
     echo "Adding user '$2' ($1) with email address [$3]"
+    echo "Existing user: "`ckan_cli user show $1`
     ckan_cli user show "$1" | grep "$1" || ckan_cli user add "$1"\
         fullname="$2"\
         email="$3"\
