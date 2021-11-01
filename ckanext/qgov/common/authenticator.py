@@ -56,7 +56,12 @@ class QGOVAuthenticator(UsernamePasswordAuthenticator):
 
         cache_key = '{}.ckanext.qgov.login_attempts.{}'.format(g.site_id, login_name)
         redis_conn = connect_to_redis()
-        login_attempts = redis_conn.get(cache_key) or 0
+        try:
+            login_attempts = int(redis_conn.get(cache_key) or 0)
+        except ValueError:
+            # shouldn't happen but let's play it safe
+            login_attempts = 0
+
         if login_attempts >= 10:
             LOG.debug('Login as %r failed - account is locked', login_name)
         elif user.validate_password(identity.get('password')):
