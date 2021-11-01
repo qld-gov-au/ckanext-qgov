@@ -157,4 +157,5 @@ Feature: User APIs
         Then I should see "Password: Your password must be 10 characters or longer"
         Then I fill in "password1" with "password1234"
         And I fill in "password2" with "password1234"
+        And I press "Create Account"
         Then I should see "Password: Must contain at least one number, lowercase letter, capital letter, and symbol"
