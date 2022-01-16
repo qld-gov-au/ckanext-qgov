@@ -4,7 +4,6 @@
 #
 set -e
 
-
 if [ "$VENV_DIR" != "" ]; then
   . ${VENV_DIR}/bin/activate
 fi
