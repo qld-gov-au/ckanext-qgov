@@ -87,8 +87,9 @@ class QGOVPlugin(SingletonPlugin):
     implements(plugins.IValidators, inherit=True)
     plugins.implements(plugins.IPackageController, inherit=True)
     implements(plugins.IResourceController, inherit=True)
-    implements(plugins.IBlueprint)
-    if toolkit.check_ckan_version(max_version='2.8.99'):
+    if toolkit.check_ckan_version('2.9'):
+        implements(plugins.IBlueprint)
+    else:
         implements(plugins.IRoutes, inherit=True)
 
     # IConfigurer
