@@ -1,7 +1,7 @@
 import ckan.plugins.toolkit as toolkit
 import ckan.logic.schema as schema
 
-from ckanext.data_qld.user_creation import helpers as user_creation_helpers
+from ckanext.qgov.common.user_creation import helpers as user_creation_helpers
 
 
 @toolkit.chained_action
