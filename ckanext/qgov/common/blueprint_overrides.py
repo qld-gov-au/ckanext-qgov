@@ -8,7 +8,9 @@ from ckan import model
 import ckan.lib.helpers as h
 from ckan.plugins.toolkit import _, g, get_action, request, redirect_to,\
     url_for, ObjectNotFound, NotAuthorized
-from ckan.views import dashboard, dataset, resource, user
+from ckan.views import dataset, resource
+from ckan.views.user import login, me, EditView
+from ckan.views.dashboard import index
 
 blueprint = Blueprint(u'user_overrides', __name__)
 _dataset = Blueprint(
@@ -27,7 +29,7 @@ def dashboard_override(offset=0):
     :param offset:
     :return:
     """
-    return dashboard.index(offset) if g.user else redirect_to(url_for(u'user.login'))
+    return index(offset) if g.user else redirect_to(url_for(u'user.login'))
 
 
 def logged_in_override():
@@ -38,10 +40,10 @@ def logged_in_override():
     """
     if g.user:
         came_from = request.params.get(u'came_from', None)
-        return redirect_to(six.text_type(came_from)) if came_from and h.url_is_local(came_from) else user.me()
+        return redirect_to(six.text_type(came_from)) if came_from and h.url_is_local(came_from) else me()
     else:
         h.flash_error(_(u'Login failed. Bad username or password.'))
-        return user.login()
+        return login()
 
 
 def user_edit_override():
@@ -55,7 +57,7 @@ def user_edit_override():
         return redirect_to(url_for(
             u'user.login',
             came_from=url_for(u'user.edit')))
-    return user.EditView().dispatch_request()
+    return EditView().dispatch_request()
 
 
 def _get_context():
