@@ -6,7 +6,7 @@
     {
       "preset_name": "resource_url_upload",
       "values": {
-        "validators": "ignore_missing unicode remove_whitespace valid_resource_url",
+        "validators": "ignore_missing unicode remove_whitespace valid_url",
         "form_snippet": "upload.html",
         "form_placeholder": "http://example.com/my-data.csv",
         "upload_field": "upload",
@@ -17,7 +17,7 @@
     {
       "preset_name": "data_qld_resource_url_upload",
       "values": {
-        "validators": "scheming_required unicode remove_whitespace valid_resource_url",
+        "validators": "scheming_required unicode remove_whitespace valid_url",
         "form_snippet": "upload.html",
         "form_placeholder": "http://example.com/my-data.csv",
         "upload_field": "upload",
