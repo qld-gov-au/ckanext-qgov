@@ -4,9 +4,19 @@ from behaving.web.steps import *  # noqa: F401, F403
 from behaving.web.steps.url import when_i_visit_url
 
 
+@step(u'I get the current URL')
+def get_current_url(context):
+    context.browser.evaluate_script("document.documentElement.clientWidth")
+
+
 @step(u'I go to homepage')
 def go_to_home(context):
     when_i_visit_url(context, '/')
+
+
+@step(u'I go to register page')
+def go_to_register_page(context):
+    when_i_visit_url(context, '/user/register')
 
 
 @step(u'I log in')
@@ -53,6 +63,11 @@ def go_to_dataset_page(context):
     when_i_visit_url(context, '/dataset')
 
 
+@step(u'I go to dataset "{name}"')
+def go_to_dataset(context, name):
+    when_i_visit_url(context, '/dataset/' + name)
+
+
 @step(u'I edit the "{name}" dataset')
 def edit_dataset(context, name):
     when_i_visit_url(context, '/dataset/edit/{}'.format(name))
@@ -63,9 +78,9 @@ def go_to_organisation_page(context):
     when_i_visit_url(context, '/organization')
 
 
-@step(u'I go to register page')
-def go_to_register_page(context):
-    when_i_visit_url(context, '/user/register')
+@step(u'I set persona var "{key}" to "{value}"')
+def set_persona_var(context, key, value):
+    context.persona[key] = value
 
 
 @step(u'I request a password reset for "{username}"')

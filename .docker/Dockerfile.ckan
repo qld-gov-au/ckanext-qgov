@@ -1,7 +1,7 @@
 FROM amazeeio/python:2.7-ckan-21.8.0
 
 ARG SITE_URL=http://ckan:3000/
-ARG CKAN_REPO=ckan/ckan
+ARG CKAN_REPO=qld-gov-au/ckan
 ARG CKAN_VERSION=2.8.8-qgov.5
 ENV SITE_URL="${SITE_URL}"
 ENV VENV_DIR=/app/ckan/default
