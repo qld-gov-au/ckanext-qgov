@@ -22,9 +22,8 @@ import urlm
 import helpers
 import intercepts
 from .stats import Stats
-from .user_creation import \
-    validators as user_creation_validators,\
-    create as user_creation_create_actions
+from .user_creation import validators as user_creation_validators
+from .user_creation.logic.actions import create as user_creation_create_actions
 
 LOG = getLogger(__name__)
 
