@@ -15,11 +15,10 @@ import requests
 from ckan import __version__
 import ckan.lib.helpers as h
 from ckan import model
-from ckan.common import _, c, g, config, request
-from ckan.logic import get_action
-from ckan.lib.base import abort, BaseController, render
+from ckan.common import request
 from ckan.lib.render import TemplateNotFound
-import paste.deploy.converters
+from ckan.plugins.toolkit import _, abort, asbool, BaseController, config,\
+    g, get_action, redirect_to, render, url_for, ObjectNotFound, NotAuthorized
 
 LOG = getLogger(__name__)
 
@@ -67,7 +66,7 @@ def _feedback_mail_recipient(recipient_name, recipient_email,
     # Send the email using Python's smtplib.
     smtp_connection = smtplib.SMTP()
     smtp_server = config.get('smtp.server', 'localhost')
-    smtp_starttls = paste.deploy.converters.asbool(
+    smtp_starttls = asbool(
         config.get('smtp.starttls'))
     smtp_user = config.get('smtp.user')
     smtp_password = config.get('smtp.password')
@@ -122,8 +121,8 @@ class QGOVController(BaseController):
         to the appropriate recipient.
         """
         context = {'model': model, 'session': model.Session,
-                   'user': c.user, 'for_view': True,
-                   'auth_user_obj': c.userobj}
+                   'user': g.user, 'for_view': True,
+                   'auth_user_obj': g.userobj}
         protocol, host = h.get_site_protocol_and_host()
         full_current_url = h.full_current_url()
 
@@ -152,7 +151,7 @@ class QGOVController(BaseController):
                     # Do not indicate failure or success since captcha was filled likely bot;
                     # 7 is the expected arguments in the query string;
                     # captchaCatch is serverside generated value hence can either be 'dev' or 'prod'
-                    h.redirect_to('/')
+                    redirect_to('/')
                     return package
 
                 # If there is value for either maintenance_email or author_email, use that.
@@ -219,18 +218,67 @@ class QGOVController(BaseController):
                             email_body
                         )
                     except Exception:
-                        abort(404, 'This form submission is invalid or CKAN mail is not configured.')
+                        return abort(404, 'This form submission is invalid or CKAN mail is not configured.')
 
                     # Redirect to home page if no thanks page is found
                     success_redirect = config.get('feedback_redirection', '/')
                     req = requests.get(protocol + '://' + host + success_redirect, verify=False)
                     if req.status_code == requests.codes.ok:
-                        h.redirect_to(success_redirect)
+                        redirect_to(success_redirect)
                     else:
-                        h.redirect_to('/')
+                        redirect_to('/')
                 else:
                     abort(404, 'Form submission is invalid no recipients.')
 
             return package
         else:
             abort(404, 'Invalid request source')
+
+    def _get_context(self):
+        return {'model': model, 'session': model.Session,
+                'user': g.user, 'for_view': True,
+                'auth_user_obj': g.userobj}
+
+    def _is_dataset_public(self, id):
+        try:
+            get_action('package_show')(self._get_context(), {'id': id})
+            return True
+        except ObjectNotFound:
+            # if nonexistent, handle it via standard channels
+            return True
+        except NotAuthorized:
+            return False
+
+    def read(self, id):
+        """
+        Override the default CKAN behaviour for private Dataset visibility
+        for unauthenticated users.
+        Instead of displaying "404 Dataset not found" message, give unauthenticated
+        users a chance to login (if the dataset exists).
+        :param id: Package id/name
+        :return:
+        """
+        if not g.user and not self._is_dataset_public(id):
+            redirect_to(
+                url_for('user.login', came_from='/dataset/{id}'.format(id=id))
+            )
+
+        return super(QGOVController, self).read(id)
+
+    def resource_read(self, id, resource_id):
+        """
+        Override the default CKAN behaviour for private Dataset Resource visibility
+        for unauthenticated users.
+        Instead of displaying "404 Dataset not found" message, give unauthenticated
+        users a chance to log in (if the dataset exists).
+        :param id: Package id/name
+        :param resource_id: Resource id
+        :return:
+        """
+        if not g.user and not self._is_dataset_public(id):
+            redirect_to(
+                url_for('user.login',
+                        came_from='/dataset/{id}/resource/{resource_id}'.format(id=id, resource_id=resource_id))
+            )
+
+        return super(QGOVController, self).resource_read(id, resource_id)
