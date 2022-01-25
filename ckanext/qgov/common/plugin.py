@@ -87,9 +87,11 @@ class QGOVPlugin(SingletonPlugin):
     implements(plugins.IValidators, inherit=True)
     plugins.implements(plugins.IPackageController, inherit=True)
     implements(plugins.IResourceController, inherit=True)
-    if toolkit.check_ckan_version('2.9'):
+    # on CKAN 2.8, use a mixture of Pylons and Flask.
+    # Ugly, but hard to avoid, since core uses a mixture.
+    if toolkit.check_ckan_version('2.8'):
         implements(plugins.IBlueprint)
-    else:
+    if toolkit.check_ckan_version(max_version='2.8.99'):
         implements(plugins.IRoutes, inherit=True)
 
     # IConfigurer

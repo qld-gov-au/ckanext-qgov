@@ -6,8 +6,8 @@ from flask import Blueprint
 
 from ckan import model
 import ckan.lib.helpers as h
-from ckan.plugins.toolkit import _, g, get_action, request, redirect_to,\
-    url_for, ObjectNotFound, NotAuthorized
+from ckan.plugins.toolkit import _, check_ckan_version, g, get_action,\
+    request, redirect_to, url_for, ObjectNotFound, NotAuthorized
 from ckan.views import dataset, resource
 from ckan.views.user import login, me, EditView
 from ckan.views.dashboard import index
@@ -125,4 +125,7 @@ _dataset.add_url_rule(u'/resource/<resource_id>', view_func=resource_read)
 
 
 def get_blueprints():
-    return [blueprint, _dataset]
+    blueprints = [blueprint]
+    if check_ckan_version('2.9'):
+        blueprints.append(_dataset)
+    return blueprints
