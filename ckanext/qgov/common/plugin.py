@@ -129,11 +129,11 @@ class QGOVPlugin(SingletonPlugin):
                 + ckan_config['scheming.presets']
 
         # Theme Inclusions of public and templates
-        possible_public_path = os.path.join(here, 'theme/public')
+        possible_public_path = os.path.join(here, 'public')
         if os.path.isdir(possible_public_path):
             ckan_config['extra_public_paths'] = possible_public_path \
                 + ',' + ckan_config.get('extra_public_paths', '')
-        possible_template_path = os.path.join(here, 'theme/templates')
+        possible_template_path = os.path.join(here, 'templates')
         if os.path.isdir(possible_template_path):
             ckan_config['extra_template_paths'] = possible_template_path \
                 + ',' + ckan_config.get('extra_template_paths', '')
