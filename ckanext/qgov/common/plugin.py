@@ -226,8 +226,12 @@ class QGOVPlugin(SingletonPlugin):
         user to the `came_from` URL if they are logged in.
         :return:
         """
-        from blueprint_overrides import get_blueprints
-        return get_blueprints()
+        from .views import user
+        blueprints = user.get_blueprints()
+        if toolkit.check_ckan_version('2.9'):
+            from .views import dataset
+            blueprints.append(dataset.get_blueprints())
+        return blueprints
 
     # ITemplateHelpers
 
