@@ -137,10 +137,6 @@ Feature: User APIs
         And I go to the dashboard
         Then I should see an element with xpath "//h2[contains(string(), 'News feed')]"
 
-    Scenario: Dashboard page is not accessible anonymously
-        When I go to the dashboard
-        Then I should see an element with xpath "//*[contains(string(), 'Not authorised to see this page')]"
-
 
     Scenario: Password reset works
         When I request a password reset for "publisher"
