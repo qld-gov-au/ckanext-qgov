@@ -16,9 +16,10 @@ from ckan import __version__
 import ckan.lib.helpers as h
 from ckan import model
 from ckan.common import request
+from ckan.controllers.package import PackageController
 from ckan.lib.render import TemplateNotFound
-from ckan.plugins.toolkit import _, abort, asbool, BaseController, config,\
-    g, get_action, redirect_to, render, url_for, ObjectNotFound, NotAuthorized
+from ckan.plugins.toolkit import _, abort, asbool, config, g, get_action,\
+    redirect_to, render, url_for, ObjectNotFound, NotAuthorized
 
 LOG = getLogger(__name__)
 
@@ -102,7 +103,7 @@ def _feedback_mail_recipient(recipient_name, recipient_email,
         smtp_connection.quit()
 
 
-class QGOVController(BaseController):
+class QGOVController(PackageController):
     """ Custom route implementations for Queensland Government portals.
     """
 
