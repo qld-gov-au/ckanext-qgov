@@ -179,6 +179,7 @@ class QGOVPlugin(SingletonPlugin):
         """
         from routes.mapper import SubMapper
         controller = 'ckanext.qgov.common.controller:QGOVController'
+
         with SubMapper(route_map, controller=controller) as mapper:
             mapper.connect('article',
                            '/article/{path:[-_a-zA-Z0-9/]+}',
@@ -187,26 +188,25 @@ class QGOVPlugin(SingletonPlugin):
                            '/api/action/submit_feedback',
                            action='submit_feedback')
 
-            # This is a pain, but re-assigning the dataset_read route using `before_map`
-            # appears to affect these two routes, so we need to replicate them here
-            mapper.connect('dataset_new', '/dataset/new', controller='package', action='new')
-            mapper.connect('/dataset/{action}',
-                           controller='ckan.controllers.package',
-                           requirements=dict(action='|'.join([
-                               'list',
-                               'autocomplete',
-                               'search'
-                           ])))
-
             # Currently no dataset/package blueprint available, so we need to override these core routes
             mapper.connect('dataset_read', '/dataset/{id}',
-                           controller='ckanext.data_qld.controller:DataQldDataset',
                            action='read',
                            ckan_icon='sitemap')
             mapper.connect('/dataset/{id}/resource/{resource_id}',
-                           controller='ckanext.data_qld.controller:DataQldDataset',
                            action='resource_read')
-            return route_map
+
+        # This is a pain, but re-assigning the dataset_read route using `before_map`
+        # appears to affect these two routes, so we need to replicate them here
+        route_map.connect('dataset_new', '/dataset/new', controller='package', action='new')
+        route_map.connect('/dataset/{action}',
+                          controller='ckan.controllers.package',
+                          requirements=dict(action='|'.join([
+                              'list',
+                              'autocomplete',
+                              'search'
+                          ])))
+
+        return route_map
 
     def after_map(self, route_map):
         """ Add monkey-patches after routing is set up.
