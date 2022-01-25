@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ckan-version: [2.8.8-qgov.5, 2.9.4-qgov.3]
+        ckan-version: [2.8.8-qgov.5]
 
     name: Continuous Integration build on CKAN ${{ matrix.ckan-version }}
     runs-on: ubuntu-latest
