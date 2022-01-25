@@ -2,19 +2,15 @@
 Feature: Login Redirection
 
     @dashboard_login
-    Scenario: As an unauthenticated user, when I visit the '/dashboard' URL I see the login page
+    Scenario: As an unauthenticated user, when I visit the dashboard URL I see the login page
         Given "Unauthenticated" as the persona
         When I visit "/dashboard"
         Then I should see an element with xpath "//h1[contains(string(), 'Login')]"
-
-    @dashboard_login
-    Scenario: As an unauthenticated user, when I visit the '/dashboard/' URL I see the login page
-        Given "Unauthenticated" as the persona
         When I visit "/dashboard/"
         Then I should see an element with xpath "//h1[contains(string(), 'Login')]"
 
     @user_edit
-    Scenario: As an unauthenticated organisation member, when I visit the '/user/edit' URL I see the login page. Upon logging in I am taken to the /user/edit page
+    Scenario: As an unauthenticated organisation member, when I visit the user edit URL I see the login page. Upon logging in I am taken to the user edit page
         Given "TestOrgMember" as the persona
         When I visit "/user/edit"
         Then I should see an element with xpath "//h1[contains(string(), 'Login')]"
