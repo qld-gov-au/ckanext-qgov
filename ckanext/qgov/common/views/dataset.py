@@ -5,7 +5,7 @@ from flask import Blueprint
 from ckan import model
 from ckan.plugins.toolkit import g, get_action, redirect_to, url_for,\
     ObjectNotFound, NotAuthorized
-from ckan.views import dataset, resource
+from ckan.views import dataset as dataset_view, resource as resource_view
 
 
 _dataset = Blueprint(
@@ -49,7 +49,7 @@ def dataset_read(package_type, id):
             url_for('user.login', came_from='/dataset/{id}'.format(id=id))
         )
 
-    return dataset.read(package_type, id)
+    return dataset_view.read(package_type, id)
 
 
 def resource_read(package_type, id, resource_id):
@@ -67,7 +67,7 @@ def resource_read(package_type, id, resource_id):
                     came_from='/dataset/{id}/resource/{resource_id}'.format(id=id, resource_id=resource_id))
         )
 
-    return resource.read(package_type, id, resource_id)
+    return resource_view.read(package_type, id, resource_id)
 
 
 _dataset.add_url_rule(u'', view_func=dataset_read)
