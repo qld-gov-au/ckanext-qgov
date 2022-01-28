@@ -230,7 +230,7 @@ class QGOVPlugin(SingletonPlugin):
         blueprints = user.get_blueprints()
         if toolkit.check_ckan_version('2.9'):
             from .views import dataset
-            blueprints.append(dataset.get_blueprints())
+            blueprints.extend(dataset.get_blueprints())
         return blueprints
 
     # ITemplateHelpers
