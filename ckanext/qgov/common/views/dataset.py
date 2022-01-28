@@ -5,7 +5,6 @@ from flask import Blueprint
 from ckan import model
 from ckan.plugins.toolkit import g, get_action, redirect_to, url_for,\
     ObjectNotFound, NotAuthorized
-from ckan.views import dataset as dataset_view, resource as resource_view
 
 
 _dataset = Blueprint(
@@ -44,6 +43,7 @@ def dataset_read(package_type, id):
     :param id: Package id/name
     :return:
     """
+    import ckan.views.dataset as dataset_view
     if not g.user and not _is_dataset_public(id):
         redirect_to(
             url_for('user.login', came_from='/dataset/{id}'.format(id=id))
@@ -61,6 +61,7 @@ def resource_read(package_type, id, resource_id):
     :param resource_id: Resource id
     :return:
     """
+    import ckan.views.resource as resource_view
     if not g.user and not _is_dataset_public(id):
         redirect_to(
             url_for('user.login',
