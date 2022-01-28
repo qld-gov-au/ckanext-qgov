@@ -79,7 +79,7 @@ ckan_cli create-test-data hierarchy
 ckan_cli create-test-data basic
 
 add_user_if_needed organisation_admin "Organisation Admin" organisation_admin@localhost
-add_user_if_needed publisher "Publisher" publisher@localhost
+add_user_if_needed editor "Publisher" publisher@localhost
 add_user_if_needed foodie "Foodie" foodie@localhost
 add_user_if_needed group_admin "Group Admin" group_admin@localhost
 add_user_if_needed walker "Walker" walker@localhost
@@ -113,7 +113,7 @@ echo ${organisation_admin_update}
 echo "Updating publisher to have editor privileges in the department-of-health Organisation:"
 publisher_update=$( \
     curl -LsH "Authorization: ${API_KEY}" \
-    --data "id=department-of-health&username=publisher&role=editor" \
+    --data "id=department-of-health&username=editor&role=editor" \
     ${CKAN_ACTION_URL}/organization_member_create
 )
 echo ${publisher_update}

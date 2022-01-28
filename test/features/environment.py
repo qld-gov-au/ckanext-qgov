@@ -32,7 +32,7 @@ PERSONAS = {
         'password': u'Password123!'
     },
     'Publisher': {
-        'name': u'publisher',
+        'name': u'editor',
         'email': u'publisher@localhost',
         'password': u'Password123!'
     },
