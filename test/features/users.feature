@@ -70,20 +70,20 @@ Feature: User APIs
     Scenario: User detail is accessible to organisation admins
         Given "Organisation Admin" as the persona
         When I log in
-        And I go to the "publisher" user API
-        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "publisher"')]"
+        And I go to the "editor" user API
+        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "editor"')]"
 
     Scenario: User detail is accessible to group admins
         Given "Group Admin" as the persona
         When I log in
-        And I go to the "publisher" user API
-        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "publisher"')]"
+        And I go to the "editor" user API
+        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "editor"')]"
 
     Scenario: User detail for self is accessible to non-admins
         Given "Publisher" as the persona
         When I log in
-        And I go to the "publisher" user API
-        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "publisher"')]"
+        And I go to the "editor" user API
+        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "editor"')]"
 
     Scenario: Non-self user detail is not accessible to non-admins
         Given "Publisher" as the persona
@@ -92,7 +92,7 @@ Feature: User APIs
         Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'Authorization Error')]"
 
     Scenario: User detail is not accessible anonymously
-        When I go to the "publisher" user API
+        When I go to the "editor" user API
         Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'requires an authenticated user')]"
 
 
@@ -105,19 +105,19 @@ Feature: User APIs
     Scenario: User profile page is accessible to organisation admins
         Given "Organisation Admin" as the persona
         When I log in
-        And I go to the "publisher" profile page
+        And I go to the "editor" profile page
         Then I should see an element with xpath "//h1[string() = 'Publisher']"
 
     Scenario: User profile page is accessible to group admins
         Given "Organisation Admin" as the persona
         When I log in
-        And I go to the "publisher" profile page
+        And I go to the "editor" profile page
         Then I should see an element with xpath "//h1[string() = 'Publisher']"
 
     Scenario: User profile page for self is accessible to non-admins
         Given "Publisher" as the persona
         When I log in
-        And I go to the "publisher" profile page
+        And I go to the "editor" profile page
         Then I should see an element with xpath "//h1[string() = 'Publisher']"
 
     Scenario: Non-self user profile page is not accessible to non-admins
@@ -127,7 +127,7 @@ Feature: User APIs
         Then I should see an element with xpath "//*[contains(string(), 'Not authorised to see this page')]"
 
     Scenario: User profile page is not accessible anonymously
-        When I go to the "publisher" profile page
+        When I go to the "editor" profile page
         Then I should see an element with xpath "//*[contains(string(), 'Not authorised to see this page')]"
 
 
@@ -139,7 +139,7 @@ Feature: User APIs
 
 
     Scenario: Password reset works
-        When I request a password reset for "publisher"
+        When I request a password reset for "editor"
         Then I should see an element with xpath "//div[contains(string(), 'A reset link has been emailed to you')]"
 
     Scenario: Register user password must be 10 characters or longer and contain number, lowercase, capital, and symbol
