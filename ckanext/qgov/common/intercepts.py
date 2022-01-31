@@ -194,7 +194,7 @@ def user_update(original_action, context, data_dict):
     '''
     Unlock an account when the password is reset.
     '''
-    modified_schema = context.get('schema') or schemas.default_user_schema()
+    modified_schema = context.get('schema') or default_user_schema()
     context['schema'] = user_creation_helpers.add_custom_validator_to_user_schema(modified_schema)
     return_value = original_action(context, data_dict)
     if u'reset_key' in data_dict:
