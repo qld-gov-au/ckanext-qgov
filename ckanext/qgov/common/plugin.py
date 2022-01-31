@@ -25,6 +25,10 @@ from .stats import Stats
 from .user_creation import validators as user_creation_validators
 from .user_creation.logic.actions import create as user_creation_create_actions
 
+# workaround for https://github.com/ckan/ckan/issues/6678
+if toolkit.check_ckan_version('2.9'):
+    from ckan.views import dataset as dataset_view, resource
+
 LOG = getLogger(__name__)
 
 IP_ADDRESS = re.compile(r'^({0}[.]){{3}}{0}$'.format(r'[0-9]{1,3}'))
