@@ -177,7 +177,10 @@ class QGOVPlugin(SingletonPlugin):
         """ Monkey-patch functions that don't have standard extension
         points.
         """
+        authenticator.intercept_authenticator()
         intercepts.configure(config)
+        intercepts.set_intercepts()
+        urlm.intercept_404()
 
     # IRoutes
     def before_map(self, route_map):
@@ -212,14 +215,6 @@ class QGOVPlugin(SingletonPlugin):
                               'search'
                           ])))
 
-        return route_map
-
-    def after_map(self, route_map):
-        """ Add monkey-patches after routing is set up.
-        """
-        authenticator.intercept_authenticator()
-        urlm.intercept_404()
-        intercepts.set_intercepts()
         return route_map
 
     # IBlueprint
