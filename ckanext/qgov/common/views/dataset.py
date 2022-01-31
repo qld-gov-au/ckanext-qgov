@@ -1,16 +1,22 @@
 # encoding: utf-8
 
+import logging
+
 from flask import Blueprint
 
 from ckan import model
 from ckan.plugins.toolkit import g, get_action, redirect_to, url_for,\
     ObjectNotFound, NotAuthorized
+from ckan.views import dataset, resource
 
+from ckanext.qgov.common.helpers import make_uncached_response
+
+LOG = logging.getLogger(__name__)
 
 _dataset = Blueprint(
     u'qgov_dataset',
     __name__,
-    url_prefix=u'/dataset/<id>',
+    url_prefix=u'/dataset/',
     url_defaults={u'package_type': u'dataset'}
 )
 
@@ -30,8 +36,10 @@ def _is_dataset_public(id):
         get_action('package_show')(_get_context(), {'id': id})
         return True
     except ObjectNotFound:
+        LOG.debug("Package %s does not exist", id)
         return True
     except NotAuthorized:
+        LOG.debug("Package %s is not visible", id)
         return False
 
 
@@ -43,13 +51,12 @@ def dataset_read(package_type, id):
     :param id: Package id/name
     :return:
     """
-    import ckan.views.dataset as dataset_view
     if not g.user and not _is_dataset_public(id):
-        redirect_to(
-            url_for('user.login', came_from='/dataset/{id}'.format(id=id))
-        )
+        return make_uncached_response(redirect_to(
+            url_for('user.login', came_from=url_for('dataset.read', id=id))
+        ))
 
-    return dataset_view.read(package_type, id)
+    return dataset.read(package_type, id)
 
 
 def resource_read(package_type, id, resource_id):
@@ -61,18 +68,19 @@ def resource_read(package_type, id, resource_id):
     :param resource_id: Resource id
     :return:
     """
-    import ckan.views.resource as resource_view
     if not g.user and not _is_dataset_public(id):
-        redirect_to(
+        return make_uncached_response(redirect_to(
             url_for('user.login',
-                    came_from='/dataset/{id}/resource/{resource_id}'.format(id=id, resource_id=resource_id))
-        )
+                    came_from=url_for('resource.read', id=id, resource_id=resource_id))
+        ))
 
-    return resource_view.read(package_type, id, resource_id)
+    return resource.read(package_type, id, resource_id)
 
 
-_dataset.add_url_rule(u'', view_func=dataset_read)
-_dataset.add_url_rule(u'/resource/<resource_id>', view_func=resource_read)
+_dataset.add_url_rule(u'new', view_func=dataset.CreateView.as_view('new'))
+_dataset.add_url_rule(u'<id>', view_func=dataset_read)
+_dataset.add_url_rule(u'<id>/resource/new', view_func=resource.CreateView.as_view('new_resource'))
+_dataset.add_url_rule(u'<id>/resource/<resource_id>', view_func=resource_read)
 
 
 def get_blueprints():

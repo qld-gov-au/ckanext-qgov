@@ -16,6 +16,12 @@ from ckan.plugins.toolkit import _, g, h, get_action
 LOG = logging.getLogger(__name__)
 
 
+def make_uncached_response(response):
+    response.headers.set('cache-control', 'no-cache'),
+    response.headers.set('Pragma', 'no-cache')
+    return response
+
+
 def format_attribution_date(date_string=None):
     """ Format a date nicely.
     """
