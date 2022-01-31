@@ -16,7 +16,10 @@ def go_to_home(context):
 
 @step(u'I go to register page')
 def go_to_register_page(context):
-    when_i_visit_url(context, '/user/register')
+    context.execute_steps(u"""
+        When I go to homepage
+        And I click the link with text that contains "Register"
+    """)
 
 
 @step(u'I log in')
