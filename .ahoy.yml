@@ -118,6 +118,7 @@ commands:
   test-bdd:
     usage: Run BDD tests.
     cmd: |
+      ahoy cli "behave ${*:-test/features}" --tags @smoke && \
       ahoy cli "behave ${*:-test/features}" || \
       [ "${ALLOW_BDD_FAIL:-0}" -eq 1 ]
 
