@@ -5,13 +5,13 @@ Feature: Organization APIs
         Given "SysAdmin" as the persona
         When I log in
         And I view the "department-of-health" organisation API "including" users
-        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "organisation_admin"') and contains(string(), '"name": "publisher"')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "organisation_admin"') and contains(string(), '"name": "editor"')]"
 
     Scenario: Organisation membership is accessible to admins of the organisation
         Given "Organisation Admin" as the persona
         When I log in
         And I view the "department-of-health" organisation API "including" users
-        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "organisation_admin"') and contains(string(), '"name": "publisher"')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "organisation_admin"') and contains(string(), '"name": "editor"')]"
 
     Scenario: Organisation membership is not accessible to non-admins
         Given "Publisher" as the persona

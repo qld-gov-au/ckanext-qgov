@@ -1,0 +1,24 @@
+{% ckan_extends %}
+
+{% import 'macros/form.html' as form %}
+
+{% block admin_form %}
+
+{{ form.input('ckan.site_title', id='field-ckan-site-title', label=_('Site Title'), value=data['ckan.site_title'], error=error, classes=['control-medium']) }}
+
+{{ form.input('ckan.site_description', id='field-ckan-site-description', label=_('Site Tag Line'), value=data['ckan.site_description'], error=error, classes=['control-medium']) }}
+
+{% set field_url = 'ckan.site_logo' %}
+{% set is_upload = data[field_url] and not data[field_url].startswith('http') %}
+{% set is_url = data[field_url] and data[field_url].startswith('http') %}
+{{ form.image_upload(data, errors, is_upload_enabled=h.uploads_enabled(), is_url=is_url, is_upload=is_upload, upload_label = _('Site logo'), url_label=_('Site logo'),  field_url=field_url, field_upload='logo_upload', field_clear='clear_logo_upload' )}}
+
+{{ form.markdown('ckan.site_about', id='field-ckan-site-about', label=_('About'), value=data['ckan.site_about'], error=error, placeholder=_('About page text')) }}
+
+{{ form.markdown('ckan.site_intro_text', id='field-ckan-site-intro-text', label=_('Intro Text'), value=data['ckan.site_intro_text'], error=error, placeholder=_('Text on home page')) }}
+
+{{ form.select('ckan.homepage_style', id='field-homepage-style', label=_('Homepage'), options=homepages, selected=data['ckan.homepage_style'], error=error) }}
+
+{{ form.textarea('ckanext.data_qld.excluded_display_name_words', id='field-ckanext.data_qld.excluded_display_name_words', label=_('Excluded display name words'), placeholder=_('eg.\nAdmin\nEditor'), value=data['ckanext.data_qld.excluded_display_name_words'], error=errors['ckanext.data_qld.excluded_display_name_words']) }}
+
+{% endblock %}
