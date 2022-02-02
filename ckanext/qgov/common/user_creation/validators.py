@@ -12,6 +12,8 @@ def _get_user():
 
 
 def data_qld_user_name_validator(key, data, errors, context):
+    if context and context.get('reset_password', False):
+        return
     user = _get_user()
     if user is None:
         is_sysadmin = False
