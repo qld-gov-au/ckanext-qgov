@@ -14,8 +14,9 @@ def _get_user():
 def data_qld_user_name_validator(key, data, errors, context):
     user = _get_user()
     is_sysadmin = user is not None and user.sysadmin
+    new_username = data[key].lower()
 
-    if not is_sysadmin and 'publisher' in data[key].lower() and user.name.lower() != data[key].lower():
+    if not is_sysadmin and 'publisher' in new_username and user.name.lower() != new_username:
         raise toolkit.Invalid("The username cannot contain the word 'publisher'. Please enter another username.")
 
 

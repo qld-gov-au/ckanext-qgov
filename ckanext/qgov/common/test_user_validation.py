@@ -25,7 +25,7 @@ class MockUser(object):
         self.sysadmin = sysadmin
 
 
-def mock_objects(username=None, displayed_name=None, sysadmin=False):
+def mock_objects(username='', displayed_name='', sysadmin=False):
     validators._get_user = lambda: MockUser(sysadmin, username, displayed_name)
 
 
