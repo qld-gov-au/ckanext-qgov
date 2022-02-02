@@ -37,26 +37,26 @@ class TestUserValidation(unittest.TestCase):
         """ Test that a user can be created/updated.
         """
         mock_objects()
-        validators.data_qld_user_name_validator('username', {'username': NON_PUBLISHER_USERNAME}, None)
+        validators.data_qld_user_name_validator('username', {'username': NON_PUBLISHER_USERNAME}, None, None)
 
     def test_cannot_set_publisher_name(self):
         """ Test that usernames may not contain 'publisher' by default.
         """
         mock_objects()
-        self.assertRaises(toolkit.Invalid, validators.data_qld_user_name_validator, 'username', {'username': PUBLISHER_USERNAME}, None)
+        self.assertRaises(toolkit.Invalid, validators.data_qld_user_name_validator, 'username', {'username': PUBLISHER_USERNAME}, None, None)
 
     def test_sysadmin_can_set_publisher_name(self):
         """ Test that sysadmins can update usernames to contain 'publisher'.
         """
         mock_objects(sysadmin=True)
-        validators.data_qld_user_name_validator('username', {'username': PUBLISHER_USERNAME}, None)
+        validators.data_qld_user_name_validator('username', {'username': PUBLISHER_USERNAME}, None, None)
 
     def test_publisher_can_retain_name(self):
         """ Test that publishers can update their profiles
         without changing their usernames.
         """
         mock_objects(username=PUBLISHER_USERNAME)
-        validators.data_qld_user_name_validator('username', {'username': PUBLISHER_USERNAME}, None)
+        validators.data_qld_user_name_validator('username', {'username': PUBLISHER_USERNAME}, None, None)
 
 
 if __name__ == '__main__':
