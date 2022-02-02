@@ -25,7 +25,7 @@ Feature: User creation
 
     Scenario: Non logged-in user register to the site.
         Given "Unauthenticated" as the persona
-        When I go to "/user/register"
+        When I go to register page
         Then I should see an element with xpath "//input[@name='fullname']"
         Then I fill in "name" with "publisher_user"
         Then I fill in "fullname" with "gov user"
