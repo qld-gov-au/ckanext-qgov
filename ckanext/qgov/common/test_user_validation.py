@@ -58,6 +58,12 @@ class TestUserValidation(unittest.TestCase):
         mock_objects(username=PUBLISHER_USERNAME)
         validators.data_qld_user_name_validator('username', {'username': PUBLISHER_USERNAME}, None, None)
 
+    def test_publisher_can_reset_password(self):
+        """ Test that publishers can reset their passwords.
+        """
+        mock_objects()
+        validators.data_qld_user_name_validator('username', {'username': PUBLISHER_USERNAME}, None, {'reset_password': True})
+
 
 if __name__ == '__main__':
     unittest.main()
