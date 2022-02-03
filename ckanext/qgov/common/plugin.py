@@ -201,7 +201,7 @@ class QGOVPlugin(SingletonPlugin):
             # appears to affect these two routes, so we need to replicate them here
             route_map.connect('dataset_new', '/dataset/new', controller='package', action='new')
             route_map.connect('/dataset/{action}',
-                              controller='ckan.controllers.package',
+                              controller='package',
                               requirements=dict(action='|'.join([
                                   'list',
                                   'autocomplete',
