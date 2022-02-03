@@ -38,7 +38,7 @@ def data_qld_displayed_name_validator(key, data, errors, context):
         old_name = None
     else:
         is_sysadmin = user.sysadmin
-        old_name = user.fullname.lower()
+        old_name = (user.fullname or '').lower()
     new_name = data[key].lower()
 
     if not is_sysadmin and old_name != new_name:
