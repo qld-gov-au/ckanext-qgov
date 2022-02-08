@@ -267,14 +267,19 @@ class QGOVPlugin(SingletonPlugin):
     def get_auth_functions(self):
         """ Override the 'related' auth functions with our own.
         """
-        return {
+        auth_functions = {
             'related_create': auth.related_create,
             'related_update': auth.related_update,
             'user_list': auth.user_list,
             'user_show': auth.user_show,
-            'group_show': auth.group_show,
-            'member_create': auth.member_create,
+            'group_show': auth.group_show
         }
+        try:
+            from ckanext.data_qld.auth_functions import member_create
+            LOG.info("member_create is already defined in ckanext-data-qld")
+        except ImportError:
+            auth_functions['member_create'] = auth.member_create
+        return auth_functions
 
     # IValidators
 
