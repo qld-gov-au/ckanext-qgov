@@ -1,0 +1,25 @@
+{%- set num = activities|length -%}
+
+{{ ungettext("You have {num} new activity on your {site_title} dashboard", "You have {num} new activities on your {site_title} dashboard", num).format(site_title=g.site_title, num=num) }}:
+
+{% for activity in activities -%}
+    {%- set data = activity['data'] if activity['data'] else None -%}
+    {%- set activity_type = activity['activity_type'] if activity['activity_type'] else None -%}
+    {%- if data -%}
+        {%- if data['package'] -%}
+            {%- set id = data['package']['name'] -%}
+            {%- set action = 'dataset_read' -%}
+        {%- elif data['group'] -%}
+            {%- set id = data['group']['name'] -%}
+            {%- set action = 'organization_read' if data['group']['is_organization'] else 'group_read' -%}
+        {%- endif -%}
+    {%- endif -%}
+    {% if action and id %}{{ h.url_for(action, id=id, _external=True) }}{% if activity_type %} ({{ h.activity_type_nice(activity_type)|capitalize }}){% endif %}{% endif %}
+{% endfor %}
+{{ _('To view your dashboard, click on this link:') }}
+
+{{ g.site_url + '/dashboard' }}
+
+{{ _('You can turn off these email notifications in your {site_title} preferences. To change your preferences, click on this link:').format(site_title=g.site_title) }}
+
+{{ g.site_url + '/user/edit' }}

@@ -9,7 +9,7 @@ import six
 
 import requests
 
-from ckan.common import _, response
+from ckan.common import _, g, response
 from ckan.controllers.user import UserController
 from ckan.controllers.package import PackageController
 try:
@@ -19,21 +19,22 @@ except ImportError:
     storage_enabled = False
 from ckan.lib.navl.dictization_functions import Missing
 from ckan.lib.navl.validators import ignore_missing, not_empty
+from ckan.lib.redis import connect_to_redis
 import ckan.logic
 import ckan.logic.action.update
 import ckan.logic.schema as schemas
 from ckan.logic import validators
-from ckan.model import Session
 from ckan.lib.base import c, request, abort, h
 from ckan.lib.uploader import Upload
 from ckan.plugins import toolkit
 
+from .user_creation import helpers as user_creation_helpers
+
 import plugin
-from authenticator import QGOVUser
+from authenticator import unlock_account, LOGIN_THROTTLE_EXPIRY
 
 LOG = getLogger(__name__)
 
-USER_UPDATE = ckan.logic.action.update.user_update
 LOGGED_IN = UserController.logged_in
 PACKAGE_EDIT = PackageController._save_edit
 RESOURCE_EDIT = PackageController.resource_edit
@@ -185,30 +186,20 @@ def default_resource_schema():
     for key in resource_schema:
         resource_schema[key] = resource_schema[key][:]
     resource_schema['url'].append(toolkit.get_validator('valid_url'))
-    resource_schema['url'].append(toolkit.get_validator('valid_resource_url'))
     return resource_schema
 
 
-def _unlock_account(account_id):
-    """ Unlock an account (erase the failed login attempts).
-    """
-    qgov_user = Session.query(QGOVUser).filter(QGOVUser.id == account_id).first()
-    if qgov_user:
-        LOG.debug("Clearing failed login attempts for %s", account_id)
-        qgov_user.login_attempts = 0
-        Session.commit()
-    else:
-        LOG.debug("Account %s not found", account_id)
-
-
-def user_update(context, data_dict):
+@toolkit.chained_action
+def user_update(original_action, context, data_dict):
     '''
     Unlock an account when the password is reset.
     '''
-    return_value = USER_UPDATE(context, data_dict)
+    modified_schema = context.get('schema') or default_user_schema()
+    context['schema'] = user_creation_helpers.add_custom_validator_to_user_schema(modified_schema)
+    return_value = original_action(context, data_dict)
     if u'reset_key' in data_dict:
         account_id = ckan.logic.get_or_bust(data_dict, 'id')
-        _unlock_account(account_id)
+        unlock_account(account_id)
     return return_value
 
 
@@ -216,13 +207,15 @@ def logged_in(self):
     """ Provide a custom error code when login fails due to account lockout.
     """
     if not c.user:
-        # a number of failed login attempts greater than 10
-        # indicates that the locked user is associated with the current request
-        qgov_user = Session.query(QGOVUser).filter(QGOVUser.login_attempts > 10).first()
-        if qgov_user:
-            qgov_user.login_attempts = 10
-            Session.commit()
-            return self.login('account-locked')
+        # a number of failed login attempts greater than 10 indicates
+        # that the locked user is associated with the current request
+        redis_conn = connect_to_redis()
+
+        for key in redis_conn.keys('{}.ckanext.qgov.login_attempts.*'.format(g.site_id)):
+            login_attempts = redis_conn.get(key)
+            if login_attempts > 10:
+                redis_conn.set(key, 10, ex=LOGIN_THROTTLE_EXPIRY)
+                return self.login('account-locked')
     return LOGGED_IN(self)
 
 
@@ -233,10 +226,10 @@ def save_edit(self, name_or_id, context, package_type=None):
     '''
     try:
         author_email = request.POST.getone('author_email')
-        if not EMAIL_REGEX.match(author_email):
-            abort(400, _('Invalid email.'))
     except Exception:
         abort(400, _('No author email or multiple author emails provided'))
+    if not EMAIL_REGEX.match(author_email):
+        abort(400, _('Invalid email.'))
 
     if 'author' in request.POST:
         request.POST.__delitem__('author')

@@ -13,7 +13,7 @@ if [ "$VENV_DIR" != "" ]; then
   . ${VENV_DIR}/bin/activate
 fi
 if (which ckan > /dev/null); then
-    ckan -c ${CKAN_INI} run
+    ckan -c ${CKAN_INI} run -r
 else
     paster serve ${CKAN_INI}
 fi
