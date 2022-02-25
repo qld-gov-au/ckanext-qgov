@@ -18,3 +18,5 @@ ignore =
     E501
     C901
     W503
+    # workaround for https://github.com/ckan/ckan/issues/6678
+    F401
