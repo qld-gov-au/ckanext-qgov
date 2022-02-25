@@ -231,6 +231,10 @@ def save_edit(self, name_or_id, context, package_type=None):
     Intercept save_edit
     Replace author, maintainer, maintainer_email
     '''
+    # Harvest package types do not have 'author_email' in their schema.
+    if package_type == 'harvest':
+        return PACKAGE_EDIT(self, name_or_id, context, package_type)
+
     try:
         author_email = request.POST.getone('author_email')
         if not EMAIL_REGEX.match(author_email):
