@@ -10,13 +10,18 @@ commands:
       ahoy title "Building project"
       ahoy pre-flight
       ahoy clean
-      (docker network prune -f > /dev/null && docker network inspect amazeeio-network > /dev/null || docker network create amazeeio-network)
+      ahoy build-network
       ahoy up -- --build --force-recreate
-      ahoy install-dev
       ahoy install-site
       ahoy title "Build complete"
       ahoy doctor
       ahoy info 1
+
+  build-network:
+    usage: Ensure that the amazeeio network exists.
+    cmd: |
+      docker network prune -f > /dev/null
+      docker network inspect amazeeio-network > /dev/null || docker network create amazeeio-network
 
   info:
     usage: Print information about this project.
@@ -65,7 +70,7 @@ commands:
 
   cli:
     usage: Start a shell inside CLI container or run a command.
-    cmd: if \[ "${#}" -ne 0 \]; then docker exec $(docker-compose ps -q ckan) sh -c ". /app/ckan/default/bin/activate; cd /app/; $*"; else docker exec $(docker-compose ps -q ckan) sh -c ". /app/ckan/default/bin/activate && cd /app/ && sh"; fi
+    cmd: if \[ "${#}" -ne 0 \]; then docker exec $(docker-compose ps -q ckan) sh -c '. ${VENV_DIR}/bin/activate; cd $APP_DIR;'" $*"; else docker exec $(docker-compose ps -q ckan) sh -c '. ${VENV_DIR}/bin/activate && cd $APP_DIR && sh'; fi
 
   doctor:
     usage: Find problems with current project setup.
@@ -75,8 +80,7 @@ commands:
     usage: Install a site.
     cmd: |
       ahoy title "Installing a fresh site"
-      docker cp -L .docker/test.ini $(docker-compose ps -q ckan):/app/ckan/default/production.ini
-      ahoy cli "/app/scripts/init.sh"
+      ahoy cli "./scripts/init.sh"
 
   clean:
     usage: Remove containers and all build files.
@@ -95,15 +99,6 @@ commands:
       git ls-files --others -i --exclude-from=.git/info/exclude | xargs rm -Rf
       find . -type d -not -path "./.git/*" -empty -delete
 
-  install-dev:
-    usage: Install dependencies.
-    cmd: |
-      docker cp -L requirements-dev.txt $(docker-compose ps -q ckan):/app/.
-      docker cp -L .flake8 $(docker-compose ps -q ckan):/app/.
-      docker cp -L test $(docker-compose ps -q ckan):/app/.
-      ahoy cli "pip install -r /app/requirements-dev.txt"
-    hide: true
-
   flush-redis:
     usage: Flush Redis cache.
     cmd: docker exec -i $(docker-compose ps -q redis) redis-cli flushall > /dev/null
@@ -111,19 +106,20 @@ commands:
   lint:
     usage: Lint code.
     cmd: |
-      ahoy cli "flake8 ${@:-/app/ckanext}" || \
+      ahoy cli "flake8 ${@:-ckanext}" || \
       [ "${ALLOW_LINT_FAIL:-0}" -eq 1 ]
 
   test-unit:
     usage: Run unit tests.
     cmd: |
-      ahoy cli "nosetests" || \
+      ahoy cli 'pytest --ckan-ini=${CKAN_INI}' || \
       [ "${ALLOW_UNIT_FAIL:-0}" -eq 1 ]
 
   test-bdd:
     usage: Run BDD tests.
     cmd: |
-      ahoy cli "behave ${*:-/app/test/features}" || \
+      ahoy cli "behave ${*:-test/features}" --tags @smoke && \
+      ahoy cli "behave ${*:-test/features}" || \
       [ "${ALLOW_BDD_FAIL:-0}" -eq 1 ]
 
   # Utilities.
@@ -157,8 +153,8 @@ entrypoint:
   - "-c"
   - "-e"
   - |
-    export LAGOON_LOCALDEV_URL=http://ckanext-qgov.docker.amazee.io
+    export LAGOON_LOCALDEV_URL=http://$PROJECT.docker.amazee.io
     [ -f .env ] && [ -s .env ] && export $(grep -v '^#' .env | xargs) && if [ -f .env.local ] && [ -s .env.local ]; then export $(grep -v '^#' .env.local | xargs); fi
     bash -e -c "$0" "$@"
-  - '{{cmd}}'
-  - '{{name}}'
+  - "{{cmd}}"
+  - "{{name}}"

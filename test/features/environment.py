@@ -4,7 +4,9 @@ from behaving import environment as benv
 from behaving.web.steps.browser import named_browser
 
 # Path to the root of the project.
-ROOT_PATH = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../'))
+ROOT_PATH = os.path.realpath(os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    '../../'))
 
 # Base URL for relative paths resolution.
 BASE_URL = 'http://ckan:3000/'
@@ -14,36 +16,51 @@ REMOTE_CHROME_URL = 'http://chrome:4444/wd/hub'
 
 # @see .docker/scripts/init.sh for credentials.
 PERSONAS = {
-    'Admin': dict(
-        name=u'admin',
-        email=u'admin@localhost',
-        password=u'Password123!'
-    ),
-    'Organisation Admin': dict(
-        name=u'organisation_admin',
-        email=u'organisation_admin@localhost',
-        password=u'Password123!'
-    ),
-    'Group Admin': dict(
-        name=u'group_admin',
-        email=u'group_admin@localhost',
-        password=u'Password123!'
-    ),
-    'Publisher': dict(
-        name=u'publisher',
-        email=u'publisher@localhost',
-        password=u'Password123!'
-    ),
-    'Walker': dict(
-        name=u'walker',
-        email=u'walker@localhost',
-        password=u'Password123!'
-    ),
-    'Foodie': dict(
-        name=u'foodie',
-        email=u'foodie@localhost',
-        password=u'Password123!'
-    )
+    'SysAdmin': {
+        'name': u'admin',
+        'email': u'admin@localhost',
+        'password': u'Password123!'
+    },
+    'Organisation Admin': {
+        'name': u'organisation_admin',
+        'email': u'organisation_admin@localhost',
+        'password': u'Password123!'
+    },
+    'Group Admin': {
+        'name': u'group_admin',
+        'email': u'group_admin@localhost',
+        'password': u'Password123!'
+    },
+    'Publisher': {
+        'name': u'editor',
+        'email': u'publisher@localhost',
+        'password': u'Password123!'
+    },
+    'Walker': {
+        'name': u'walker',
+        'email': u'walker@localhost',
+        'password': u'Password123!'
+    },
+    'Foodie': {
+        'name': u'foodie',
+        'email': u'foodie@localhost',
+        'password': u'Password123!'
+    },
+    'TestOrgAdmin': {
+        'name': u'test_org_admin',
+        'email': u'test_org_admin@localhost',
+        'password': u'Password123!'
+    },
+    'TestOrgEditor': {
+        'name': u'test_org_editor',
+        'email': u'test_org_editor@localhost',
+        'password': u'Password123!'
+    },
+    'TestOrgMember': {
+        'name': u'test_org_member',
+        'email': u'test_org_member@localhost',
+        'password': u'Password123!'
+    },
 }
 
 
