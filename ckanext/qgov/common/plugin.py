@@ -191,6 +191,26 @@ class QGOVPlugin(SingletonPlugin):
                            '/api/action/submit_feedback',
                            action='submit_feedback')
 
+            # Currently no dataset/package blueprint available, so we need to override these core routes
+            mapper.connect('dataset_read', '/dataset/{id}',
+                           action='read',
+                           ckan_icon='sitemap')
+            mapper.connect('/dataset/{id}/resource/{resource_id}',
+                           action='resource_read')
+
+        with SubMapper(route_map, controller='package') as mapper:
+            # This is a pain, but re-assigning the dataset_read route using `before_map`
+            # appears to affect these routes, so we need to replicate them here
+            mapper.connect('search', '/dataset', action='search', highlight_actions='index search')
+            mapper.connect('dataset_new', '/dataset/new', action='new')
+            mapper.connect(
+                '/dataset/{action}',
+                requirements=dict(action='|'.join([
+                    'list',
+                    'autocomplete',
+                    'search'
+                ])))
+
         return route_map
 
     # IBlueprint
