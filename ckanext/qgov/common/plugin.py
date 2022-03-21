@@ -183,6 +183,19 @@ class QGOVPlugin(SingletonPlugin):
         from routes.mapper import SubMapper
         controller = 'ckanext.qgov.common.controller:QGOVController'
 
+        with SubMapper(route_map, controller='package') as mapper:
+            # This is a pain, but re-assigning the dataset_read route using `before_map`
+            # appears to affect these routes, so we need to replicate them here
+            mapper.connect('search', '/dataset', action='search', highlight_actions='index search')
+            mapper.connect('dataset_new', '/dataset/new', action='new')
+            mapper.connect(
+                '/dataset/{action}',
+                requirements=dict(action='|'.join([
+                    'list',
+                    'autocomplete',
+                    'search'
+                ])))
+
         with SubMapper(route_map, controller=controller) as mapper:
             mapper.connect('article',
                            '/article/{path:[-_a-zA-Z0-9/]+}',
@@ -190,17 +203,6 @@ class QGOVPlugin(SingletonPlugin):
             mapper.connect('submit_feedback',
                            '/api/action/submit_feedback',
                            action='submit_feedback')
-
-            # This is a pain, but re-assigning the dataset_read route using `before_map`
-            # appears to affect these two routes, so we need to replicate them here
-            route_map.connect('dataset_new', '/dataset/new', controller='package', action='new')
-            route_map.connect('/dataset/{action}',
-                              controller='package',
-                              requirements=dict(action='|'.join([
-                                  'list',
-                                  'autocomplete',
-                                  'search'
-                              ])))
 
             # Currently no dataset/package blueprint available, so we need to override these core routes
             mapper.connect('dataset_read', '/dataset/{id}',
