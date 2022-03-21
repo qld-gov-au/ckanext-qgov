@@ -183,6 +183,19 @@ class QGOVPlugin(SingletonPlugin):
         from routes.mapper import SubMapper
         controller = 'ckanext.qgov.common.controller:QGOVController'
 
+        with SubMapper(route_map, controller='package') as mapper:
+            # This is a pain, but re-assigning the dataset_read route using `before_map`
+            # appears to affect these routes, so we need to replicate them here
+            mapper.connect('search', '/dataset', action='search', highlight_actions='index search')
+            mapper.connect('dataset_new', '/dataset/new', action='new')
+            mapper.connect(
+                '/dataset/{action}',
+                requirements=dict(action='|'.join([
+                    'list',
+                    'autocomplete',
+                    'search'
+                ])))
+
         with SubMapper(route_map, controller=controller) as mapper:
             mapper.connect('article',
                            '/article/{path:[-_a-zA-Z0-9/]+}',
@@ -197,19 +210,6 @@ class QGOVPlugin(SingletonPlugin):
                            ckan_icon='sitemap')
             mapper.connect('/dataset/{id}/resource/{resource_id}',
                            action='resource_read')
-
-        with SubMapper(route_map, controller='package') as mapper:
-            # This is a pain, but re-assigning the dataset_read route using `before_map`
-            # appears to affect these routes, so we need to replicate them here
-            mapper.connect('search', '/dataset', action='search', highlight_actions='index search')
-            mapper.connect('dataset_new', '/dataset/new', action='new')
-            mapper.connect(
-                '/dataset/{action}',
-                requirements=dict(action='|'.join([
-                    'list',
-                    'autocomplete',
-                    'search'
-                ])))
 
         return route_map
 
