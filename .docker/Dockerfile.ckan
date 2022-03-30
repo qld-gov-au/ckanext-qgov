@@ -2,7 +2,7 @@ FROM amazeeio/python:2.7-ckan-21.8.0
 
 ARG SITE_URL=http://ckan:3000/
 ARG CKAN_REPO=qld-gov-au/ckan
-ARG CKAN_VERSION=2.8.8-qgov.5
+ARG CKAN_VERSION=ckan-2.8.8-qgov.5
 ENV SITE_URL="${SITE_URL}"
 ENV VENV_DIR=/app/ckan/default
 ENV APP_DIR=/app
@@ -20,7 +20,7 @@ RUN apk add --no-cache curl build-base \
 
 RUN . ${VENV_DIR}/bin/activate \
     && pip install setuptools==36.1 \
-    && pip install -e "git+https://github.com/${CKAN_REPO}.git@ckan-${CKAN_VERSION}#egg=ckan" \
+    && pip install -e "git+https://github.com/${CKAN_REPO}.git@${CKAN_VERSION}#egg=ckan" \
     && sed -i "s/psycopg2==2.4.5/psycopg2==2.7.7/g" "${VENV_DIR}/src/ckan/requirements.txt" \
     && ((test -f "${VENV_DIR}/src/ckan/requirements-py2.txt" && \
         pip install -r "${VENV_DIR}/src/ckan/requirements-py2.txt") || \
