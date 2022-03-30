@@ -118,9 +118,24 @@ commands:
   test-bdd:
     usage: Run BDD tests.
     cmd: |
-      ahoy cli "behave ${*:-test/features}" --tags @smoke && \
-      ahoy cli "behave ${*:-test/features}" || \
+      ahoy start-mailmock &
+      sleep 5 &&
+      ahoy cli "behave -k ${*:-test/features}" --tags @smoke && \
+      ahoy cli "behave --no-capture ${*:-test/features}" || \
       [ "${ALLOW_BDD_FAIL:-0}" -eq 1 ]
+      ahoy stop-mailmock
+
+  start-mailmock:
+    usage: Starts email mock server used for email BDD tests
+    cmd: |
+      ahoy title 'Starting mailmock'
+      ahoy cli 'mailmock -p 8025 -o ${APP_DIR}/test/emails' # for debugging mailmock email output remove --no-stdout
+
+  stop-mailmock:
+    usage: Stops email mock server used for email BDD tests
+    cmd: |
+      ahoy title 'Stopping mailmock'
+      ahoy cli "killall -2 mailmock"
 
   # Utilities.
   title:

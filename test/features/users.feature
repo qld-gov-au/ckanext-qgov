@@ -138,9 +138,25 @@ Feature: User APIs
         Then I should see an element with xpath "//h2[contains(string(), 'News feed')]"
 
 
-    Scenario: Password reset works
-        When I request a password reset for "editor"
+    Scenario: As a registered user, when I have locked my account with too many failed logins, I can reset my password to unlock it
+        Given "Walker" as the persona
+        When I lock my account
+        And I go to "/user/login"
+        And I attempt to log in with password "$password"
+        Then I should see "Login failed"
+        When I request a password reset
         Then I should see an element with xpath "//div[contains(string(), 'A reset link has been emailed to you')]"
+        When I wait for 3 seconds
+        Then I should receive an email at "$email" containing "You have requested your password"
+        When I parse the email I received at "$email" and set "{domain}/user/reset/{path}Have"
+        And I go to "/user/reset/$path"
+        Then the browser's URL should contain "/user/reset/"
+        And the browser's URL should contain "key="
+        When I fill in "password1" with "$password"
+        And I fill in "password2" with "$password"
+        And I press the element with xpath "//button[@class='btn btn-primary']"
+        Then I log in
+
 
     Scenario: Register user password must be 10 characters or longer and contain number, lowercase, capital, and symbol
         When I go to register page

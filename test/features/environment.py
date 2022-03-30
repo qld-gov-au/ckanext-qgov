@@ -69,6 +69,8 @@ def before_all(context):
     context.screenshots_dir = os.path.join(ROOT_PATH, 'test/screenshots')
     # The path where file attachments can be found.
     context.attachment_dir = os.path.join(ROOT_PATH, 'test/fixtures')
+    # The path where emails can be found.
+    context.mail_path = os.path.join(ROOT_PATH, 'test/emails')
 
     # Set base url for all relative links.
     context.base_url = BASE_URL

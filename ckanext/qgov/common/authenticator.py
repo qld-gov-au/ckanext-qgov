@@ -16,18 +16,19 @@ LOG = logging.getLogger(__name__)
 LOGIN_THROTTLE_EXPIRY = 1800
 
 
-def unlock_account(login_name):
+def unlock_account(account_id):
     """ Unlock an account (erase the failed login attempts).
     """
-    qgov_user = Session.query(User).filter(User.id == login_name).first()
+    qgov_user = Session.query(User).filter(User.id == account_id).first()
     if qgov_user:
+        login_name = qgov_user.name
         cache_key = '{}.ckanext.qgov.login_attempts.{}'.format(g.site_id, login_name)
         redis_conn = connect_to_redis()
         if redis_conn.get(cache_key):
             LOG.debug("Clearing failed login attempts for %s", login_name)
             redis_conn.delete(cache_key)
     else:
-        LOG.debug("Account %s not found", login_name)
+        LOG.debug("Account %s not found", account_id)
 
 
 def intercept_authenticator():
