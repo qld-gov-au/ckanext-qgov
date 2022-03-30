@@ -1,5 +1,6 @@
 from behave import step
 from behaving.personas.steps import *  # noqa: F401, F403
+from behaving.mail.steps import *  # noqa: F401, F403
 from behaving.web.steps import *  # noqa: F401, F403
 from behaving.web.steps.url import when_i_visit_url
 import random
@@ -43,11 +44,19 @@ def log_in_directly(context):
 
     assert context.persona
     context.execute_steps(u"""
-        When I fill in "login" with "$name"
-        And I fill in "password" with "$password"
-        And I press the element with xpath "//button[contains(string(), 'Login')]"
+        When I attempt to log in with password "$password"
         Then I should see an element with xpath "//a[@title='Log out']"
     """)
+
+
+@step(u'I attempt to log in with password "{password}"')
+def attempt_login(context, password):
+    assert context.persona
+    context.execute_steps(u"""
+        When I fill in "login" with "$name"
+        And I fill in "password" with "{}"
+        And I press the element with xpath "//button[contains(string(), 'Login')]"
+    """.format(password))
 
 
 @step(u'I create a resource with name "{name}" and URL "{url}"')
@@ -62,7 +71,7 @@ def add_resource(context, name, url):
     """.format(name, url))
 
 
-@step('I fill in title with random text')
+@step(u'I fill in title with random text')
 def title_random_text(context):
 
     assert context.persona
@@ -96,13 +105,21 @@ def set_persona_var(context, key, value):
     context.persona[key] = value
 
 
-@step(u'I request a password reset for "{username}"')
-def request_reset(context, username):
+@step(u'I lock my account')
+def lock_account(context):
+    when_i_visit_url(context, "/user/login")
+    for x in range(11):
+        attempt_login(context, "incorrect password")
+
+
+@step(u'I request a password reset')
+def request_reset(context):
+    assert context.persona
     context.execute_steps(u"""
         When I visit "/user/reset"
-        And I fill in "user" with "{}"
+        And I fill in "user" with "$name"
         And I press the element with xpath "//button[contains(string(), 'Request Reset')]"
-    """.format(username))
+    """)
 
 
 @step(u'I search the autocomplete API for user "{username}"')
