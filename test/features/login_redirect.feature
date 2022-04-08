@@ -2,18 +2,23 @@
 Feature: Login Redirection
 
     @dashboard_login
-    Scenario: As an unauthenticated user, when I visit the dashboard URL I see the login page
-        Given "Unauthenticated" as the persona
-        When I visit "/dashboard"
-        Then I should see an element with xpath "//h1[contains(string(), 'Login')]"
-        When I visit "/dashboard/"
-        Then I should see an element with xpath "//h1[contains(string(), 'Login')]"
+    Scenario Outline: As an unauthenticated user, when I visit the dashboard URL I see the login page
+        Given "TestOrgMember" as the persona
+        When I visit "<URL>"
+        Then I should see a login link
+        When I log in directly
+        Then I should see "News feed"
+
+        Examples: Dashboard URLs
+        | URL              |
+        | /dashboard       |
+        | /dashboard/      |
 
     @user_edit
     Scenario: As an unauthenticated organisation member, when I visit the user edit URL I see the login page. Upon logging in I am taken to the user edit page
         Given "TestOrgMember" as the persona
         When I visit "/user/edit"
-        Then I should see an element with xpath "//h1[contains(string(), 'Login')]"
+        Then I should see a login link
         When I log in directly
         Then I should see "Change details"
 
@@ -31,7 +36,7 @@ Feature: Login Redirection
     Scenario: As an unauthenticated user, when I visit the URL of a private dataset I see the login page
         Given "Unauthenticated" as the persona
         When I visit "/dataset/annakarenina"
-        Then I should see an element with xpath "//h1[contains(string(), 'Login')]"
+        Then I should see a login link
 
     @public_dataset
     Scenario: As an unauthenticated user, when I visit the URL of a public dataset I see the dataset without needing to login
@@ -44,7 +49,7 @@ Feature: Login Redirection
     Scenario: As an unauthenticated organisation member, when I visit the URL of a private dataset I see the login page. Upon logging in I am taken to the private dataset
         Given "TestOrgMember" as the persona
         When I visit "/dataset/annakarenina"
-        Then I should see an element with xpath "//h1[contains(string(), 'Login')]"
+        Then I should see a login link
         When I log in directly
         Then I should see an element with xpath "//h1[contains(string(), 'A Novel By Tolstoy')]"
         And I should see an element with xpath "//span[contains(string(), 'Private')]"

@@ -59,6 +59,13 @@ def attempt_login(context, password):
     """.format(password))
 
 
+@step(u'I should see a login link')
+def login_link_visible(context):
+    context.execute_steps(u"""
+        Then I should see an element with xpath "//h1[contains(string(), 'Login')]"
+    """)
+
+
 @step(u'I create a resource with name "{name}" and URL "{url}"')
 def add_resource(context, name, url):
     context.execute_steps(u"""
@@ -155,3 +162,17 @@ def go_to_group_including_users(context, group_id, including):
 @step(u'I view the "{organisation_id}" organisation API "{including}" users')
 def go_to_organisation_including_users(context, organisation_id, including):
     when_i_visit_url(context, r'/api/3/action/organization_show?id={}&include_users={}'.format(organisation_id, including in ['with', 'including']))
+
+
+@step(u'I log in and go to admin config page')
+def log_in_go_to_admin_config(context):
+    assert context.persona
+    context.execute_steps(u"""
+        When I log in
+        And I go to admin config page
+    """)
+
+
+@step(u'I go to admin config page')
+def go_to_admin_config(context):
+    when_i_visit_url(context, '/ckan-admin/config')
