@@ -122,6 +122,7 @@ def user_list(context, data_dict=None):
     return {'success': _requester_is_admin(context)}
 
 
+@auth_allow_anonymous_access
 def user_show(context, data_dict):
     """Check whether access to individual user details is authorised.
     Restricted to organisation admins or self, as per QOL-5710.
