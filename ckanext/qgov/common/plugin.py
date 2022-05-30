@@ -89,7 +89,6 @@ class QGOVPlugin(SingletonPlugin):
     implements(plugins.IActions, inherit=True)
     implements(plugins.IAuthFunctions, inherit=True)
     implements(plugins.IValidators, inherit=True)
-    plugins.implements(plugins.IPackageController, inherit=True)
     implements(plugins.IResourceController, inherit=True)
     # on CKAN 2.8, use a mixture of Pylons and Flask.
     # Ugly, but hard to avoid, since core uses a mixture.
@@ -293,19 +292,6 @@ class QGOVPlugin(SingletonPlugin):
             'data_qld_user_name_validator': user_creation_validators.data_qld_user_name_validator,
             'data_qld_displayed_name_validator': user_creation_validators.data_qld_displayed_name_validator,
         }
-
-    # IPackageController
-
-    def set_maintainer_from_author(self, entity):
-        entity.author = entity.author_email
-        entity.maintainer = entity.author_email
-        entity.maintainer_email = entity.author_email
-
-    def create(self, entity):
-        self.set_maintainer_from_author(entity)
-
-    def edit(self, entity):
-        self.set_maintainer_from_author(entity)
 
     # IResourceController
 
