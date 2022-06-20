@@ -9,7 +9,6 @@ Feature: User creation
         Then I fill in "ckanext.data_qld.excluded_display_name_words" with "gov"
         And I press the element with xpath "//button[contains(@class, 'btn-primary')]"
 
-
     Scenario: SysAdmin create a new user to the site.
         Given "SysAdmin" as the persona
         When I log in
@@ -22,9 +21,7 @@ Feature: User creation
         Then I should not see "The username cannot contain the word 'publisher'. Please enter another username."
         Then I should not see "The displayed name cannot contain certain words such as 'publisher', 'QLD Government' or similar. Please enter another display name."
 
-
     Scenario: Non logged-in user register to the site.
-        Given "Unauthenticated" as the persona
         When I go to register page
         Then I should see an element with xpath "//input[@name='fullname']"
         Then I fill in "name" with "publisher_user"

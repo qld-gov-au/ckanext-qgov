@@ -3,7 +3,7 @@ from behaving.personas.steps import *  # noqa: F401, F403
 from behaving.mail.steps import *  # noqa: F401, F403
 from behaving.web.steps import *  # noqa: F401, F403
 from behaving.web.steps.url import when_i_visit_url
-import random
+import uuid
 
 
 @step(u'I get the current URL')
@@ -29,6 +29,7 @@ def log_in(context):
     assert context.persona
     context.execute_steps(u"""
         When I go to homepage
+        And I resize the browser to 1024x2048
         And I click the link with text that contains "Log in"
         And I log in directly
     """)
@@ -66,6 +67,23 @@ def login_link_visible(context):
     """)
 
 
+@step(u'I request a password reset')
+def request_reset(context):
+    assert context.persona
+    context.execute_steps(u"""
+        When I visit "/user/reset"
+        And I fill in "user" with "$name"
+        And I press the element with xpath "//button[contains(string(), 'Request Reset')]"
+    """)
+
+
+@step(u'I fill in "{name}" with "{value}" if present')
+def fill_in_field_if_present(context, name, value):
+    context.execute_steps(u"""
+        When I execute the script "field = document.getElementById('field-{0}'); if (field) field.value = '{1}';"
+    """.format(name, value))
+
+
 @step(u'I create a resource with name "{name}" and URL "{url}"')
 def add_resource(context, name, url):
     context.execute_steps(u"""
@@ -74,6 +92,8 @@ def add_resource(context, name, url):
         And I press the element with xpath "//form[@id='resource-edit']//a[string() = 'Link']"
         And I fill in "name" with "{}"
         And I fill in "url" with "{}"
+        And I fill in "description" with "description"
+        And I fill in "size" with "1024" if present
         And I press the element with xpath "//button[contains(string(), 'Add')]"
     """.format(name, url))
 
@@ -84,7 +104,7 @@ def title_random_text(context):
     assert context.persona
     context.execute_steps(u"""
         When I fill in "title" with "Test Title {0}"
-    """.format(random.randrange(1000)))
+    """.format(uuid.uuid4()))
 
 
 @step(u'I go to dataset page')
@@ -102,31 +122,14 @@ def edit_dataset(context, name):
     when_i_visit_url(context, '/dataset/edit/{}'.format(name))
 
 
+@step(u'I go to group page')
+def go_to_group_page(context):
+    when_i_visit_url(context, '/group')
+
+
 @step(u'I go to organisation page')
 def go_to_organisation_page(context):
     when_i_visit_url(context, '/organization')
-
-
-@step(u'I set persona var "{key}" to "{value}"')
-def set_persona_var(context, key, value):
-    context.persona[key] = value
-
-
-@step(u'I lock my account')
-def lock_account(context):
-    when_i_visit_url(context, "/user/login")
-    for x in range(11):
-        attempt_login(context, "incorrect password")
-
-
-@step(u'I request a password reset')
-def request_reset(context):
-    assert context.persona
-    context.execute_steps(u"""
-        When I visit "/user/reset"
-        And I fill in "user" with "$name"
-        And I press the element with xpath "//button[contains(string(), 'Request Reset')]"
-    """)
 
 
 @step(u'I search the autocomplete API for user "{username}"')
@@ -176,3 +179,10 @@ def log_in_go_to_admin_config(context):
 @step(u'I go to admin config page')
 def go_to_admin_config(context):
     when_i_visit_url(context, '/ckan-admin/config')
+
+
+@step(u'I lock my account')
+def lock_account(context):
+    when_i_visit_url(context, "/user/login")
+    for x in range(11):
+        attempt_login(context, "incorrect password")

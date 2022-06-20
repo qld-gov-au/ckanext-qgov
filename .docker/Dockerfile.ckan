@@ -39,8 +39,7 @@ COPY .docker/scripts ${APP_DIR}/scripts
 
 COPY .docker/scripts/ckan_cli ${VENV_DIR}/bin/
 
-RUN chmod +x ${APP_DIR}/scripts/*.sh\
-    && chmod +x ${VENV_DIR}/bin/ckan_cli
+RUN chmod +x ${APP_DIR}/scripts/*.sh ${VENV_DIR}/bin/ckan_cli
 
 # Init current extension.
 RUN ${APP_DIR}/scripts/init-ext.sh

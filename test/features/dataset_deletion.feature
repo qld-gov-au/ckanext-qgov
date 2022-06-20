@@ -16,7 +16,7 @@ Feature: Dataset deletion
         Then I execute the script "document.getElementById('field-image-url').value='https://example.com'"
         Then I fill in "name" with "res1"
         Then I fill in "description" with "description"
-        Then I fill in "size" with "1024"
+        Then I fill in "size" with "1024" if present
         Then I press the element with xpath "//button[@value='go-metadata']"
         And I wait for 10 seconds
         Then I should see "Data and Resources"
