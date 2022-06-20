@@ -84,6 +84,8 @@ add_user_if_needed foodie "Foodie" foodie@localhost
 add_user_if_needed group_admin "Group Admin" group_admin@localhost
 add_user_if_needed walker "Walker" walker@localhost
 
+# Datasets need to be assigned to an organisation
+
 echo "Assigning test Datasets to Organisation..."
 
 echo "Updating annakarenina to use ${TEST_ORG_TITLE} organisation:"
