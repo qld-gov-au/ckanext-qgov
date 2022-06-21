@@ -90,6 +90,8 @@ class QGOVPlugin(SingletonPlugin):
     implements(plugins.IAuthFunctions, inherit=True)
     implements(plugins.IValidators, inherit=True)
     implements(plugins.IResourceController, inherit=True)
+    implements(plugins.IMiddleware, inherit=True)
+
     # on CKAN 2.8, use a mixture of Pylons and Flask.
     # Ugly, but hard to avoid, since core uses a mixture.
     if toolkit.check_ckan_version('2.8'):
@@ -174,6 +176,28 @@ class QGOVPlugin(SingletonPlugin):
         intercepts.configure(config)
         intercepts.set_intercepts()
         urlm.intercept_404()
+
+    # IMiddleware
+
+    def make_middleware(self, app, config):
+        if hasattr(app, 'errorhandler'):
+            @app.errorhandler(404)
+            def handle_not_found(e):
+                from flask import redirect, request
+                redirect_url = urlm.get_purl_response(request.base_url)
+                if redirect_url:
+                    return redirect(redirect_url, 301)
+                else:
+                    # copy default error handling
+                    extra_vars = {
+                        u'code': e.code,
+                        u'content': e.description,
+                        u'name': e.name
+                    }
+
+                    return toolkit.render(
+                        u'error_document_template.html', extra_vars), e.code
+        return app
 
     # IRoutes
     def before_map(self, route_map):
