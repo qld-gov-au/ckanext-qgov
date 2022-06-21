@@ -22,3 +22,23 @@
 {{ form.textarea('ckanext.data_qld.excluded_display_name_words', id='field-ckanext.data_qld.excluded_display_name_words', label=_('Excluded display name words'), placeholder=_('eg.\nAdmin\nEditor'), value=data['ckanext.data_qld.excluded_display_name_words'], error=errors['ckanext.data_qld.excluded_display_name_words']) }}
 
 {% endblock %}
+
+{% block admin_form_help %}
+{% set about_url = h.url_for(controller='home', action='about') %}
+{% set home_url = h.url_for(controller='home', action='index') %}
+{% set docs_url = "http://docs.ckan.org/en/{0}/theming".format(g.ckan_doc_version) %}
+{% trans %}
+<p><strong>Site Title:</strong> This is the title of this CKAN instance
+    It appears in various places throughout CKAN.</p>
+<p><strong>Site Tag Logo:</strong> This is the logo that appears in the
+    header of all the CKAN instance templates.</p>
+<p><strong>About:</strong> This text will appear on this CKAN instances
+    <a href="{{ about_url }}">about page</a>.</p>
+<p><strong>Intro Text:</strong> This text will appear on this CKAN instances
+    <a href="{{ home_url }}">home page</a> as a welcome to visitors.</p>
+<p><strong>Homepage:</strong> This is for choosing a predefined layout for
+    the modules that appear on your homepage.</p>
+<p><strong>Excluded display name words:</strong> Keywords that are restricted
+    from being included in displayed account names.</p>
+{% endtrans %}
+{% endblock %}
