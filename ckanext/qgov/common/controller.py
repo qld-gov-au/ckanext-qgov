@@ -15,11 +15,10 @@ import requests
 from ckan import __version__
 import ckan.lib.helpers as h
 from ckan import model
-from ckan.common import request
 from ckan.controllers.package import PackageController
 from ckan.lib.render import TemplateNotFound
 from ckan.plugins.toolkit import _, abort, asbool, config, g, get_action,\
-    redirect_to, render, url_for, ObjectNotFound, NotAuthorized
+    redirect_to, render, request, url_for, ObjectNotFound, NotAuthorized
 
 LOG = getLogger(__name__)
 

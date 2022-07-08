@@ -9,7 +9,6 @@ import six
 
 import requests
 
-from ckan.common import _
 from ckan.controllers.user import UserController
 from ckan.controllers.package import PackageController
 try:
@@ -27,6 +26,7 @@ from ckan.logic import validators
 from ckan.lib.base import c, request, abort, h
 from ckan.lib.uploader import Upload
 from ckan.plugins import toolkit
+from ckan.plugins.toolkit import _, g, get_validator, chained_action
 
 from . import helpers
 from .authenticator import unlock_account, LOGIN_THROTTLE_EXPIRY
@@ -184,11 +184,11 @@ def default_resource_schema():
     # infinite depth either.
     for key in resource_schema:
         resource_schema[key] = resource_schema[key][:]
-    resource_schema['url'].append(toolkit.get_validator('valid_url'))
+    resource_schema['url'].append(get_validator('valid_url'))
     return resource_schema
 
 
-@toolkit.chained_action
+@chained_action
 def user_update(original_action, context, data_dict):
     '''
     Unlock an account when the password is reset.
@@ -210,7 +210,7 @@ def logged_in(self):
         # that the locked user is associated with the current request
         redis_conn = connect_to_redis()
 
-        for key in redis_conn.keys('{}.ckanext.qgov.login_attempts.*'.format(toolkit.g.site_id)):
+        for key in redis_conn.keys('{}.ckanext.qgov.login_attempts.*'.format(g.site_id)):
             login_attempts = redis_conn.get(key)
             if login_attempts > 10:
                 redis_conn.set(key, 10, ex=LOGIN_THROTTLE_EXPIRY)

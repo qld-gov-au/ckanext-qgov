@@ -3,10 +3,10 @@
 """
 
 import logging
-from ckan.common import g
 from ckan.lib.authenticator import UsernamePasswordAuthenticator
 from ckan.lib.redis import connect_to_redis
 from ckan.model import User, Session
+from ckan.plugins.toolkit import g
 
 from zope.interface import implementer
 from repoze.who.interfaces import IAuthenticator
