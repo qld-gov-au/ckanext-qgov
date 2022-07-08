@@ -28,10 +28,9 @@ from ckan.lib.base import c, request, abort, h
 from ckan.lib.uploader import Upload
 from ckan.plugins import toolkit
 
-from .user_creation import helpers as user_creation_helpers
-
-from . import plugin
+from . import helpers
 from .authenticator import unlock_account, LOGIN_THROTTLE_EXPIRY
+from .user_creation import helpers as user_creation_helpers
 
 LOG = getLogger(__name__)
 
@@ -259,8 +258,8 @@ def validate_resource_edit(self, id, resource_id,
         resource_format = request.POST.getone('format')
         validation_schema = request.POST.getone('validation_schema')
         if resource_format == 'CSV' and validation_schema and validation_schema != '':
-            schema_url = plugin.generate_download_url(id, validation_schema)
-            data_url = plugin.generate_download_url(id, resource_id)
+            schema_url = helpers.generate_download_url(id, validation_schema)
+            data_url = helpers.generate_download_url(id, resource_id)
             validation_url = "http://goodtables.okfnlabs.org/api/run?format=csv&schema={0}&data={1}&row_limit=100000&report_limit=1000&report_type=grouped".format(schema_url, data_url)
             req = requests.get(validation_url, verify=False)
             if req.status_code == requests.codes.ok:
