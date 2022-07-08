@@ -9,13 +9,6 @@ import six
 
 import requests
 
-from ckan.controllers.user import UserController
-from ckan.controllers.package import PackageController
-try:
-    from ckan.controllers.storage import StorageController
-    storage_enabled = True
-except ImportError:
-    storage_enabled = False
 from ckan.lib.navl.dictization_functions import Missing
 from ckan.lib.navl.validators import ignore_missing, not_empty
 from ckan.lib.redis import connect_to_redis
@@ -34,20 +27,11 @@ from .user_creation import helpers as user_creation_helpers
 
 LOG = getLogger(__name__)
 
-LOGGED_IN = UserController.logged_in
-PACKAGE_EDIT = PackageController._save_edit
-RESOURCE_EDIT = PackageController.resource_edit
-
 DEFAULT_USER_SCHEMA = schemas.default_user_schema()
 USER_NEW_FORM_SCHEMA = schemas.user_new_form_schema()
 USER_EDIT_FORM_SCHEMA = schemas.user_edit_form_schema()
 DEFAULT_UPDATE_USER_SCHEMA = schemas.default_update_user_schema()
 RESOURCE_SCHEMA = schemas.default_resource_schema()
-
-UPLOAD = Upload.upload
-if storage_enabled:
-    STORAGE_DOWNLOAD = StorageController.file
-RESOURCE_DOWNLOAD = PackageController.resource_download
 
 EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
 
@@ -67,9 +51,6 @@ def set_intercepts():
     """ Monkey-patch to wrap/override core functions with our own.
     """
     validators.user_password_validator = user_password_validator
-    UserController.logged_in = logged_in
-    PackageController._save_edit = save_edit
-    PackageController.resource_edit = validate_resource_edit
 
     schemas.default_user_schema = default_user_schema
     schemas.user_new_form_schema = user_new_form_schema
@@ -78,7 +59,28 @@ def set_intercepts():
 
     schemas.default_resource_schema = default_resource_schema
 
+
+def set_pylons_intercepts():
+    from ckan.controllers.user import UserController
+    from ckan.controllers.package import PackageController
+    try:
+        from ckan.controllers.storage import StorageController
+        storage_enabled = True
+    except ImportError:
+        storage_enabled = False
+
+    global LOGGED_IN, PACKAGE_EDIT, RESOURCE_EDIT, RESOURCE_DOWNLOAD, STORAGE_DOWNLOAD
+    LOGGED_IN = UserController.logged_in
+    PACKAGE_EDIT = PackageController._save_edit
+    RESOURCE_EDIT = PackageController.resource_edit
+    RESOURCE_DOWNLOAD = PackageController.resource_download
+
+    UserController.logged_in = logged_in
+    PackageController._save_edit = save_edit
+    PackageController.resource_edit = validate_resource_edit
+
     if storage_enabled:
+        STORAGE_DOWNLOAD = StorageController.file
         StorageController.file = storage_download_with_headers
     PackageController.resource_download = resource_download_with_headers
 
