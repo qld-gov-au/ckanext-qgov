@@ -8,7 +8,7 @@ from ckan.lib.authenticator import UsernamePasswordAuthenticator
 from ckan.lib.redis import connect_to_redis
 from ckan.model import User, Session
 
-from zope.interface import implements
+from zope.interface import implementer
 from repoze.who.interfaces import IAuthenticator
 
 LOG = logging.getLogger(__name__)
@@ -37,11 +37,11 @@ def intercept_authenticator():
     UsernamePasswordAuthenticator.authenticate = QGOVAuthenticator().authenticate
 
 
+@implementer(IAuthenticator)
 class QGOVAuthenticator(UsernamePasswordAuthenticator):
     """ Extend UsernamePasswordAuthenticator so it's possible to
     configure this via who.ini.
     """
-    implements(IAuthenticator)
 
     def authenticate(self, environ, identity):
         """ Mimic most of UsernamePasswordAuthenticator.authenticate
