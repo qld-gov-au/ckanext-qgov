@@ -30,8 +30,8 @@ from ckan.plugins import toolkit
 
 from .user_creation import helpers as user_creation_helpers
 
-import plugin
-from authenticator import unlock_account, LOGIN_THROTTLE_EXPIRY
+from . import plugin
+from .authenticator import unlock_account, LOGIN_THROTTLE_EXPIRY
 
 LOG = getLogger(__name__)
 

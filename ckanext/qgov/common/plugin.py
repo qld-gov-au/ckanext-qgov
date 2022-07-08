@@ -16,11 +16,7 @@ from ckan.lib.base import h
 import ckan.lib.navl.dictization_functions as df
 from ckan.plugins import implements, toolkit, SingletonPlugin
 
-import authenticator
-import auth_functions as auth
-import urlm
-import helpers
-import intercepts
+from . import authenticator, auth_functions as auth, helpers, intercepts, urlm
 from .stats import Stats
 from .user_creation import validators as user_creation_validators
 from .user_creation.logic.actions import create as user_creation_create_actions
