@@ -9,7 +9,7 @@ import six
 
 import requests
 
-from ckan.common import _, g, response
+from ckan.common import _
 from ckan.controllers.user import UserController
 from ckan.controllers.package import PackageController
 try:
@@ -210,7 +210,7 @@ def logged_in(self):
         # that the locked user is associated with the current request
         redis_conn = connect_to_redis()
 
-        for key in redis_conn.keys('{}.ckanext.qgov.login_attempts.*'.format(g.site_id)):
+        for key in redis_conn.keys('{}.ckanext.qgov.login_attempts.*'.format(toolkit.g.site_id)):
             login_attempts = redis_conn.get(key)
             if login_attempts > 10:
                 redis_conn.set(key, 10, ex=LOGIN_THROTTLE_EXPIRY)
@@ -281,7 +281,7 @@ def storage_download_with_headers(self, label):
     """ Add security headers to protect against download-based exploits.
     """
     file_download = STORAGE_DOWNLOAD(self, label)
-    _set_download_headers(response)
+    _set_download_headers(toolkit.response)
     return file_download
 
 
@@ -289,5 +289,5 @@ def resource_download_with_headers(self, id, resource_id, filename=None):
     """ Add security headers to protect against download-based exploits.
     """
     file_download = RESOURCE_DOWNLOAD(self, id, resource_id, filename)
-    _set_download_headers(response)
+    _set_download_headers(toolkit.response)
     return file_download
