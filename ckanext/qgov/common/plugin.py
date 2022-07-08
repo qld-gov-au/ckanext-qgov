@@ -174,7 +174,6 @@ class QGOVPlugin(SingletonPlugin):
         intercepts.set_intercepts()
         if check_ckan_version(max_version='2.8.99'):
             intercepts.set_pylons_intercepts()
-        urlm.intercept_404()
 
     # IMiddleware
 

@@ -3,14 +3,10 @@
 """
 from logging import getLogger
 
-from ckan.lib import base
-from ckan.controllers import group
-from ckan.controllers import package, user
-from ckan.lib import helpers
+from ckan.plugins.toolkit import request
 
 LOG = getLogger(__name__)
 
-RAW_ABORT = base.abort
 URLM_ENDPOINT = None
 URLM_PROXY = None
 
@@ -27,21 +23,11 @@ def configure_urlm(app_path, proxy):
     LOG.info("Using URL Management system at %s via proxy %s", URLM_ENDPOINT, URLM_PROXY)
 
 
-def intercept_404():
-    """ Monkey-patch ourselves into the 404 handler.
-    """
-    base.abort = abort_with_purl
-    group.abort = base.abort
-    package.abort = base.abort
-    # related.abort = base.abort
-    user.abort = base.abort
-
-
 def get_purl_response(url):
     global URLM_ENDPOINT, URLM_PROXY
     LOG.warn("Page [%s] not found; checking URL Management System at %s",
              url, URLM_ENDPOINT)
-    purl_request = URLM_ENDPOINT.format(source=base.request.url)
+    purl_request = URLM_ENDPOINT.format(source=request.url)
     try:
         import json
         import urllib2
@@ -61,14 +47,3 @@ def get_purl_response(url):
             LOG.warn("No match in URL Management System")
     except urllib2.URLError as ex:
         LOG.error("Failed to contact URL Management system: %s", ex)
-
-
-def abort_with_purl(status_code=None, detail='', headers=None, comment=None):
-    """ Consult PURL about a 404, redirecting if it reports a new URL.
-    """
-    if status_code == 404:
-        redirect_url = get_purl_response(base.request.url)
-        if redirect_url:
-            helpers.redirect_to(redirect_url, 301)
-
-    return RAW_ABORT(status_code, detail, headers, comment)

@@ -16,13 +16,14 @@ import ckan.logic
 import ckan.logic.action.update
 import ckan.logic.schema as schemas
 from ckan.logic import validators
-from ckan.lib.base import c, request, abort, h
 from ckan.lib.uploader import Upload
 from ckan.plugins import toolkit
-from ckan.plugins.toolkit import _, g, get_validator, chained_action
+from ckan.plugins.toolkit import _, abort, c, g, h, get_validator, \
+    chained_action, redirect_to, request
 
 from . import helpers
 from .authenticator import unlock_account, LOGIN_THROTTLE_EXPIRY
+from .urlm import get_purl_response
 from .user_creation import helpers as user_creation_helpers
 
 LOG = getLogger(__name__)
@@ -68,12 +69,15 @@ def set_pylons_intercepts():
         storage_enabled = True
     except ImportError:
         storage_enabled = False
+    from ckan.lib import base
+    from ckan.controllers import group, package, user
 
-    global LOGGED_IN, PACKAGE_EDIT, RESOURCE_EDIT, RESOURCE_DOWNLOAD, STORAGE_DOWNLOAD
+    global LOGGED_IN, PACKAGE_EDIT, RESOURCE_EDIT, RESOURCE_DOWNLOAD, STORAGE_DOWNLOAD, ABORT
     LOGGED_IN = UserController.logged_in
     PACKAGE_EDIT = PackageController._save_edit
     RESOURCE_EDIT = PackageController.resource_edit
     RESOURCE_DOWNLOAD = PackageController.resource_download
+    ABORT = base.abort
 
     UserController.logged_in = logged_in
     PackageController._save_edit = save_edit
@@ -83,6 +87,12 @@ def set_pylons_intercepts():
         STORAGE_DOWNLOAD = StorageController.file
         StorageController.file = storage_download_with_headers
     PackageController.resource_download = resource_download_with_headers
+
+    # Monkey-patch ourselves into the 404 handler
+    base.abort = abort_with_purl
+    group.abort = abort_with_purl
+    package.abort = abort_with_purl
+    user.abort = abort_with_purl
 
 
 def user_password_validator(key, data, errors, context):
@@ -293,3 +303,14 @@ def resource_download_with_headers(self, id, resource_id, filename=None):
     file_download = RESOURCE_DOWNLOAD(self, id, resource_id, filename)
     _set_download_headers(toolkit.response)
     return file_download
+
+
+def abort_with_purl(status_code=None, detail='', headers=None, comment=None):
+    """ Consult PURL about a 404, redirecting if it reports a new URL.
+    """
+    if status_code == 404:
+        redirect_url = get_purl_response(request.url)
+        if redirect_url:
+            redirect_to(redirect_url, 301)
+
+    return ABORT(status_code, detail, headers, comment)
