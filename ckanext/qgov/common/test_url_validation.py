@@ -5,16 +5,16 @@
 
 import unittest
 
-from ckan.lib.cli import MockTranslator
 import ckan.lib.helpers as h
 
-import plugin
+from . import plugin
 
 
 def mock_objects(config):
     try:
         from paste.registry import Registry
         import pylons
+        from ckan.lib.cli import MockTranslator
         registry = Registry()
         registry.prepare()
         registry.register(pylons.translator, MockTranslator())
