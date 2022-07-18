@@ -24,7 +24,7 @@ from .user_creation.logic.actions import create as user_creation_create_actions
 
 # workaround for https://github.com/ckan/ckan/issues/6678
 if check_ckan_version('2.9'):
-    from ckan.views import dataset as dataset_view, resource
+    from ckan.views import dataset as dataset_view, resource  # noqa: F401
 
 LOG = getLogger(__name__)
 
@@ -297,7 +297,7 @@ class QGOVPlugin(SingletonPlugin):
             'group_show': auth.group_show
         }
         try:
-            from ckanext.data_qld.auth_functions import member_create
+            from ckanext.data_qld.auth_functions import member_create  # noqa: F401
             LOG.info("member_create is already defined in ckanext-data-qld")
         except ImportError:
             auth_functions['member_create'] = auth.member_create

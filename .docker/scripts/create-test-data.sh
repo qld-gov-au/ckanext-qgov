@@ -84,6 +84,18 @@ add_user_if_needed foodie "Foodie" foodie@localhost
 add_user_if_needed group_admin "Group Admin" group_admin@localhost
 add_user_if_needed walker "Walker" walker@localhost
 
+# Create private test dataset with our standard fields
+curl -LsH "Authorization: ${API_KEY}" \
+    --data '{"name": "test-dataset", "owner_org": "'"${TEST_ORG_ID}"'", "private": true,
+"author_email": "admin@localhost", "version": "1.0", "license_id": "other-open", "notes": "test"}' \
+    ${CKAN_ACTION_URL}/package_create
+
+# Create public test dataset with our standard fields
+curl -LsH "Authorization: ${API_KEY}" \
+    --data '{"name": "public-test-dataset", "owner_org": "'"${TEST_ORG_ID}"'",
+"author_email": "admin@localhost", "version": "1.0", "license_id": "other-open", "notes": "test"}' \
+    ${CKAN_ACTION_URL}/package_create
+
 # Datasets need to be assigned to an organisation
 
 echo "Assigning test Datasets to Organisation..."

@@ -16,7 +16,6 @@ import ckan.logic
 import ckan.logic.action.update
 import ckan.logic.schema as schemas
 from ckan.logic import validators
-from ckan.lib.uploader import Upload
 from ckan.plugins import toolkit
 from ckan.plugins.toolkit import _, abort, c, g, h, get_validator, \
     chained_action, redirect_to, request
