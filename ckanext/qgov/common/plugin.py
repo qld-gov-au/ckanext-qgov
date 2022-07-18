@@ -11,22 +11,19 @@ import re
 import six
 
 from ckan import plugins
-from ckan.common import _
 from ckan.lib.base import h
 import ckan.lib.navl.dictization_functions as df
-from ckan.plugins import implements, toolkit, SingletonPlugin
+from ckan.plugins import implements, SingletonPlugin
+from ckan.plugins.toolkit import _, add_template_directory, check_ckan_version,\
+    get_action, get_validator, render
 
-import authenticator
-import auth_functions as auth
-import urlm
-import helpers
-import intercepts
+from . import authenticator, auth_functions as auth, helpers, intercepts, urlm
 from .stats import Stats
 from .user_creation import validators as user_creation_validators
 from .user_creation.logic.actions import create as user_creation_create_actions
 
 # workaround for https://github.com/ckan/ckan/issues/6678
-if toolkit.check_ckan_version('2.9'):
+if check_ckan_version('2.9'):
     from ckan.views import dataset as dataset_view, resource
 
 LOG = getLogger(__name__)
@@ -94,9 +91,9 @@ class QGOVPlugin(SingletonPlugin):
 
     # on CKAN 2.8, use a mixture of Pylons and Flask.
     # Ugly, but hard to avoid, since core uses a mixture.
-    if toolkit.check_ckan_version('2.8'):
+    if check_ckan_version('2.8'):
         implements(plugins.IBlueprint)
-    if toolkit.check_ckan_version(max_version='2.8.99'):
+    if check_ckan_version(max_version='2.8.99'):
         implements(plugins.IRoutes, inherit=True)
 
     # IConfigurer
@@ -108,7 +105,7 @@ class QGOVPlugin(SingletonPlugin):
         schema.pop('ckan.main_css', None)
         schema.pop('ckan.site_custom_css', None)
 
-        ignore_missing = toolkit.get_validator('ignore_missing')
+        ignore_missing = get_validator('ignore_missing')
         schema.update({
             'ckanext.data_qld.excluded_display_name_words': [ignore_missing, six.text_type]
         })
@@ -136,7 +133,7 @@ class QGOVPlugin(SingletonPlugin):
                 + ckan_config['scheming.presets']
 
         # include templates
-        toolkit.add_template_directory(ckan_config, 'templates')
+        add_template_directory(ckan_config, 'templates')
 
         # block unwanted content
         ckan_config['openid_enabled'] = False
@@ -175,7 +172,8 @@ class QGOVPlugin(SingletonPlugin):
         authenticator.intercept_authenticator()
         intercepts.configure(config)
         intercepts.set_intercepts()
-        urlm.intercept_404()
+        if check_ckan_version(max_version='2.8.99'):
+            intercepts.set_pylons_intercepts()
 
     # IMiddleware
 
@@ -195,8 +193,7 @@ class QGOVPlugin(SingletonPlugin):
                         u'name': e.name
                     }
 
-                    return toolkit.render(
-                        u'error_document_template.html', extra_vars), e.code
+                    return render(u'error_document_template.html', extra_vars), e.code
         return app
 
     # IRoutes
@@ -246,7 +243,7 @@ class QGOVPlugin(SingletonPlugin):
         """
         from .views import user
         blueprints = user.get_blueprints()
-        if toolkit.check_ckan_version('2.9'):
+        if check_ckan_version('2.9'):
             from .views import dataset
             blueprints.extend(dataset.get_blueprints())
         return blueprints
@@ -325,6 +322,6 @@ class QGOVPlugin(SingletonPlugin):
         package_id = data_dict.get('package_id', None)
         if resource_id and package_id:
             try:
-                toolkit.get_action('package_resource_reorder')(context, {'id': package_id, 'order': [resource_id]})
+                get_action('package_resource_reorder')(context, {'id': package_id, 'order': [resource_id]})
             except Exception as e:
                 LOG.error("Failed to move new resource to first position: %s", e)

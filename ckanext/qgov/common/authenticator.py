@@ -3,12 +3,12 @@
 """
 
 import logging
-from ckan.common import g
 from ckan.lib.authenticator import UsernamePasswordAuthenticator
 from ckan.lib.redis import connect_to_redis
 from ckan.model import User, Session
+from ckan.plugins.toolkit import config
 
-from zope.interface import implements
+from zope.interface import implementer
 from repoze.who.interfaces import IAuthenticator
 
 LOG = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ def unlock_account(account_id):
     qgov_user = Session.query(User).filter(User.id == account_id).first()
     if qgov_user:
         login_name = qgov_user.name
-        cache_key = '{}.ckanext.qgov.login_attempts.{}'.format(g.site_id, login_name)
+        cache_key = '{}.ckanext.qgov.login_attempts.{}'.format(config['ckan.site_id'], login_name)
         redis_conn = connect_to_redis()
         if redis_conn.get(cache_key):
             LOG.debug("Clearing failed login attempts for %s", login_name)
@@ -37,11 +37,11 @@ def intercept_authenticator():
     UsernamePasswordAuthenticator.authenticate = QGOVAuthenticator().authenticate
 
 
+@implementer(IAuthenticator)
 class QGOVAuthenticator(UsernamePasswordAuthenticator):
     """ Extend UsernamePasswordAuthenticator so it's possible to
     configure this via who.ini.
     """
-    implements(IAuthenticator)
 
     def authenticate(self, environ, identity):
         """ Mimic most of UsernamePasswordAuthenticator.authenticate
@@ -55,7 +55,7 @@ class QGOVAuthenticator(UsernamePasswordAuthenticator):
             LOG.debug('Login failed - username %r not found', login_name)
             return None
 
-        cache_key = '{}.ckanext.qgov.login_attempts.{}'.format(g.site_id, login_name)
+        cache_key = '{}.ckanext.qgov.login_attempts.{}'.format(config['ckan.site_id'], login_name)
         redis_conn = connect_to_redis()
         try:
             login_attempts = int(redis_conn.get(cache_key) or 0)

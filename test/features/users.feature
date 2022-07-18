@@ -31,7 +31,7 @@ Feature: User APIs
         Given "<Persona>" as the persona
         When I log in
         And I go to the user list API
-        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "admin"')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": true') and contains(string(), '"name": "admin"')]"
 
         Examples: Admins
             | Persona       |
@@ -43,19 +43,19 @@ Feature: User APIs
         Given "Publisher" as the persona
         When I log in
         And I go to the user list API
-        Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'Authorization Error')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": false') and contains(string(), 'Authorization Error')]"
 
     @unauthenticated
     Scenario: User list is not accessible anonymously
         Given "Unauthenticated" as the persona
         When I go to the user list API
-        Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'requires an authenticated user')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": false') and contains(string(), 'requires an authenticated user')]"
 
     Scenario Outline: User detail is accessible to admins
         Given "<Persona>" as the persona
         When I log in
         And I go to the "admin" user API
-        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "admin"')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": true') and contains(string(), '"name": "admin"')]"
 
         Examples: Admins
             | Persona       |
@@ -67,19 +67,19 @@ Feature: User APIs
         Given "Publisher" as the persona
         When I log in
         And I go to the "editor" user API
-        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "editor"')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": true') and contains(string(), '"name": "editor"')]"
 
     Scenario: Non-self user detail is not accessible to non-admins
         Given "Publisher" as the persona
         When I log in
         And I go to the "admin" user API
-        Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'Authorization Error')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": false') and contains(string(), 'Authorization Error')]"
 
     @unauthenticated
     Scenario: User detail is not accessible anonymously
         Given "Unauthenticated" as the persona
         When I go to the "editor" user API
-        Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'Authorization Error')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": false') and contains(string(), 'Authorization Error')]"
 
     Scenario Outline: User profile page is accessible to admins
         Given "<Persona>" as the persona

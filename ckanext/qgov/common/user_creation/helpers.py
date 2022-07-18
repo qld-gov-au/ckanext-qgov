@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-import validators as user_creation_validators
+from . import validators as user_creation_validators
 
 
 def is_validator_exist(field_schema, validator_name):

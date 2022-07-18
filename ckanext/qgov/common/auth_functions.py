@@ -4,7 +4,7 @@ from ckan import authz, model
 from ckan.logic import auth as logic_auth
 from ckan.plugins.toolkit import _, asbool, auth_allow_anonymous_access
 
-from helpers import user_has_admin_access
+from .helpers import user_has_admin_access
 
 
 def member_create(context, data_dict):
