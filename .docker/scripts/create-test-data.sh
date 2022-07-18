@@ -164,6 +164,12 @@ walker_update=$( \
 )
 echo ${walker_update}
 
+echo "Creating config value for excluded display name words:"
+
+curl -LsH "Authorization: ${API_KEY}" \
+    --data '{"ckanext.data_qld.excluded_display_name_words": "gov"}' \
+    ${CKAN_ACTION_URL}/config_option_update
+
 if [ "$VENV_DIR" != "" ]; then
   deactivate
 fi
