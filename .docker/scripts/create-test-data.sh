@@ -55,7 +55,7 @@ TEST_ORG=$( \
 
 TEST_ORG_ID=$(echo $TEST_ORG | sed -r 's/^(.*)"id": "(.*)",(.*)/\2/')
 
-echo "Assigning test users to ${TEST_ORG_TITLE} Organisation:"
+echo "Assigning test users to '${TEST_ORG_TITLE}' organisation (${TEST_ORG_ID}):"
 
 curl -LsH "Authorization: ${API_KEY}" \
     --data "id=${TEST_ORG_ID}&object=test_org_admin&object_type=user&capacity=admin" \

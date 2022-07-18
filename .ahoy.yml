@@ -109,6 +109,13 @@ commands:
       ahoy cli "flake8 ${@:-ckanext}" || \
       [ "${ALLOW_LINT_FAIL:-0}" -eq 1 ]
 
+  copy-local-files:
+    usage: Update files from local repo.
+    cmd: |
+      docker cp . $(docker-compose ps -q ckan):/app/
+      docker cp .docker/scripts/ckan_cli $(docker-compose ps -q ckan):/app/ckan/default/bin/
+      ahoy cli 'chmod u+x $VENV_DIR/bin/ckan_cli; cp .docker/test.ini $CKAN_INI'
+
   test-unit:
     usage: Run unit tests.
     cmd: |
