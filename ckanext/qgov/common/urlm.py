@@ -1,7 +1,9 @@
 # encoding: utf-8
 """ Functions for URL Management System interaction.
 """
+
 from logging import getLogger
+import requests
 
 from ckan.plugins.toolkit import request
 
@@ -29,21 +31,16 @@ def get_purl_response(url):
              url, URLM_ENDPOINT)
     purl_request = URLM_ENDPOINT.format(source=request.url)
     try:
-        import json
-        import urllib2
         if URLM_PROXY:
-            proxy_handler = urllib2.ProxyHandler(
-                {'http': 'http://' + URLM_PROXY, 'https': 'https://' + URLM_PROXY}
-            )
-            req = urllib2.build_opener(proxy_handler).open(purl_request)
+            kwargs = {'proxies': {'http': 'http://' + URLM_PROXY, 'https': 'https://' + URLM_PROXY}}
         else:
-            req = urllib2.urlopen(purl_request)
-        response = json.load(req)
+            kwargs = {}
+        response = requests.get(purl_request, **kwargs).json()
         if response['Status'] == 301:
             location = response['Headers']['location']
             LOG.info("Found; redirecting to %s", location)
             return location
         else:
             LOG.warn("No match in URL Management System")
-    except urllib2.URLError as ex:
+    except requests.exceptions.RequestException as ex:
         LOG.error("Failed to contact URL Management system: %s", ex)
