@@ -114,7 +114,7 @@ class QGOVController(PackageController):
             return render('static-content/{}/index.html'.format(path))
         except TemplateNotFound:
             LOG.warn("%s not found", path)
-            abort(404)
+            return abort(404)
 
     def submit_feedback(self):
         """ Retrieves the necessary data and sends a feedback email
@@ -151,8 +151,7 @@ class QGOVController(PackageController):
                     # Do not indicate failure or success since captcha was filled likely bot;
                     # 7 is the expected arguments in the query string;
                     # captchaCatch is serverside generated value hence can either be 'dev' or 'prod'
-                    redirect_to('/')
-                    return package
+                    return redirect_to('/')
 
                 # If there is value for either maintenance_email or author_email, use that.
                 # If both of them null then send the email to online@qld.gov.au
@@ -224,15 +223,15 @@ class QGOVController(PackageController):
                     success_redirect = config.get('feedback_redirection', '/')
                     req = requests.get(protocol + '://' + host + success_redirect, verify=False)
                     if req.status_code == requests.codes.ok:
-                        redirect_to(success_redirect)
+                        return redirect_to(success_redirect)
                     else:
-                        redirect_to('/')
+                        return redirect_to('/')
                 else:
-                    abort(404, 'Form submission is invalid no recipients.')
+                    return abort(404, 'Form submission is invalid, no recipients.')
 
             return package
         else:
-            abort(404, 'Invalid request source')
+            return abort(404, 'Invalid request source')
 
     def _get_context(self):
         return {'model': model, 'session': model.Session,
@@ -259,7 +258,7 @@ class QGOVController(PackageController):
         :return:
         """
         if not g.user and not self._is_dataset_public(id):
-            redirect_to(
+            return redirect_to(
                 url_for('user.login', came_from='/dataset/{id}'.format(id=id))
             )
 
@@ -276,7 +275,7 @@ class QGOVController(PackageController):
         :return:
         """
         if not g.user and not self._is_dataset_public(id):
-            redirect_to(
+            return redirect_to(
                 url_for('user.login',
                         came_from='/dataset/{id}/resource/{resource_id}'.format(id=id, resource_id=resource_id))
             )
