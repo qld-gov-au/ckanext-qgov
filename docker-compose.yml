@@ -21,7 +21,7 @@ services:
   ckan:
     build:
       context: .
-      dockerfile: .docker/Dockerfile.ckan
+      dockerfile: .docker/Dockerfile-${PYTHON_VERSION}.ckan
       args:
         SITE_URL: "http://${PROJECT}.docker.amazee.io"
         CKAN_REPO:
@@ -81,6 +81,11 @@ services:
     networks:
       - amazeeio-network
       - default
+    extra_hosts:
+      # point some unnecessary domains at localhost
+      - "www.googletagmanager.com:127.0.0.1"
+      - "fonts.gstatic.com:127.0.0.1"
+      - "gravatar.com:127.0.0.1"
 
 volumes:
   solr-data: {}

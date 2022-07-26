@@ -3,20 +3,24 @@
 '''Tests for the ckanext.qgov extension resource URL filter.
 '''
 
-from paste.registry import Registry
-import pylons
 import unittest
 
-from ckan.lib.cli import MockTranslator
 import ckan.lib.helpers as h
 
-import plugin
+from . import plugin
 
 
 def mock_objects(config):
-    registry = Registry()
-    registry.prepare()
-    registry.register(pylons.translator, MockTranslator())
+    try:
+        from paste.registry import Registry
+        import pylons
+        from ckan.lib.cli import MockTranslator
+        registry = Registry()
+        registry.prepare()
+        registry.register(pylons.translator, MockTranslator())
+    except ImportError:
+        # if Pylons isn't present, then we don't need it
+        pass
 
     h.config = config
 

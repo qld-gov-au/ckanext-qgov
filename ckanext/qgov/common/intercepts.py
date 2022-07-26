@@ -9,14 +9,6 @@ import six
 
 import requests
 
-from ckan.common import _, g, response
-from ckan.controllers.user import UserController
-from ckan.controllers.package import PackageController
-try:
-    from ckan.controllers.storage import StorageController
-    storage_enabled = True
-except ImportError:
-    storage_enabled = False
 from ckan.lib.navl.dictization_functions import Missing
 from ckan.lib.navl.validators import ignore_missing, not_empty
 from ckan.lib.redis import connect_to_redis
@@ -24,31 +16,23 @@ import ckan.logic
 import ckan.logic.action.update
 import ckan.logic.schema as schemas
 from ckan.logic import validators
-from ckan.lib.base import c, request, abort, h
 from ckan.lib.uploader import Upload
 from ckan.plugins import toolkit
+from ckan.plugins.toolkit import _, abort, c, g, h, get_validator, \
+    chained_action, redirect_to, request
 
+from . import helpers
+from .authenticator import unlock_account, LOGIN_THROTTLE_EXPIRY
+from .urlm import get_purl_response
 from .user_creation import helpers as user_creation_helpers
 
-import plugin
-from authenticator import unlock_account, LOGIN_THROTTLE_EXPIRY
-
 LOG = getLogger(__name__)
-
-LOGGED_IN = UserController.logged_in
-PACKAGE_EDIT = PackageController._save_edit
-RESOURCE_EDIT = PackageController.resource_edit
 
 DEFAULT_USER_SCHEMA = schemas.default_user_schema()
 USER_NEW_FORM_SCHEMA = schemas.user_new_form_schema()
 USER_EDIT_FORM_SCHEMA = schemas.user_edit_form_schema()
 DEFAULT_UPDATE_USER_SCHEMA = schemas.default_update_user_schema()
 RESOURCE_SCHEMA = schemas.default_resource_schema()
-
-UPLOAD = Upload.upload
-if storage_enabled:
-    STORAGE_DOWNLOAD = StorageController.file
-RESOURCE_DOWNLOAD = PackageController.resource_download
 
 EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
 
@@ -68,9 +52,6 @@ def set_intercepts():
     """ Monkey-patch to wrap/override core functions with our own.
     """
     validators.user_password_validator = user_password_validator
-    UserController.logged_in = logged_in
-    PackageController._save_edit = save_edit
-    PackageController.resource_edit = validate_resource_edit
 
     schemas.default_user_schema = default_user_schema
     schemas.user_new_form_schema = user_new_form_schema
@@ -79,9 +60,39 @@ def set_intercepts():
 
     schemas.default_resource_schema = default_resource_schema
 
+
+def set_pylons_intercepts():
+    from ckan.controllers.user import UserController
+    from ckan.controllers.package import PackageController
+    try:
+        from ckan.controllers.storage import StorageController
+        storage_enabled = True
+    except ImportError:
+        storage_enabled = False
+    from ckan.lib import base
+    from ckan.controllers import group, package, user
+
+    global LOGGED_IN, PACKAGE_EDIT, RESOURCE_EDIT, RESOURCE_DOWNLOAD, STORAGE_DOWNLOAD, ABORT
+    LOGGED_IN = UserController.logged_in
+    PACKAGE_EDIT = PackageController._save_edit
+    RESOURCE_EDIT = PackageController.resource_edit
+    RESOURCE_DOWNLOAD = PackageController.resource_download
+    ABORT = base.abort
+
+    UserController.logged_in = logged_in
+    PackageController._save_edit = save_edit
+    PackageController.resource_edit = validate_resource_edit
+
     if storage_enabled:
+        STORAGE_DOWNLOAD = StorageController.file
         StorageController.file = storage_download_with_headers
     PackageController.resource_download = resource_download_with_headers
+
+    # Monkey-patch ourselves into the 404 handler
+    base.abort = abort_with_purl
+    group.abort = abort_with_purl
+    package.abort = abort_with_purl
+    user.abort = abort_with_purl
 
 
 def user_password_validator(key, data, errors, context):
@@ -185,11 +196,11 @@ def default_resource_schema():
     # infinite depth either.
     for key in resource_schema:
         resource_schema[key] = resource_schema[key][:]
-    resource_schema['url'].append(toolkit.get_validator('valid_url'))
+    resource_schema['url'].append(get_validator('valid_url'))
     return resource_schema
 
 
-@toolkit.chained_action
+@chained_action
 def user_update(original_action, context, data_dict):
     '''
     Unlock an account when the password is reset.
@@ -259,8 +270,8 @@ def validate_resource_edit(self, id, resource_id,
         resource_format = request.POST.getone('format')
         validation_schema = request.POST.getone('validation_schema')
         if resource_format == 'CSV' and validation_schema and validation_schema != '':
-            schema_url = plugin.generate_download_url(id, validation_schema)
-            data_url = plugin.generate_download_url(id, resource_id)
+            schema_url = helpers.generate_download_url(id, validation_schema)
+            data_url = helpers.generate_download_url(id, resource_id)
             validation_url = "http://goodtables.okfnlabs.org/api/run?format=csv&schema={0}&data={1}&row_limit=100000&report_limit=1000&report_type=grouped".format(schema_url, data_url)
             req = requests.get(validation_url, verify=False)
             if req.status_code == requests.codes.ok:
@@ -282,7 +293,7 @@ def storage_download_with_headers(self, label):
     """ Add security headers to protect against download-based exploits.
     """
     file_download = STORAGE_DOWNLOAD(self, label)
-    _set_download_headers(response)
+    _set_download_headers(toolkit.response)
     return file_download
 
 
@@ -290,5 +301,16 @@ def resource_download_with_headers(self, id, resource_id, filename=None):
     """ Add security headers to protect against download-based exploits.
     """
     file_download = RESOURCE_DOWNLOAD(self, id, resource_id, filename)
-    _set_download_headers(response)
+    _set_download_headers(toolkit.response)
     return file_download
+
+
+def abort_with_purl(status_code=None, detail='', headers=None, comment=None):
+    """ Consult PURL about a 404, redirecting if it reports a new URL.
+    """
+    if status_code == 404:
+        redirect_url = get_purl_response(request.url)
+        if redirect_url:
+            redirect_to(redirect_url, 301)
+
+    return ABORT(status_code, detail, headers, comment)

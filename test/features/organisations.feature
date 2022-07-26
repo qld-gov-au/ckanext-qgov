@@ -5,7 +5,7 @@ Feature: Organization APIs
         Given "<Persona>" as the persona
         When I log in
         And I view the "department-of-health" organisation API "including" users
-        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "organisation_admin"') and contains(string(), '"name": "editor"')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": true') and contains(string(), '"name": "organisation_admin"') and contains(string(), '"name": "editor"')]"
 
         Examples: Admins
             | Persona             |
@@ -16,7 +16,7 @@ Feature: Organization APIs
         Given "<Persona>" as the persona
         When I log in
         And I view the "department-of-health" organisation API "including" users
-        Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'Authorization Error')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": false') and contains(string(), 'Authorization Error')]"
 
         Examples: Non-admin users
             | Persona       |
@@ -28,7 +28,7 @@ Feature: Organization APIs
     Scenario: Organisation membership is not accessible anonymously
         Given "Unauthenticated" as the persona
         When I view the "department-of-health" organisation API "including" users
-        Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'Authorization Error')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": false') and contains(string(), 'Authorization Error')]"
 
     @unauthenticated
     Scenario: Organisation overview is accessible to everyone
@@ -39,4 +39,4 @@ Feature: Organization APIs
         And I should see an element with xpath "//a[contains(@href, '/organization/department-of-health')]"
 
         When I view the "department-of-health" organisation API "not including" users
-        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "department-of-health"')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": true') and contains(string(), '"name": "department-of-health"')]"

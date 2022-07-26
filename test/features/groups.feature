@@ -5,7 +5,7 @@ Feature: Group APIs
         Given "<Persona>" as the persona
         When I log in
         And I view the "silly-walks" group API "including" users
-        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "group_admin"') and contains(string(), '"name": "walker"')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": true') and contains(string(), '"name": "group_admin"') and contains(string(), '"name": "walker"')]"
 
         Examples: Admins
             | Persona      |
@@ -16,7 +16,7 @@ Feature: Group APIs
         Given "<Persona>" as the persona
         When I log in
         And I view the "silly-walks" group API "including" users
-        Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'Authorization Error')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": false') and contains(string(), 'Authorization Error')]"
 
         Examples: Non-admin users
             | Persona             |
@@ -27,7 +27,7 @@ Feature: Group APIs
     Scenario: Group membership is not accessible anonymously
         Given "Unauthenticated" as the persona
         When I view the "silly-walks" group API "including" users
-        Then I should see an element with xpath "//*[contains(string(), '"success": false,') and contains(string(), 'Authorization Error')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": false') and contains(string(), 'Authorization Error')]"
 
     @unauthenticated
     Scenario: Group overview is accessible to everyone
@@ -38,4 +38,4 @@ Feature: Group APIs
         And I should see an element with xpath "//a[contains(@href, '/group/silly-walks')]"
 
         When I view the "silly-walks" group API "not including" users
-        Then I should see an element with xpath "//*[contains(string(), '"success": true,') and contains(string(), '"name": "silly-walks"')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": true') and contains(string(), '"name": "silly-walks"')]"
