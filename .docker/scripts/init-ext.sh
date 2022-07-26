@@ -4,11 +4,33 @@
 #
 set -e
 
+install_requirements () {
+    PROJECT_DIR="$1"
+    for filename in requirements-$PYTHON_VERSION.txt requirements.txt pip-requirements.txt; do
+        if [ -f "$PROJECT_DIR/$filename" ]; then
+            pip install -r "$PROJECT_DIR/$filename"
+            return 0
+        fi
+    done
+}
+
+install_dev_requirements () {
+    PROJECT_DIR="$1"
+    for filename in dev-requirements-$PYTHON_VERSION.txt requirements-dev-$PYTHON_VERSION.txt requirements-dev.txt dev-requirements.txt; do
+        if [ -f "$PROJECT_DIR/$filename" ]; then
+            pip install -r "$PROJECT_DIR/$filename"
+            return 0
+        fi
+    done
+}
+
 if [ "$VENV_DIR" != "" ]; then
   . ${VENV_DIR}/bin/activate
 fi
-pip install -r "requirements.txt"
-pip install -r "dev-requirements.txt"
+install_dev_requirements .
+for extension in . `ls $VENV_DIR/src/ckanext-*`; do
+    install_requirements $extension
+done
 python setup.py develop
 installed_name=$(grep '^\s*name=' setup.py |sed "s|[^']*'\([-a-zA-Z0-9]*\)'.*|\1|")
 
