@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ckan-version: [ckan-2.8.8-qgov.5, ckan-2.9.5-qgov.7]
+        ckan-version: [ckan-2.8.8-qgov.5, ckan-2.9.5-qgov.8]
         python-version: [py2, py3]
         exclude:
           - ckan-version: ckan-2.8.8-qgov.5

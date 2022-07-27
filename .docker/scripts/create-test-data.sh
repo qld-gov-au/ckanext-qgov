@@ -4,15 +4,14 @@
 #
 set -e
 
+CKAN_USER_NAME="${CKAN_USER_NAME:-admin}"
+CKAN_DISPLAY_NAME="${CKAN_DISPLAY_NAME:-Administrator}"
+CKAN_USER_EMAIL="${CKAN_USER_EMAIL:-admin@localhost}"
 CKAN_ACTION_URL=http://ckan:3000/api/action
 
 if [ "$VENV_DIR" != "" ]; then
   . ${VENV_DIR}/bin/activate
 fi
-
-CKAN_USER_NAME="${CKAN_USER_NAME:-admin}"
-CKAN_DISPLAY_NAME="${CKAN_DISPLAY_NAME:-Administrator}"
-CKAN_USER_EMAIL="${CKAN_USER_EMAIL:-admin@localhost}"
 
 add_user_if_needed () {
     echo "Adding user '$2' ($1) with email address [$3]"
@@ -25,7 +24,6 @@ add_user_if_needed () {
 add_user_if_needed "$CKAN_USER_NAME" "$CKAN_DISPLAY_NAME" "$CKAN_USER_EMAIL"
 ckan_cli sysadmin add "${CKAN_USER_NAME}"
 
-# We know the "admin" sysadmin account exists, so we'll use her API KEY to create further data
 API_KEY=$(ckan_cli user show "${CKAN_USER_NAME}" | tr -d '\n' | sed -r 's/^(.*)apikey=(\S*)(.*)/\2/')
 if [ "$API_KEY" = "None" ]; then
     echo "No API Key found on ${CKAN_USER_NAME}, generating API Token..."
@@ -83,6 +81,18 @@ add_user_if_needed editor "Publisher" publisher@localhost
 add_user_if_needed foodie "Foodie" foodie@localhost
 add_user_if_needed group_admin "Group Admin" group_admin@localhost
 add_user_if_needed walker "Walker" walker@localhost
+
+# Create private test dataset with our standard fields
+curl -LsH "Authorization: ${API_KEY}" \
+    --data '{"name": "test-dataset", "owner_org": "'"${TEST_ORG_ID}"'", "private": true,
+"author_email": "admin@localhost", "version": "1.0", "license_id": "other-open", "notes": "test"}' \
+    ${CKAN_ACTION_URL}/package_create
+
+# Create public test dataset with our standard fields
+curl -LsH "Authorization: ${API_KEY}" \
+    --data '{"name": "public-test-dataset", "owner_org": "'"${TEST_ORG_ID}"'",
+"author_email": "admin@localhost", "version": "1.0", "license_id": "other-open", "notes": "test"}' \
+    ${CKAN_ACTION_URL}/package_create
 
 # Datasets need to be assigned to an organisation
 
@@ -151,6 +161,12 @@ walker_update=$( \
     ${CKAN_ACTION_URL}/group_member_create
 )
 echo ${walker_update}
+
+echo "Creating config value for excluded display name words:"
+
+curl -LsH "Authorization: ${API_KEY}" \
+    --data '{"ckanext.data_qld.excluded_display_name_words": "gov"}' \
+    ${CKAN_ACTION_URL}/config_option_update
 
 if [ "$VENV_DIR" != "" ]; then
   deactivate

@@ -3,7 +3,6 @@
 '''Tests for username and Displayed Name filtering.
 '''
 
-import mock
 import unittest
 
 from ckan.plugins import toolkit

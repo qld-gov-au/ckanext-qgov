@@ -16,7 +16,6 @@ import ckan.logic
 import ckan.logic.action.update
 import ckan.logic.schema as schemas
 from ckan.logic import validators
-from ckan.lib.uploader import Upload
 from ckan.plugins import toolkit
 from ckan.plugins.toolkit import _, abort, c, g, h, get_validator, \
     chained_action, redirect_to, request
@@ -242,9 +241,9 @@ def save_edit(self, name_or_id, context, package_type=None):
     try:
         author_email = request.POST.getone('author_email')
     except Exception:
-        abort(400, _('No author email or multiple author emails provided'))
+        return abort(400, _('No author email or multiple author emails provided'))
     if not EMAIL_REGEX.match(author_email):
-        abort(400, _('Invalid email.'))
+        return abort(400, _('Invalid email.'))
 
     if 'author' in request.POST:
         request.POST.__delitem__('author')
@@ -311,6 +310,6 @@ def abort_with_purl(status_code=None, detail='', headers=None, comment=None):
     if status_code == 404:
         redirect_url = get_purl_response(request.url)
         if redirect_url:
-            redirect_to(redirect_url, 301)
+            return redirect_to(redirect_url, 301)
 
     return ABORT(status_code, detail, headers, comment)
