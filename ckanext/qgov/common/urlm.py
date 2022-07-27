@@ -5,8 +5,6 @@
 from logging import getLogger
 import requests
 
-from ckan.plugins.toolkit import request
-
 LOG = getLogger(__name__)
 
 URLM_ENDPOINT = None
@@ -29,7 +27,7 @@ def get_purl_response(url):
     global URLM_ENDPOINT, URLM_PROXY
     LOG.warn("Page [%s] not found; checking URL Management System at %s",
              url, URLM_ENDPOINT)
-    purl_request = URLM_ENDPOINT.format(source=request.url)
+    purl_request = URLM_ENDPOINT.format(source=url)
     try:
         if URLM_PROXY:
             kwargs = {'proxies': {'http': 'http://' + URLM_PROXY, 'https': 'https://' + URLM_PROXY}}
