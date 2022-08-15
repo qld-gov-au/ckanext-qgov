@@ -5,38 +5,36 @@
 set -e
 
 install_requirements () {
-    PROJECT_DIR="$1"
-    for filename in requirements-$PYTHON_VERSION.txt requirements.txt pip-requirements.txt; do
-        if [ -f "$PROJECT_DIR/$filename" ]; then
-            pip install -r "$PROJECT_DIR/$filename"
+    PROJECT_DIR=$1
+    shift
+    # Identify the best match requirements file, ignore the others.
+    # If there is one specific to our Python version, use that.
+    for filename_pattern in "$@"; do
+        filename="$PROJECT_DIR/${filename_pattern}-$PYTHON_VERSION.txt"
+        if [ -f "$filename" ]; then
+            pip install -r "$filename"
+            return 0
+        fi
+    done
+    for filename_pattern in "$@"; do
+        filename="$PROJECT_DIR/$filename_pattern.txt"
+        if [ -f "$filename" ]; then
+            pip install -r "$filename"
             return 0
         fi
     done
 }
 
-install_dev_requirements () {
-    PROJECT_DIR="$1"
-    for filename in dev-requirements-$PYTHON_VERSION.txt requirements-dev-$PYTHON_VERSION.txt requirements-dev.txt dev-requirements.txt; do
-        if [ -f "$PROJECT_DIR/$filename" ]; then
-            pip install -r "$PROJECT_DIR/$filename"
-            return 0
-        fi
-    done
-}
+. ${APP_DIR}/scripts/activate
 
-if [ "$VENV_DIR" != "" ]; then
-  . ${VENV_DIR}/bin/activate
-fi
-install_dev_requirements .
-for extension in . `ls $VENV_DIR/src/ckanext-*`; do
-    install_requirements $extension
+install_requirements . dev-requirements requirements-dev
+for extension in . `ls -d $SRC_DIR/ckanext-*`; do
+    install_requirements $extension requirements pip-requirements
 done
-python setup.py develop
+pip install -e .
 installed_name=$(grep '^\s*name=' setup.py |sed "s|[^']*'\([-a-zA-Z0-9]*\)'.*|\1|")
 
 # Validate that the extension was installed correctly.
 if ! pip list | grep "$installed_name" > /dev/null; then echo "Unable to find the extension in the list"; exit 1; fi
 
-if [ "$VENV_DIR" != "" ]; then
-  deactivate
-fi
+. ${APP_DIR}/scripts/deactivate

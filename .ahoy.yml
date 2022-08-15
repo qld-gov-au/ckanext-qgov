@@ -38,7 +38,7 @@ commands:
       docker-compose up -d "$@"
       sleep 10
       docker-compose logs
-      ahoy cli "dockerize -wait tcp://ckan:3000 -timeout 1m"
+      ahoy cli "dockerize -wait tcp://ckan:5000 -timeout 1m"
       if docker-compose logs | grep -q "\[Error\]"; then docker-compose logs; exit 1; fi
       if docker-compose logs | grep -q "Exception"; then docker-compose logs; exit 1; fi
       docker ps -a --filter name=^/${COMPOSE_PROJECT_NAME}_
@@ -70,7 +70,7 @@ commands:
 
   cli:
     usage: Start a shell inside CLI container or run a command.
-    cmd: if \[ "${#}" -ne 0 \]; then docker exec $(docker-compose ps -q ckan) sh -c '. ${VENV_DIR}/bin/activate; cd $APP_DIR;'" $*"; else docker exec $(docker-compose ps -q ckan) sh -c '. ${VENV_DIR}/bin/activate && cd $APP_DIR && sh'; fi
+    cmd: if \[ "${#}" -ne 0 \]; then docker exec $(docker-compose ps -q ckan) sh -c '. ${APP_DIR}/scripts/activate; cd $APP_DIR;'" $*"; else docker exec $(docker-compose ps -q ckan) sh -c '. ${APP_DIR}/scripts/activate && cd $APP_DIR && sh'; fi
 
   doctor:
     usage: Find problems with current project setup.
@@ -80,7 +80,7 @@ commands:
     usage: Install a site.
     cmd: |
       ahoy title "Installing a fresh site"
-      ahoy cli "./scripts/init.sh"
+      ahoy cli '$APP_DIR/scripts/init.sh'
 
   clean:
     usage: Remove containers and all build files.
@@ -112,14 +112,15 @@ commands:
   copy-local-files:
     usage: Update files from local repo.
     cmd: |
-      docker cp . $(docker-compose ps -q ckan):/app/
-      docker cp .docker/scripts/ckan_cli $(docker-compose ps -q ckan):/app/ckan/default/bin/
-      ahoy cli 'chmod u+x $VENV_DIR/bin/ckan_cli; cp .docker/test.ini $CKAN_INI'
+      docker cp . $(docker-compose ps -q ckan):/srv/app/
+      docker cp .docker/scripts $(docker-compose ps -q ckan):/srv/app/
+      docker cp .docker/scripts/ckan_cli $(docker-compose ps -q ckan):/usr/bin/
+      ahoy cli 'chmod -v u+x /usr/bin/ckan_cli; cp -v .docker/test.ini $CKAN_INI'
 
   test-unit:
     usage: Run unit tests.
     cmd: |
-      ahoy cli 'pytest --ckan-ini=${CKAN_INI}' || \
+      ahoy cli 'pytest --ckan-ini=${CKAN_INI} $APP_DIR/ckanext' || \
       [ "${ALLOW_UNIT_FAIL:-0}" -eq 1 ]
 
   test-bdd:
