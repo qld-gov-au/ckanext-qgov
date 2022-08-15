@@ -11,11 +11,6 @@ RUN apk add --no-cache build-base \
     && curl -sL https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz \
         | tar -C /usr/local/bin -xzvf -
 
-# Install CKAN.
-# Use 'force-reinstall' to cleanly overwrite vanilla CKAN with our own.
-
-RUN pip install --force-reinstall "git+https://github.com/qld-gov-au/ckan.git@{QGOV_CKAN_VERSION}#egg=ckan"
-
 COPY .docker/test.ini $CKAN_INI
 
 RUN sed -i "s@SITE_URL@${CKAN_SITE_URL}@g" $CKAN_INI
