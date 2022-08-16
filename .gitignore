@@ -64,3 +64,6 @@ target/
 
 #Intellij
 .idea
+
+# generated from template
+Dockerfile.ckan

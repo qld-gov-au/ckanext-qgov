@@ -9,7 +9,7 @@ ROOT_PATH = os.path.realpath(os.path.join(
     '../../'))
 
 # Base URL for relative paths resolution.
-BASE_URL = 'http://ckan:3000/'
+BASE_URL = 'http://ckan:5000/'
 
 # URL of remote Chrome instance.
 REMOTE_CHROME_URL = 'http://chrome:4444/wd/hub'

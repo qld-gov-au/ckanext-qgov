@@ -136,7 +136,7 @@ def user_show(context, data_dict):
     else:
         user_obj = data_dict.get('user_obj', None)
     if user_obj:
-        return {'success': requester == user_obj.name}
+        return {'success': requester in [user_obj.name, user_obj.id]}
 
     return {'success': False}
 
