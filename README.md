@@ -40,3 +40,38 @@ The 'develop' branch is automatically pushed to dev.data.qld.gov.au and dev.publ
 The 'master' branch is automatically pushed to test-dev.data.qld.gov.au.
 
 For deploying to higher environments, releases should be tagged and updated in the CloudFormation templates.
+
+## Installation
+
+* Activate your virtual environment
+```
+. /usr/lib/ckan/default/bin/activate
+```
+* Install the extension
+```
+pip install 'git+https://github.com/qld-gov-au/ckanext-qgov.git#egg=ckanext-qgov'
+```
+> **Note**: If you prefer, you can download the source code as well and install in 'develop' mode for easy editing. To do so, use the '-e' fla
+g:
+> ```
+> pip install -e 'git+https://github.com/qld-gov-au/ckanext-qgov.git#egg=ckanext-qgov'
+> ```
+
+* Modify your configuration file (generally in `/etc/ckan/default/production.ini`) and add `qgovext` in the `ckan.plugins` property.
+```
+ckan.plugins = qgovext <OTHER_PLUGINS>
+```
+
+## Tests
+
+- Make sure that you have latest versions of all required software installed:
+  - [Docker](https://www.docker.com/)
+  - [Pygmy](https://pygmy.readthedocs.io/)
+  - [Ahoy](https://github.com/ahoy-cli/ahoy)
+
+- Build the test container for your preferred CKAN version: '2.8', '2.9-py2', or '2.9'.
+```
+CKAN_VERSION=2.9 .circleci/build.sh
+```
+
+- Run tests: `.circleci/test.sh`
