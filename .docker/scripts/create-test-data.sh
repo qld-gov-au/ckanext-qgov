@@ -4,15 +4,10 @@
 #
 set -e
 
-if [ "$PYTHON_VERSION" = "py3" ]; then
-    PYTHON=python3
-else
-    PYTHON=python
-fi
+CKAN_ACTION_URL=${CKAN_SITE_URL}api/action
 CKAN_USER_NAME="${CKAN_USER_NAME:-admin}"
 CKAN_DISPLAY_NAME="${CKAN_DISPLAY_NAME:-Administrator}"
 CKAN_USER_EMAIL="${CKAN_USER_EMAIL:-admin@localhost}"
-CKAN_ACTION_URL=${CKAN_SITE_URL}api/action
 
 . ${APP_DIR}/scripts/activate
 
