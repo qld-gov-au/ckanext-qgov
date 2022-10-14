@@ -70,17 +70,17 @@ commands:
 
   cli:
     usage: Start a shell inside CLI container or run a command.
-    cmd: if \[ "${#}" -ne 0 \]; then docker exec $(docker-compose ps -q ckan) sh -c '. ${APP_DIR}/scripts/activate; cd $APP_DIR;'" $*"; else docker exec $(docker-compose ps -q ckan) sh -c '. ${APP_DIR}/scripts/activate && cd $APP_DIR && sh'; fi
+    cmd: if \[ "${#}" -ne 0 \]; then docker exec $(docker-compose ps -q ckan) sh -c '. ${APP_DIR}/bin/activate; cd $APP_DIR;'" $*"; else docker exec $(docker-compose ps -q ckan) sh -c '. ${APP_DIR}/bin/activate && cd $APP_DIR && sh'; fi
 
   doctor:
     usage: Find problems with current project setup.
-    cmd: .docker/scripts/doctor.sh "$@"
+    cmd: bin/doctor.sh "$@"
 
   install-site:
     usage: Install a site.
     cmd: |
       ahoy title "Installing a fresh site"
-      ahoy cli '$APP_DIR/scripts/init.sh'
+      ahoy cli '$APP_DIR/bin/init.sh'
 
   clean:
     usage: Remove containers and all build files.
@@ -113,8 +113,7 @@ commands:
     usage: Update files from local repo.
     cmd: |
       docker cp . $(docker-compose ps -q ckan):/srv/app/
-      docker cp .docker/scripts $(docker-compose ps -q ckan):/srv/app/
-      docker cp .docker/scripts/ckan_cli $(docker-compose ps -q ckan):/usr/bin/
+      docker cp bin/ckan_cli $(docker-compose ps -q ckan):/usr/bin/
       ahoy cli 'chmod -v u+x /usr/bin/ckan_cli; cp -v .docker/test.ini $CKAN_INI'
 
   test-unit:

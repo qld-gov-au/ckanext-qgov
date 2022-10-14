@@ -17,17 +17,13 @@ RUN pip install -U urllib3
 
 COPY .docker/test.ini $CKAN_INI
 
-RUN sed -i "s@SITE_URL@${CKAN_SITE_URL}@g" $CKAN_INI
-
 COPY . ${APP_DIR}/
 
-COPY .docker/scripts ${APP_DIR}/scripts
+COPY bin/ckan_cli /usr/bin/
 
-COPY .docker/scripts/ckan_cli /usr/bin/
-
-RUN chmod +x ${APP_DIR}/scripts/*.sh /usr/bin/ckan_cli
+RUN chmod +x ${APP_DIR}/bin/*.sh /usr/bin/ckan_cli
 
 # Init current extension.
-RUN ${APP_DIR}/scripts/init-ext.sh
+RUN ${APP_DIR}/bin/init-ext.sh
 
-CMD ["/srv/app/scripts/serve.sh"]
+CMD ["/srv/app/bin/serve.sh"]

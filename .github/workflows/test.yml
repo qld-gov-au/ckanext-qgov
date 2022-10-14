@@ -13,27 +13,27 @@ jobs:
       matrix:
         ckan-version: [2.9, 2.9-py2, 2.8]
 
-    name: Continuous Integration build on CKAN ${{ matrix.ckan-version }}
+    name: Test on CKAN ${{ matrix.ckan-version }}
     runs-on: ubuntu-latest
     container: integratedexperts/ci-builder
     env:
       CKAN_VERSION: ${{ matrix.ckan-version }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         timeout-minutes: 2
 
       - name: Build
-        run: .circleci/build.sh
+        run: bin/build.sh
         timeout-minutes: 15
 
       - name: Test
-        run: .circleci/test.sh
-        timeout-minutes: 25
+        run: bin/test.sh
+        timeout-minutes: 30
 
       - name: Retrieve screenshots
         if: failure()
-        run: .circleci/process-artifacts.sh
+        run: bin/process-artifacts.sh
         timeout-minutes: 1
 
       - name: Upload screenshots
