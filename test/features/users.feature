@@ -127,7 +127,7 @@ Feature: User APIs
         When I request a password reset
         Then I should see an element with xpath "//div[contains(string(), 'A reset link has been emailed to you')]"
         When I wait for 3 seconds
-        Then I should receive an email at "$email" containing "You have requested your password"
+        Then I should receive a base64 email at "$email" containing "You have requested your password"
         When I parse the email I received at "$email" and set "{domain}/user/reset/{path}Have"
         And I go to "/user/reset/$path"
         Then the browser's URL should contain "/user/reset/"
