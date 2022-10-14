@@ -78,7 +78,6 @@ def request_reset(context):
         When I visit "/user/reset"
         And I fill in "user" with "$name"
         And I press the element with xpath "//button[contains(string(), 'Request Reset')]"
-        And I go to dataset page
     """)
 
 
