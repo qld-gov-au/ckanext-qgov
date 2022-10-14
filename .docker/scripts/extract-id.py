@@ -2,4 +2,6 @@
 import json
 import sys
 
-print(json.loads(sys.stdin.read())['result']['id'])
+value = sys.stdin.read()
+sys.stderr.write(value)
+print(json.loads(value)['result']['id'])
