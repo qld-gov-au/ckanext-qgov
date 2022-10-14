@@ -11,6 +11,15 @@ RUN apk add --no-cache build-base \
     && curl -sL https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz \
         | tar -C /usr/local/bin -xzvf -
 
+# Install CKAN.
+
+RUN cd $SRC_DIR/ckan \
+    && git config --global --add safe.directory "$SRC_DIR/ckan" \
+    && git remote set-url origin 'https://github.com/qld-gov-au/ckan.git' \
+    && git fetch \
+    && git reset --hard && git clean -f \
+    && git checkout '{QGOV_CKAN_VERSION}'
+
 COPY .docker/test.ini $CKAN_INI
 
 RUN sed -i "s@SITE_URL@${CKAN_SITE_URL}@g" $CKAN_INI

@@ -9,10 +9,10 @@ if [ "$PYTHON_VERSION" = "py3" ]; then
 else
     PYTHON=python
 fi
+CKAN_ACTION_URL=${CKAN_SITE_URL}api/action
 CKAN_USER_NAME="${CKAN_USER_NAME:-admin}"
 CKAN_DISPLAY_NAME="${CKAN_DISPLAY_NAME:-Administrator}"
 CKAN_USER_EMAIL="${CKAN_USER_EMAIL:-admin@localhost}"
-CKAN_ACTION_URL=${CKAN_SITE_URL}api/action
 
 . ${APP_DIR}/scripts/activate
 
@@ -120,7 +120,7 @@ echo ${package_owner_org_update}
 echo "Updating organisation_admin to have admin privileges in the department-of-health Organisation:"
 organisation_admin_update=$( \
     curl -LsH "Authorization: ${API_KEY}" \
-    --data "id=department-of-health&username=organisation_admin&role=admin" \
+    --data '{"id": "department-of-health", "username": "organisation_admin", "role": "admin"}' \
     ${CKAN_ACTION_URL}/organization_member_create
 )
 echo ${organisation_admin_update}
@@ -128,7 +128,7 @@ echo ${organisation_admin_update}
 echo "Updating publisher to have editor privileges in the department-of-health Organisation:"
 publisher_update=$( \
     curl -LsH "Authorization: ${API_KEY}" \
-    --data "id=department-of-health&username=editor&role=editor" \
+    --data '{"id": "department-of-health", "username": "editor", "role": "editor"}' \
     ${CKAN_ACTION_URL}/organization_member_create
 )
 echo ${publisher_update}
@@ -136,7 +136,7 @@ echo ${publisher_update}
 echo "Updating foodie to have admin privileges in the food-standards-agency Organisation:"
 foodie_update=$( \
     curl -LsH "Authorization: ${API_KEY}" \
-    --data "id=food-standards-agency&username=foodie&role=admin" \
+    --data '{"id": "food-standards-agency", "username": "foodie", "role": "admin"}' \
     ${CKAN_ACTION_URL}/organization_member_create
 )
 echo ${foodie_update}
@@ -144,7 +144,7 @@ echo ${foodie_update}
 echo "Creating non-organisation group:"
 group_create=$( \
     curl -LsH "Authorization: ${API_KEY}" \
-    --data "name=silly-walks" \
+    --data '{"name": "silly-walks"}' \
     ${CKAN_ACTION_URL}/group_create
 )
 echo ${group_create}
@@ -152,7 +152,7 @@ echo ${group_create}
 echo "Updating group_admin to have admin privileges in the silly-walks group:"
 group_admin_update=$( \
     curl -LsH "Authorization: ${API_KEY}" \
-    --data "id=silly-walks&username=group_admin&role=admin" \
+    --data '{"id": "silly-walks", "username": "group_admin", "role": "admin"}' \
     ${CKAN_ACTION_URL}/group_member_create
 )
 echo ${group_admin_update}
@@ -160,7 +160,7 @@ echo ${group_admin_update}
 echo "Updating walker to have editor privileges in the silly-walks group:"
 walker_update=$( \
     curl -LsH "Authorization: ${API_KEY}" \
-    --data "id=silly-walks&username=walker&role=editor" \
+    --data '{"id": "silly-walks", "username": "walker", "role": "editor"}' \
     ${CKAN_ACTION_URL}/group_member_create
 )
 echo ${walker_update}
@@ -171,4 +171,6 @@ curl -LsH "Authorization: ${API_KEY}" \
     --data '{"ckanext.data_qld.excluded_display_name_words": "gov"}' \
     ${CKAN_ACTION_URL}/config_option_update
 
-. ${APP_DIR}/scripts/deactivate
+if [ "$VENV_DIR" != "" ]; then
+  deactivate
+fi
