@@ -9,6 +9,7 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -29,6 +30,7 @@ jobs:
     name: Continuous Integration build on CKAN ${{ matrix.ckan-version }}
     runs-on: ubuntu-latest
     container: integratedexperts/ci-builder
+    timeout-minutes: 360
     env:
       CKAN_VERSION: ${{ matrix.ckan-version }}
 
@@ -36,8 +38,17 @@ jobs:
       - uses: actions/checkout@v2
         timeout-minutes: 2
 
+      - name: Pip List local
+        run: pip list
+        timeout-minutes: 15
+        continue-on-error: true
+
       - name: Build
         run: .circleci/build.sh
+        timeout-minutes: 15
+        
+      - name: Pip list
+        run: ahoy pip-list
         timeout-minutes: 15
 
       - name: Test
