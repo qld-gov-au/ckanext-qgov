@@ -11,5 +11,5 @@ Feature: Homepage
     @unauthenticated
     Scenario: As a member of the public, when I go to the main stylesheet URL, I can see the stylesheet
         Given "Unauthenticated" as the persona
-        When I visit "/assets/style/main"
+        When I visit "/assets/css/main"
         Then I should see "Bootstrap"
