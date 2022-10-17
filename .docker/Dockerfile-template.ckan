@@ -15,6 +15,15 @@ RUN apk add --no-cache build-base \
 # Update urllib3 to fix urlopen bug
 RUN pip install -U urllib3
 
+# Install CKAN.
+
+RUN cd $SRC_DIR/ckan \
+    && git config --global --add safe.directory "$SRC_DIR/ckan" \
+    && git remote set-url origin 'https://github.com/qld-gov-au/ckan.git' \
+    && git fetch \
+    && git reset --hard && git clean -f \
+    && git checkout '{QGOV_CKAN_VERSION}'
+
 COPY .docker/test.ini $CKAN_INI
 
 COPY . ${APP_DIR}/
