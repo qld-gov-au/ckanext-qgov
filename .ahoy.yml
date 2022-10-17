@@ -116,6 +116,11 @@ commands:
       docker cp bin/ckan_cli $(docker-compose ps -q ckan):/usr/bin/
       ahoy cli 'chmod -v u+x /usr/bin/ckan_cli; cp -v .docker/test.ini $CKAN_INI'
 
+  pip-list:
+    usage: List pip install version details
+    cmd: |
+      ahoy cli 'pip list'
+
   test-unit:
     usage: Run unit tests.
     cmd: |
