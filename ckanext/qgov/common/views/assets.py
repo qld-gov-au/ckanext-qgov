@@ -17,14 +17,9 @@ blueprint = Blueprint(
 def get_included_bundles():
     global INCLUDED_BUNDLES
     if INCLUDED_BUNDLES is None:
-        INCLUDED_BUNDLES = init()
-    return INCLUDED_BUNDLES
-
-
-def init():
-    render(u'page.html')
-    INCLUDED_BUNDLES = g.webassets[u'included'].copy()
-    g.webassets[u'included'].clear()
+        render(u'page.html')
+        INCLUDED_BUNDLES = g.webassets[u'included'].copy()
+        g.webassets[u'included'].clear()
     return INCLUDED_BUNDLES
 
 
@@ -37,11 +32,11 @@ def any_redirect(extension, name):
         asset_type = u'script'
     else:
         raise ObjectNotFound(u'Extension must be either "css" or "js"')
-    pattern = '/webassets/[a-zA-Z_-]*/[0-9a-f]*[_-]' + name + '.' + extension
+    pattern = '/webassets/[a-zA-Z_-]*/[0-9a-f]*[_-]{}.{}'.format(name, extension)
     for asset in g.webassets[asset_type]:
         if re.search(pattern, asset):
             return redirect_to(asset)
-    raise ObjectNotFound(u'No assets match pattern: %s', pattern)
+    raise ObjectNotFound(u'No assets match: {}.{}'.format(name, extension))
 
 
 blueprint.add_url_rule(u'<extension>/<name>', view_func=any_redirect)
