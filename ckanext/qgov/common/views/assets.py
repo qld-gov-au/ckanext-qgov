@@ -22,7 +22,6 @@ def init():
 
 
 def any_redirect(extension, name):
-    global INCLUDED_BUNDLES
     if INCLUDED_BUNDLES is None:
         init()
     for bundle in INCLUDED_BUNDLES:
@@ -33,10 +32,11 @@ def any_redirect(extension, name):
         asset_type = u'script'
     else:
         raise ObjectNotFound(u'Extension must be either "css" or "js"')
+    pattern = '/webassets/[a-zA-Z_-]*/[0-9a-f]*[_-]' + name + '.' + extension
     for asset in g.webassets[asset_type]:
-        if re.search('/webassets/[a-zA-Z_-]*/[0-9a-f]*[_-]' + name + '.' + extension, asset):
+        if re.search(pattern, asset):
             return redirect_to(asset)
-    raise ObjectNotFound(u'No assets match')
+    raise ObjectNotFound(u'No assets match pattern: %s', pattern)
 
 
 blueprint.add_url_rule(u'<extension>/<name>', view_func=any_redirect)
