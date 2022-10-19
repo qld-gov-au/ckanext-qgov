@@ -14,17 +14,22 @@ blueprint = Blueprint(
 )
 
 
+def get_included_bundles():
+    global INCLUDED_BUNDLES
+    if INCLUDED_BUNDLES is None:
+        INCLUDED_BUNDLES = init()
+    return INCLUDED_BUNDLES
+
+
 def init():
     render(u'page.html')
-    global INCLUDED_BUNDLES
     INCLUDED_BUNDLES = g.webassets[u'included'].copy()
     g.webassets[u'included'].clear()
+    return INCLUDED_BUNDLES
 
 
 def any_redirect(extension, name):
-    if INCLUDED_BUNDLES is None:
-        init()
-    for bundle in INCLUDED_BUNDLES:
+    for bundle in get_included_bundles():
         h.include_asset(bundle)
     if extension == u'css':
         asset_type = u'style'
