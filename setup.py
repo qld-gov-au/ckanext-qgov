@@ -15,7 +15,7 @@ setup(
     long_description='',
 
     # The project's main homepage.
-    url='https://github.com/qld-gov-au/ckan-ex-qgov',
+    url='https://github.com/qld-gov-au/ckanext-qgov',
 
     # Author details
     author='Queensland Online',
@@ -30,7 +30,7 @@ setup(
         # 3 - Alpha
         # 4 - Beta
         # 5 - Production/Stable
-        'Development Status :: 5 - Production',
+        'Development Status :: 5 - Production/Stable',
 
         # Pick your license as you wish (should match "license" above)
         'License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)',

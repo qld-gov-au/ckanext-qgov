@@ -244,8 +244,9 @@ class QGOVPlugin(SingletonPlugin):
         from .views import user
         blueprints = user.get_blueprints()
         if check_ckan_version('2.9'):
-            from .views import dataset
+            from .views import dataset, assets
             blueprints.extend(dataset.get_blueprints())
+            blueprints.extend(assets.get_blueprints())
         return blueprints
 
     # ITemplateHelpers
