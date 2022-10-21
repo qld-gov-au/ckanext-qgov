@@ -1,8 +1,9 @@
-FROM openknowledge/ckan-dev:@CKAN_VERSION@
+FROM openknowledge/ckan-dev:{CKAN_VERSION}
 
 ARG SITE_URL=http://ckan:5000/
-ENV PYTHON_VERSION=@PYTHON_VERSION@
+ENV PYTHON_VERSION={PYTHON_VERSION}
 ENV CKAN_SITE_URL="${SITE_URL}"
+ENV PYTHON={PYTHON}
 
 WORKDIR "${APP_DIR}"
 
@@ -11,19 +12,27 @@ RUN apk add --no-cache build-base \
     && curl -sL https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz \
         | tar -C /usr/local/bin -xzvf -
 
-COPY .docker/test.ini $CKAN_INI
+# Update urllib3 to fix urlopen bug
+RUN pip install -U urllib3
 
-RUN sed -i "s@SITE_URL@${CKAN_SITE_URL}@g" $CKAN_INI
+# Install CKAN.
+
+RUN cd $SRC_DIR/ckan \
+    && git config --global --add safe.directory "$SRC_DIR/ckan" \
+    && git remote set-url origin 'https://github.com/qld-gov-au/ckan.git' \
+    && git fetch \
+    && git reset --hard && git clean -f \
+    && git checkout '{QGOV_CKAN_VERSION}'
+
+COPY .docker/test.ini $CKAN_INI
 
 COPY . ${APP_DIR}/
 
-COPY .docker/scripts ${APP_DIR}/scripts
+COPY bin/ckan_cli /usr/bin/
 
-COPY .docker/scripts/ckan_cli /usr/bin/
-
-RUN chmod +x ${APP_DIR}/scripts/*.sh /usr/bin/ckan_cli
+RUN chmod +x ${APP_DIR}/bin/*.sh /usr/bin/ckan_cli
 
 # Init current extension.
-RUN ${APP_DIR}/scripts/init-ext.sh
+RUN ${APP_DIR}/bin/init-ext.sh
 
-CMD ["/srv/app/scripts/serve.sh"]
+CMD ["/srv/app/bin/serve.sh"]

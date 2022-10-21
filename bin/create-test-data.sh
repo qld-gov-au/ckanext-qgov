@@ -4,17 +4,12 @@
 #
 set -e
 
-if [ "$PYTHON_VERSION" = "py3" ]; then
-    PYTHON=python3
-else
-    PYTHON=python
-fi
+CKAN_ACTION_URL=${CKAN_SITE_URL}api/action
 CKAN_USER_NAME="${CKAN_USER_NAME:-admin}"
 CKAN_DISPLAY_NAME="${CKAN_DISPLAY_NAME:-Administrator}"
 CKAN_USER_EMAIL="${CKAN_USER_EMAIL:-admin@localhost}"
-CKAN_ACTION_URL=${CKAN_SITE_URL}api/action
 
-. ${APP_DIR}/scripts/activate
+. ${APP_DIR}/bin/activate
 
 add_user_if_needed () {
     echo "Adding user '$2' ($1) with email address [$3]"
@@ -30,7 +25,7 @@ ckan_cli sysadmin add "${CKAN_USER_NAME}"
 API_KEY=$(ckan_cli user show "${CKAN_USER_NAME}" | tr -d '\n' | sed -r 's/^(.*)apikey=(\S*)(.*)/\2/')
 if [ "$API_KEY" = "None" ]; then
     echo "No API Key found on ${CKAN_USER_NAME}, generating API Token..."
-    API_KEY=$(ckan_cli user token add "${CKAN_USER_NAME}" test_setup |grep -v '^API Token created' | tr -d '[:space:]')
+    API_KEY=$(ckan_cli user token add "${CKAN_USER_NAME}" test_setup |tail -1 | tr -d '[:space:]')
 fi
 
 ##
@@ -50,24 +45,24 @@ echo "Creating ${TEST_ORG_TITLE} organisation:"
 
 TEST_ORG=$( \
     curl -LsH "Authorization: ${API_KEY}" \
-    --data "name=${TEST_ORG_NAME}&title=${TEST_ORG_TITLE}" \
+    --data '{"name": "'"${TEST_ORG_NAME}"'", "title": "'"${TEST_ORG_TITLE}"'"}' \
     ${CKAN_ACTION_URL}/organization_create
 )
 
-TEST_ORG_ID=$(echo $TEST_ORG | $PYTHON $APP_DIR/scripts/extract-id.py)
+TEST_ORG_ID=$(echo $TEST_ORG | $PYTHON ${APP_DIR}/bin/extract-id.py)
 
 echo "Assigning test users to '${TEST_ORG_TITLE}' organisation (${TEST_ORG_ID}):"
 
 curl -LsH "Authorization: ${API_KEY}" \
-    --data "id=${TEST_ORG_ID}&object=test_org_admin&object_type=user&capacity=admin" \
+    --data '{"id": "'"${TEST_ORG_ID}"'", "object": "test_org_admin", "object_type": "user", "capacity": "admin"}' \
     ${CKAN_ACTION_URL}/member_create
 
 curl -LsH "Authorization: ${API_KEY}" \
-    --data "id=${TEST_ORG_ID}&object=test_org_editor&object_type=user&capacity=editor" \
+    --data '{"id": "'"${TEST_ORG_ID}"'", "object": "test_org_editor", "object_type": "user", "capacity": "editor"}' \
     ${CKAN_ACTION_URL}/member_create
 
 curl -LsH "Authorization: ${API_KEY}" \
-    --data "id=${TEST_ORG_ID}&object=test_org_member&object_type=user&capacity=member" \
+    --data '{"id": "'"${TEST_ORG_ID}"'", "object": "test_org_member", "object_type": "user", "capacity": "member"}' \
     ${CKAN_ACTION_URL}/member_create
 ##
 # END.
@@ -104,7 +99,7 @@ echo "Assigning test Datasets to Organisation..."
 echo "Updating annakarenina to use ${TEST_ORG_TITLE} organisation:"
 package_owner_org_update=$( \
     curl -LsH "Authorization: ${API_KEY}" \
-    --data "id=annakarenina&organization_id=${TEST_ORG_NAME}" \
+    --data '{"id": "annakarenina", "organization_id": "'"${TEST_ORG_NAME}"'"}' \
     ${CKAN_ACTION_URL}/package_owner_org_update
 )
 echo ${package_owner_org_update}
@@ -112,7 +107,7 @@ echo ${package_owner_org_update}
 echo "Updating warandpeace to use ${TEST_ORG_TITLE} organisation:"
 package_owner_org_update=$( \
     curl -LsH "Authorization: ${API_KEY}" \
-    --data "id=warandpeace&organization_id=${TEST_ORG_NAME}" \
+    --data '{"id": "warandpeace", "organization_id": "'"${TEST_ORG_NAME}"'"}' \
     ${CKAN_ACTION_URL}/package_owner_org_update
 )
 echo ${package_owner_org_update}
@@ -171,4 +166,4 @@ curl -LsH "Authorization: ${API_KEY}" \
     --data '{"ckanext.data_qld.excluded_display_name_words": "gov"}' \
     ${CKAN_ACTION_URL}/config_option_update
 
-. ${APP_DIR}/scripts/deactivate
+. ${APP_DIR}/bin/deactivate
