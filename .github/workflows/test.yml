@@ -29,7 +29,7 @@ jobs:
 
     name: Test on CKAN ${{ matrix.ckan-version }}
     runs-on: ubuntu-latest
-    container: integratedexperts/ci-builder
+    container: drevops/ci-builder
     env:
       CKAN_VERSION: ${{ matrix.ckan-version }}
 
