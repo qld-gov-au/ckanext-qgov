@@ -42,7 +42,7 @@ jobs:
         timeout-minutes: 15
 
       - name: Test
-        run: bin/test.sh
+        run: ahoy test
         timeout-minutes: 30
 
       - name: Retrieve screenshots

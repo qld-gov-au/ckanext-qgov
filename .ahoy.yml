@@ -12,7 +12,6 @@ commands:
       ahoy clean
       ahoy build-network
       ahoy up -- --build --force-recreate
-      ahoy install-site
       ahoy title "Build complete"
       ahoy doctor
       ahoy info 1
@@ -36,6 +35,7 @@ commands:
     usage: Build and start Docker containers.
     cmd: |
       docker-compose up -d "$@"
+      ahoy cli '$APP_DIR/bin/init.sh'
       sleep 10
       docker-compose logs
       ahoy cli "dockerize -wait tcp://ckan:5000 -timeout 1m"
@@ -77,10 +77,8 @@ commands:
     cmd: bin/doctor.sh "$@"
 
   install-site:
-    usage: Install a site.
-    cmd: |
-      ahoy title "Installing a fresh site"
-      ahoy cli '$APP_DIR/bin/init.sh'
+    usage: Install test site data.
+    cmd: ahoy cli '$APP_DIR/bin/create-test-data.sh'
 
   clean:
     usage: Remove containers and all build files.
@@ -120,6 +118,14 @@ commands:
     usage: List pip install version details
     cmd: |
       ahoy cli 'pip list'
+
+  test:
+    usage: Run test suite
+    cmd: |
+      ahoy lint
+      ahoy test-unit
+      ahoy install-site
+      ahoy test-bdd || (ahoy logs; exit 1)
 
   test-unit:
     usage: Run unit tests.
