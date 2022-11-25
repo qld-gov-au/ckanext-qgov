@@ -17,9 +17,9 @@ ahoy pull
 PYTHON=python
 if [ "$CKAN_VERSION" = "2.8" ]; then
     PYTHON_VERSION=py2
-    QGOV_CKAN_VERSION=ckan-2.8.8-qgov.5 #not in use
+    QGOV_CKAN_VERSION=ckan-2.8.8-qgov.5
 else
-    QGOV_CKAN_VERSION=ckan-2.9.5-qgov.8 #not in use
+    QGOV_CKAN_VERSION=ckan-2.9.7-qgov
     if [ "$CKAN_VERSION" = "2.9-py2" ]; then
         PYTHON_VERSION=py2
     else
