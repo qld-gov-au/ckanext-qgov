@@ -14,7 +14,7 @@ from repoze.who.interfaces import IAuthenticator
 LOG = logging.getLogger(__name__)
 
 LOGIN_THROTTLE_EXPIRY = 1800
-OriginalUsernamePasswordAuthenticatorAuth = None
+OriginalUsernamePasswordAuthenticatorAuth = UsernamePasswordAuthenticator.authenticate
 
 
 def unlock_account(account_id):
@@ -35,10 +35,6 @@ def unlock_account(account_id):
 def intercept_authenticator():
     """ Replaces the existing authenticate function with our custom one.
     """
-    global OriginalUsernamePasswordAuthenticatorAuth
-    if OriginalUsernamePasswordAuthenticatorAuth is None:
-        OriginalUsernamePasswordAuthenticatorAuth = UsernamePasswordAuthenticator.authenticate
-
     UsernamePasswordAuthenticator.authenticate = QGOVAuthenticator().authenticate
 
 
