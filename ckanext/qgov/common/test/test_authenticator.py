@@ -10,7 +10,7 @@ class TestUsernamePasswordAuthenticator(object):
     @pytest.fixture(autouse=True)
     def initial_data(self, clean_db):
 
-        self.authenticate = qgovAuthenticator.intercept_authenticator()
+        self.authenticate = qgovAuthenticator.authenticate
 
     def test_authenticate_succeeds_if_login_and_password_are_correct(self):
         environ = {}
