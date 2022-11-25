@@ -2,7 +2,6 @@
 
 import pytest
 import ckan.lib.create_test_data as ctd
-import ckan.lib.authenticator as authenticator
 import ckanext.qgov.common.authenticator as qgovAuthenticator
 CreateTestData = ctd.CreateTestData
 
@@ -10,9 +9,8 @@ CreateTestData = ctd.CreateTestData
 class TestUsernamePasswordAuthenticator(object):
     @pytest.fixture(autouse=True)
     def initial_data(self, clean_db):
-        qgovAuthenticator.intercept_authenticator()
-        # Verify intercept replaced authenticator module
-        self.authenticate = authenticator.UsernamePasswordAuthenticator()
+
+        self.authenticate = qgovAuthenticator.intercept_authenticator()
 
     def test_authenticate_succeeds_if_login_and_password_are_correct(self):
         environ = {}
