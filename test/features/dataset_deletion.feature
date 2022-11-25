@@ -6,6 +6,7 @@ Feature: Dataset deletion
         When I log in
         And I go to "/dataset/new"
         Then I fill in "title" with "Dataset deletion"
+        And I fill in "name" with "dataset-deletion" if present
         Then I fill in "notes" with "notes"
         Then I execute the script "document.getElementById('field-organizations').value=jQuery('#field-organizations option').filter(function () { return $(this).html() == 'Test Organisation'; }).attr('value')"
         Then I select "False" from "private"
