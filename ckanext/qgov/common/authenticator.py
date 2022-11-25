@@ -70,7 +70,7 @@ class QGOVAuthenticator(UsernamePasswordAuthenticator):
                 LOG.debug("Clearing failed login attempts for %s", login_name)
                 # reset attempt count to 0
                 redis_conn.delete(cache_key)
-            return user.name
+            return super().authenticate(environ, identity)
         else:
             LOG.debug('Login as %r failed - password not valid', login_name)
 
