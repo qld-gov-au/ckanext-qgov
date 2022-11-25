@@ -44,6 +44,7 @@ class QGOVAuthenticator(UsernamePasswordAuthenticator):
         """ Mimic most of UsernamePasswordAuthenticator.authenticate
         but add account lockout after 10 failed attempts.
         """
+        # don't try to increment account lockout if account doesn't exist
         if 'login' not in identity or 'password' not in identity:
             return None
         login_name = identity.get('login')
@@ -62,14 +63,15 @@ class QGOVAuthenticator(UsernamePasswordAuthenticator):
 
         if login_attempts >= 10:
             LOG.debug('Login as %r failed - account is locked', login_name)
-        elif user.validate_password(identity.get('password')):
-            if login_attempts > 0:
-                LOG.debug("Clearing failed login attempts for %s", login_name)
-                # reset attempt count to 0
-                redis_conn.delete(cache_key)
-            return OriginalUsernamePasswordAuthenticatorAuth(self, environ, identity)
         else:
-            LOG.debug('Login as %r failed - password not valid', login_name)
+            return_value = OriginalUsernamePasswordAuthenticatorAuth(self, environ, identity)
+            if return_value:
+                if login_attempts > 0:
+                    LOG.debug("Clearing failed login attempts for %s", login_name)
+                    redis_conn.delete(cache_key)
+                return return_value
+            else:
+                LOG.debug('Login as %r failed - password not valid', login_name)
 
         redis_conn.set(cache_key, login_attempts + 1, ex=LOGIN_THROTTLE_EXPIRY)
         return None
