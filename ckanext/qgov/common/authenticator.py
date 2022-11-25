@@ -14,6 +14,7 @@ from repoze.who.interfaces import IAuthenticator
 LOG = logging.getLogger(__name__)
 
 LOGIN_THROTTLE_EXPIRY = 1800
+OriginalUsernamePasswordAuthenticatorAuth = None
 
 
 def unlock_account(account_id):
