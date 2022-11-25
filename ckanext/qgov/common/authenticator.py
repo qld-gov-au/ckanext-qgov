@@ -8,9 +8,6 @@ from ckan.lib.redis import connect_to_redis
 from ckan.model import User, Session
 from ckan.plugins.toolkit import config
 
-from zope.interface import implementer
-from repoze.who.interfaces import IAuthenticator
-
 LOG = logging.getLogger(__name__)
 
 LOGIN_THROTTLE_EXPIRY = 1800
@@ -38,7 +35,6 @@ def intercept_authenticator():
     UsernamePasswordAuthenticator.authenticate = QGOVAuthenticator().authenticate
 
 
-@implementer(IAuthenticator)
 class QGOVAuthenticator(UsernamePasswordAuthenticator):
     """ Extend UsernamePasswordAuthenticator so it's possible to
     configure this via who.ini.
