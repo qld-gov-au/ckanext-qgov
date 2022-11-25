@@ -34,6 +34,10 @@ def unlock_account(account_id):
 def intercept_authenticator():
     """ Replaces the existing authenticate function with our custom one.
     """
+    global OriginalUsernamePasswordAuthenticatorAuth
+    if OriginalUsernamePasswordAuthenticatorAuth is None:
+        OriginalUsernamePasswordAuthenticatorAuth = UsernamePasswordAuthenticator.authenticate
+
     UsernamePasswordAuthenticator.authenticate = QGOVAuthenticator().authenticate
 
 
@@ -70,7 +74,7 @@ class QGOVAuthenticator(UsernamePasswordAuthenticator):
                 LOG.debug("Clearing failed login attempts for %s", login_name)
                 # reset attempt count to 0
                 redis_conn.delete(cache_key)
-            return super().authenticate(environ, identity)
+            return OriginalUsernamePasswordAuthenticatorAuth(environ, identity)
         else:
             LOG.debug('Login as %r failed - password not valid', login_name)
 
