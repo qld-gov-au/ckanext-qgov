@@ -61,6 +61,7 @@ class QGOVAuthenticator(UsernamePasswordAuthenticator):
             # shouldn't happen but let's play it safe
             login_attempts = 0
 
+        LOG.debug('%r has failed to log in %s time(s) previously', login_name, login_attempts)
         if login_attempts >= 10:
             LOG.debug('Login as %r failed - account is locked', login_name)
         else:
