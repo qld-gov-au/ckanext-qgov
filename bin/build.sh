@@ -2,7 +2,7 @@
 ##
 # Build site in CI.
 #
-set -e
+set -ex
 
 # Process Docker Compose configuration. This is used to avoid multiple
 # docker-compose.yml files.
@@ -15,13 +15,26 @@ sed -i -e "s/##//" docker-compose.yml
 ahoy pull
 
 PYTHON=python
+
+CKAN_GIT_VERSION=$CKAN_VERSION
+CKAN_GIT_ORG=ckan
+
 if [ "$CKAN_VERSION" = "2.8" ]; then
     PYTHON_VERSION=py2
-    QGOV_CKAN_VERSION=ckan-2.8.8-qgov.5
+    if [ "$CKAN_TYPE" = "custom" ]; then
+      CKAN_GIT_VERSION=ckan-2.8.8-qgov.5
+      CKAN_GIT_ORG=qld-gov-au
+    fi
+
 else
-    QGOV_CKAN_VERSION=ckan-2.9.5-qgov.8
+    if [ "$CKAN_TYPE" = "custom" ]; then
+      CKAN_GIT_VERSION=ckan-2.9.5-qgov.9
+      CKAN_GIT_ORG=qld-gov-au
+    fi
+
     if [ "$CKAN_VERSION" = "2.9-py2" ]; then
         PYTHON_VERSION=py2
+        CKAN_GIT_VERSION=2.9
     else
         PYTHON_VERSION=py3
         PYTHON="${PYTHON}3"
@@ -29,7 +42,8 @@ else
 fi
 
 sed "s|{CKAN_VERSION}|$CKAN_VERSION|g" .docker/Dockerfile-template.ckan \
-    | sed "s|{QGOV_CKAN_VERSION}|$QGOV_CKAN_VERSION|g" \
+    | sed "s|{CKAN_GIT_VERSION}|$CKAN_GIT_VERSION|g" \
+    | sed "s|{CKAN_GIT_ORG}|$CKAN_GIT_ORG|g" \
     | sed "s|{PYTHON_VERSION}|$PYTHON_VERSION|g" \
     | sed "s|{PYTHON}|$PYTHON|g" \
     > .docker/Dockerfile.ckan

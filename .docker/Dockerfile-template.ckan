@@ -19,10 +19,10 @@ RUN pip install -U urllib3
 
 RUN cd $SRC_DIR/ckan \
     && git config --global --add safe.directory "$SRC_DIR/ckan" \
-    && git remote set-url origin 'https://github.com/qld-gov-au/ckan.git' \
+    && git remote set-url origin 'https://github.com/{CKAN_GIT_ORG}/ckan.git' \
     && git fetch \
     && git reset --hard && git clean -f \
-    && git checkout '{QGOV_CKAN_VERSION}'
+    && git checkout '{CKAN_GIT_VERSION}'
 
 COPY .docker/test.ini $CKAN_INI
 

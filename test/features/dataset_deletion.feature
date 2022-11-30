@@ -6,6 +6,7 @@ Feature: Dataset deletion
         When I log in
         And I go to "/dataset/new"
         Then I fill in "title" with "Dataset deletion"
+        And I fill in "name" with "dataset-deletion" if present
         Then I fill in "notes" with "notes"
         Then I execute the script "document.getElementById('field-organizations').value=jQuery('#field-organizations option').filter(function () { return $(this).html() == 'Test Organisation'; }).attr('value')"
         Then I select "False" from "private"
@@ -23,7 +24,8 @@ Feature: Dataset deletion
 
         When I go to "/dataset/edit/dataset-deletion"
         Then I press the element with xpath "//a[string()='Delete' and @data-module='confirm-action']"
-        Then I press the element with xpath "//div[@class='modal-footer']//button[@class='btn btn-primary']"
+        # Work on in-line js enabled page and non-js "Confirm" or "Confirm Delete" page
+        Then I press the element with xpath "//button[@class='btn btn-primary' and contains(text(), 'Confirm') ]"
         And I wait for 5 seconds
         Then I should see "Dataset has been deleted"
         And I should not see "Dataset deletion"
