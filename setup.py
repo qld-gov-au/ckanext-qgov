@@ -1,7 +1,7 @@
 # encoding: utf-8
 from setuptools import setup, find_packages
 
-version = '@BUILD-LABEL@'
+version = '5.0.7'
 
 setup(
     name='ckanext-qgov',
