@@ -96,9 +96,9 @@ class QGOVPlugin(SingletonPlugin):
     if check_ckan_version(max_version='2.8.99'):
         implements(plugins.IRoutes, inherit=True)
     if check_ckan_version('2.10'):
-        implements(plugins.IAuthenticator)
+        implements(plugins.IAuthenticator, inherit=True)
 
-        def authenticate(identity):
+        def authenticate(self, identity):
             return authenticator.qgov_authenticate(identity)
 
     # IConfigurer
