@@ -8,11 +8,11 @@ import json
 from logging import getLogger
 import os
 import re
-import six
 
 from ckan import plugins
 from ckan.lib.base import h
 import ckan.lib.navl.dictization_functions as df
+from ckan.lib.navl.validators import unicode_safe
 from ckan.plugins import implements, SingletonPlugin
 from ckan.plugins.toolkit import _, add_template_directory, check_ckan_version,\
     get_action, get_validator, render
@@ -112,7 +112,7 @@ class QGOVPlugin(SingletonPlugin):
 
         ignore_missing = get_validator('ignore_missing')
         schema.update({
-            'ckanext.data_qld.excluded_display_name_words': [ignore_missing, six.text_type]
+            'ckanext.data_qld.excluded_display_name_words': [ignore_missing, unicode_safe]
         })
 
         return schema
