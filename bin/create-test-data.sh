@@ -77,13 +77,13 @@ add_user_if_needed walker "Walker" walker@localhost
 # Create private test dataset with our standard fields
 curl -LsH "Authorization: ${API_KEY}" \
     --data '{"name": "test-dataset", "owner_org": "'"${TEST_ORG_ID}"'", "private": true,
-"author_email": "admin@localhost", "version": "1.0", "license_id": "other-open", "notes": "private test"}' \
+"author_email": "admin@localhost", "license_id": "other-open", "notes": "private test"}' \
     ${CKAN_ACTION_URL}/package_create
 
 # Create public test dataset with our standard fields
 curl -LsH "Authorization: ${API_KEY}" \
     --data '{"name": "public-test-dataset", "owner_org": "'"${TEST_ORG_ID}"'",
-"author_email": "admin@localhost", "version": "1.0", "license_id": "other-open", "notes": "public test"}' \
+"author_email": "admin@localhost", "license_id": "other-open", "notes": "public test"}' \
     ${CKAN_ACTION_URL}/package_create
 
 echo "Creating department-of-health organisation:"
