@@ -25,7 +25,9 @@ if [ "$CKAN_VERSION" = "2.8" ]; then
       CKAN_GIT_VERSION=ckan-2.8.8-qgov.5
       CKAN_GIT_ORG=qld-gov-au
     fi
-
+elif [ "$CKAN_VERSION" = "2.10" ]; then
+    PYTHON_VERSION=py3
+    PYTHON="${PYTHON}3"
 else
     if [ "$CKAN_TYPE" = "custom" ]; then
       CKAN_GIT_VERSION=ckan-2.9.5-qgov.9
