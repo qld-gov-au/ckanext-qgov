@@ -33,8 +33,8 @@ Feature: Login Redirection
     @unauthenticated
     Scenario: As an unauthenticated user, when I visit the URL of a public dataset I see the dataset without needing to login
         Given "Unauthenticated" as the persona
-        When I visit "/dataset/warandpeace"
-        Then I should see an element with xpath "//h1[contains(string(), 'A Wonderful Story')]"
+        When I visit "/dataset/public-test-dataset"
+        Then I should see "public test"
         And I should not see an element with xpath "//h1[contains(string(), 'Login')]"
 
     @private_dataset
@@ -43,7 +43,7 @@ Feature: Login Redirection
         When I visit "/dataset/test-dataset"
         Then I should see a login link
         When I log in directly
-        Then I should see an element with xpath "//h1[contains(string(), 'test-dataset')]"
+        Then I should see "private test"
         And I should see an element with xpath "//span[contains(string(), 'Private')]"
 
     @private_dataset
