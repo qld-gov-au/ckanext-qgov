@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+from ckan import model
 from ckan.plugins.toolkit import config, g, Invalid
 
 
@@ -8,7 +9,10 @@ def _get_user():
     """
     # 'g' is not a regular data structure so we can't use 'hasattr'
     if 'userobj' in dir(g):
-        return g.userobj
+        user = g.userobj
+        if isinstance(user, str):
+            user = model.User.get(user)
+        return user
     else:
         return None
 
