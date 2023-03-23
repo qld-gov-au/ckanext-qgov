@@ -5,12 +5,10 @@
 
 import unittest
 
-import ckan.lib.helpers as h
-
 from . import plugin
 
 
-def mock_objects(config):
+def mock_objects():
     try:
         from paste.registry import Registry
         import pylons
@@ -21,8 +19,6 @@ def mock_objects(config):
     except ImportError:
         # if Pylons isn't present, then we don't need it
         pass
-
-    h.config = config
 
 
 URL_DATA = [
@@ -45,7 +41,7 @@ class TestUrlValidation(unittest.TestCase):
         and http:// is prepended if they don't match.
         """
         key = ('resources', 0, 'url')
-        mock_objects({})
+        mock_objects()
         for test in URL_DATA:
             input_url = test.get('input')
             if test.get('upload', False):

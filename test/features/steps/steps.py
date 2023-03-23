@@ -93,7 +93,7 @@ def add_resource(context, name, url):
     context.execute_steps(u"""
         When I log in
         And I visit "/dataset/new_resource/test-dataset"
-        And I execute the script "document.getElementById('field-image-url').value='{url}'"
+        And I execute the script "$('#resource-edit [name=url]').val('{url}')"
         And I fill in "name" with "{name}"
         And I fill in "description" with "description"
         And I fill in "size" with "1024" if present
@@ -196,7 +196,7 @@ def create_dataset_titled(context, title):
         And I fill in "author_email" with "test@me.com"
         And I fill in "de_identified_data" with "NO" if present
         And I press "Add Data"
-        And I execute the script "document.getElementById('field-image-url').value='https://example.com'"
+        And I execute the script "$('#resource-edit [name=url]').val('https://example.com')"
         And I fill in "name" with "Test Resource"
         And I execute the script "document.getElementById('field-format').value='HTML'"
         And I fill in "description" with "Test Resource Description"

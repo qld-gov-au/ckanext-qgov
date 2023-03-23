@@ -3,7 +3,7 @@ Feature: Dataset APIs
     Scenario: Creative Commons BY-NC-SA 4.0 licence is an option for datasets
         Given "SysAdmin" as the persona
         When I log in
-        And I edit the "warandpeace" dataset
+        And I edit the "test-dataset" dataset
         Then I should see an element with xpath "//option[@value='cc-by-nc-sa-4']"
 
     @smoke
@@ -17,6 +17,6 @@ Feature: Dataset APIs
         And I fill in "author_email" with "test@me.com"
         And I press "Add Data"
         And I fill in "name" with "Test"
-        And I execute the script "document.getElementById('field-image-url').value='https://example.com'"
+        And I execute the script "$('#resource-edit [name=url]').val('https://example.com')"
         And I press the element with xpath "//button[contains(string(), 'Finish')]"
         Then I should see "Testing dataset creation"

@@ -1,68 +1,68 @@
 # encoding: utf-8
 
 import pytest
+from ckan.model import User
 import ckan.lib.create_test_data as ctd
-import ckanext.qgov.common.authenticator as qgovAuthenticator
+from ckan.plugins.toolkit import check_ckan_version
+
+if check_ckan_version('2.10'):
+    from ckanext.qgov.common.authenticator import qgov_authenticate
+else:
+    from ckanext.qgov.common.authenticator import QGOVAuthenticator
+    qgov_authenticator = QGOVAuthenticator()
+
+    def qgov_authenticate(identity):
+        return qgov_authenticator.authenticate(None, identity)
+
 CreateTestData = ctd.CreateTestData
 
 
+@pytest.mark.usefixtures("clean_db")
 class TestUsernamePasswordAuthenticator(object):
-    @pytest.fixture(autouse=True)
-    def initial_data(self, clean_db):
-        self.authenticate = qgovAuthenticator.QGOVAuthenticator().authenticate
 
     def test_authenticate_succeeds_if_login_and_password_are_correct(self):
-        environ = {}
         password = "somepass"
         user = CreateTestData.create_user("a_user", **{"password": password})
         identity = {"login": user.name, "password": password}
 
-        username = self.authenticate(environ, identity)
+        username = qgov_authenticate(identity)
+        # 2.10
+        if isinstance(username, User):
+            assert username.name == user.name
         # 2.9.6+
-        if ",1" in username:
+        elif ",1" in username:
             assert username == user.id + ",1", username
         # 2.9.5-
         else:
             assert username == user.name, username
 
     def test_authenticate_fails_if_user_is_deleted(self):
-        environ = {}
         password = "somepass"
         user = CreateTestData.create_user("a_user", **{"password": password})
         identity = {"login": user.name, "password": password}
         user.delete()
-        assert self.authenticate(environ, identity) is None
+        assert qgov_authenticate(identity) is None
 
     def test_authenticate_fails_if_user_is_pending(self):
-        environ = {}
         password = "somepass"
         user = CreateTestData.create_user("a_user", **{"password": password})
         identity = {"login": user.name, "password": password}
         user.set_pending()
-        assert self.authenticate(environ, identity) is None
+        assert qgov_authenticate(identity) is None
 
     def test_authenticate_fails_if_password_is_wrong(self):
-        environ = {}
         user = CreateTestData.create_user("a_user")
         identity = {"login": user.name, "password": "wrong-password"}
-        assert self.authenticate(environ, identity) is None
+        assert qgov_authenticate(identity) is None
 
-    def test_authenticate_fails_if_received_no_login_or_pass(self):
-        environ = {}
-        identity = {}
-        assert self.authenticate(environ, identity) is None
-
-    def test_authenticate_fails_if_received_just_login(self):
-        environ = {}
-        identity = {"login": "some-user"}
-        assert self.authenticate(environ, identity) is None
-
-    def test_authenticate_fails_if_received_just_password(self):
-        environ = {}
-        identity = {"password": "some-password"}
-        assert self.authenticate(environ, identity) is None
-
-    def test_authenticate_fails_if_user_doesnt_exist(self):
-        environ = {}
-        identity = {"login": "inexistent-user"}
-        assert self.authenticate(environ, identity) is None
+    @pytest.mark.parametrize(
+        "identity",
+        [
+            {},
+            {"login": "some-user"},
+            {"password": "somepass"},
+            {"login": "nonexistent-user", "password": "somepass"}
+        ]
+    )
+    def test_authenticate_fails_if_incomplete_credentials(self, identity):
+        assert qgov_authenticate(identity) is None
