@@ -11,32 +11,41 @@ LOG = logging.getLogger(__name__)
 
 LOGIN_THROTTLE_EXPIRY = 1800
 
+
 if check_ckan_version('2.10'):
     from ckan.lib.authenticator import default_authenticate
 else:
-    from zope.interface import implementer
-    from repoze.who.interfaces import IAuthenticator
-
     from ckan.lib.authenticator import UsernamePasswordAuthenticator
     default_authenticate = UsernamePasswordAuthenticator.authenticate
 
-    @implementer(IAuthenticator)
-    class QGOVAuthenticator(UsernamePasswordAuthenticator):
-        """ Extend UsernamePasswordAuthenticator so it's possible to
-        configure this via who.ini.
-        """
 
-        def authenticate(self, environ, identity):
-            """ Mimic most of UsernamePasswordAuthenticator.authenticate
-            but add account lockout after 10 failed attempts.
+def intercept_authenticator():
+    """ Replaces the existing authenticate function with our custom one.
+    """
+    if check_ckan_version('2.10'):
+        from ckan.lib import authenticator as core_authenticator
+
+        core_authenticator.default_authenticate = qgov_authenticate
+    else:
+        from zope.interface import implementer
+        from repoze.who.interfaces import IAuthenticator
+
+        from ckan.lib.authenticator import UsernamePasswordAuthenticator
+
+        @implementer(IAuthenticator)
+        class QGOVAuthenticator(UsernamePasswordAuthenticator):
+            """ Extend UsernamePasswordAuthenticator so it's possible to
+            configure this via who.ini.
             """
-            def core_authenticate(identity):
-                return default_authenticate(self, environ, identity)
-            return qgov_authenticate(identity, core_authenticate)
 
-    def intercept_authenticator():
-        """ Replaces the existing authenticate function with our custom one.
-        """
+            def authenticate(self, environ, identity):
+                """ Mimic most of UsernamePasswordAuthenticator.authenticate
+                but add account lockout after 10 failed attempts.
+                """
+                def core_authenticate(identity):
+                    return default_authenticate(self, environ, identity)
+                return qgov_authenticate(identity, core_authenticate)
+
         UsernamePasswordAuthenticator.authenticate = QGOVAuthenticator().authenticate
 
 

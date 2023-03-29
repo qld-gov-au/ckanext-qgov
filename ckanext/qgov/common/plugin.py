@@ -95,11 +95,6 @@ class QGOVPlugin(SingletonPlugin):
         implements(plugins.IBlueprint)
     if check_ckan_version(max_version='2.8.99'):
         implements(plugins.IRoutes, inherit=True)
-    if check_ckan_version('2.10'):
-        implements(plugins.IAuthenticator, inherit=True)
-
-        def authenticate(self, identity):
-            return authenticator.qgov_authenticate(identity)
 
     # IConfigurer
 
@@ -174,8 +169,7 @@ class QGOVPlugin(SingletonPlugin):
         """ Monkey-patch functions that don't have standard extension
         points.
         """
-        if not check_ckan_version('2.10'):
-            authenticator.intercept_authenticator()
+        authenticator.intercept_authenticator()
         intercepts.configure(config)
         intercepts.set_intercepts()
         if check_ckan_version(max_version='2.8.99'):
