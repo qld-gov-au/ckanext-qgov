@@ -92,7 +92,9 @@ def fill_in_field_if_present(context, name, value):
 def add_resource(context, name, url):
     context.execute_steps(u"""
         When I log in
-        And I visit "/dataset/new_resource/test-dataset"
+        And I edit the "test-dataset" dataset
+        And I click the link with text that contains "Resources"
+        And I click the link with text that contains "Add new resource"
         And I execute the script "$('#resource-edit [name=url]').val('{url}')"
         And I fill in "name" with "{name}"
         And I fill in "description" with "description"
