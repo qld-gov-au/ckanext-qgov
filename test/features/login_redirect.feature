@@ -5,7 +5,7 @@ Feature: Login Redirection
     Scenario Outline: As an unauthenticated user, when I visit the dashboard URL I see the login page
         Given "TestOrgMember" as the persona
         When I visit "<URL>"
-        Then I should see a login link
+        Then I should see the login form
         When I log in directly
         Then I should see "News feed"
 
@@ -18,7 +18,7 @@ Feature: Login Redirection
     Scenario: As an unauthenticated organisation member, when I visit the user edit URL I see the login page. Upon logging in I am taken to the user edit page
         Given "TestOrgMember" as the persona
         When I visit "/user/edit"
-        Then I should see a login link
+        Then I should see the login form
         When I log in directly
         Then I should see "Change details"
 
@@ -27,7 +27,7 @@ Feature: Login Redirection
     Scenario: As an unauthenticated user, when I visit the URL of a private dataset I see the login page
         Given "Unauthenticated" as the persona
         When I visit "/dataset/test-dataset"
-        Then I should see a login link
+        Then I should see the login form
 
     @public_dataset
     @unauthenticated
@@ -41,7 +41,7 @@ Feature: Login Redirection
     Scenario: As an unauthenticated organisation member, when I visit the URL of a private dataset I see the login page. Upon logging in I am taken to the private dataset
         Given "TestOrgMember" as the persona
         When I visit "/dataset/test-dataset"
-        Then I should see a login link
+        Then I should see the login form
         When I log in directly
         Then I should see "private test"
         And I should see an element with xpath "//span[contains(string(), 'Private')]"

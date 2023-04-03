@@ -44,15 +44,7 @@ jobs:
         timeout-minutes: 15
 
       - name: Test
-        run: |
-          ahoy lint
-          ahoy test-unit
-        timeout-minutes: 10
-
-      - name: Test BDD
-        run: |
-           ahoy install-site
-           ahoy test-bdd
+        run: bin/test.sh
         timeout-minutes: 30
 
       - name: Retrieve logs

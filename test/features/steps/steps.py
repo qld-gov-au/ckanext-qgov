@@ -64,7 +64,7 @@ def attempt_login(context, password):
     """.format(password))
 
 
-@step(u'I should see a login link')
+@step(u'I should see the login form')
 def login_link_visible(context):
     context.execute_steps(u"""
         Then I should see an element with xpath "//h1[contains(string(), 'Login')]"
