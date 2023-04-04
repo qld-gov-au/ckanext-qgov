@@ -3,7 +3,7 @@
 """
 from ckan import model
 from sqlalchemy import and_, func, select, Table
-import six
+from six import text_type as str
 
 
 def table(name):
@@ -36,7 +36,7 @@ class Stats(object):
             limit(limit)
 
         res_ids = model.Session.execute(query).fetchall()
-        res_groups = [(model.Session.query(model.Group).get(six.text_type(group_id)), val) for group_id, val in res_ids]
+        res_groups = [(model.Session.query(model.Group).get(str(group_id)), val) for group_id, val in res_ids]
         return res_groups
 
     @classmethod
@@ -51,7 +51,7 @@ class Stats(object):
             limit(limit)
 
         res_ids = model.Session.execute(query).fetchall()
-        res_groups = [(model.Session.query(model.Group).get(six.text_type(owner_org)), val) for owner_org, val in res_ids]
+        res_groups = [(model.Session.query(model.Group).get(str(owner_org)), val) for owner_org, val in res_ids]
         return res_groups
 
     @classmethod

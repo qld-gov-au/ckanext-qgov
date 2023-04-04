@@ -49,7 +49,7 @@ Feature: User APIs
     Scenario: User list is not accessible anonymously
         Given "Unauthenticated" as the persona
         When I go to the user list API
-        Then I should see an element with xpath "//*[contains(string(), '"success": false') and contains(string(), 'requires an authenticated user')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": false') and contains(string(), 'Authorization Error')]"
 
     Scenario Outline: User detail is accessible to admins
         Given "<Persona>" as the persona
@@ -115,11 +115,12 @@ Feature: User APIs
         Given "Publisher" as the persona
         When I log in
         And I go to the dashboard
-        Then I should see an element with xpath "//h2[contains(string(), 'News feed')]"
+        Then I should see my datasets
+        And I should see "Add Dataset"
 
     @email
     Scenario: As a registered user, when I have locked my account with too many failed logins, I can reset my password to unlock it
-        Given "Walker" as the persona
+        Given "Foodie" as the persona
         When I lock my account
         And I go to "/user/login"
         And I attempt to log in with password "$password"

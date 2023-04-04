@@ -14,8 +14,8 @@ from ckan.lib.base import h
 import ckan.lib.navl.dictization_functions as df
 from ckan.lib.navl.validators import unicode_safe
 from ckan.plugins import implements, SingletonPlugin
-from ckan.plugins.toolkit import _, add_template_directory, check_ckan_version,\
-    get_action, get_validator, render
+from ckan.plugins.toolkit import _, add_template_directory, get_action,\
+    get_validator, render
 
 from . import authenticator, auth_functions as auth, helpers, intercepts, urlm
 from .stats import Stats
@@ -23,8 +23,7 @@ from .user_creation import validators as user_creation_validators
 from .user_creation.logic.actions import create as user_creation_create_actions
 
 # workaround for https://github.com/ckan/ckan/issues/6678
-if check_ckan_version('2.9'):
-    from ckan.views import dataset as dataset_view, resource  # noqa: F401
+from ckan.views import dataset as dataset_view, resource  # noqa: F401
 
 LOG = getLogger(__name__)
 
@@ -88,13 +87,7 @@ class QGOVPlugin(SingletonPlugin):
     implements(plugins.IValidators, inherit=True)
     implements(plugins.IResourceController, inherit=True)
     implements(plugins.IMiddleware, inherit=True)
-
-    # on CKAN 2.8, use a mixture of Pylons and Flask.
-    # Ugly, but hard to avoid, since core uses a mixture.
-    if check_ckan_version('2.8'):
-        implements(plugins.IBlueprint)
-    if check_ckan_version(max_version='2.8.99'):
-        implements(plugins.IRoutes, inherit=True)
+    implements(plugins.IBlueprint)
 
     # IConfigurer
 
@@ -172,8 +165,6 @@ class QGOVPlugin(SingletonPlugin):
         authenticator.intercept_authenticator()
         intercepts.configure(config)
         intercepts.set_intercepts()
-        if check_ckan_version(max_version='2.8.99'):
-            intercepts.set_pylons_intercepts()
 
     # IMiddleware
 
@@ -196,43 +187,6 @@ class QGOVPlugin(SingletonPlugin):
                     return render(u'error_document_template.html', extra_vars), e.code
         return app
 
-    # IRoutes
-    def before_map(self, route_map):
-        """ Add some custom routes for Queensland Government portals.
-        """
-        from routes.mapper import SubMapper
-        controller = 'ckanext.qgov.common.controller:QGOVController'
-
-        with SubMapper(route_map, controller='package') as mapper:
-            # This is a pain, but re-assigning the dataset_read route using `before_map`
-            # appears to affect these routes, so we need to replicate them here
-            mapper.connect('search', '/dataset', action='search', highlight_actions='index search')
-            mapper.connect('dataset_new', '/dataset/new', action='new')
-            mapper.connect(
-                '/dataset/{action}',
-                requirements=dict(action='|'.join([
-                    'list',
-                    'autocomplete',
-                    'search'
-                ])))
-
-        with SubMapper(route_map, controller=controller) as mapper:
-            mapper.connect('article',
-                           '/article/{path:[-_a-zA-Z0-9/]+}',
-                           action='static_content')
-            mapper.connect('submit_feedback',
-                           '/api/action/submit_feedback',
-                           action='submit_feedback')
-
-            # Currently no dataset/package blueprint available, so we need to override these core routes
-            mapper.connect('dataset_read', '/dataset/{id}',
-                           action='read',
-                           ckan_icon='sitemap')
-            mapper.connect('/dataset/{id}/resource/{resource_id}',
-                           action='resource_read')
-
-        return route_map
-
     # IBlueprint
     def get_blueprint(self):
         """
@@ -241,12 +195,10 @@ class QGOVPlugin(SingletonPlugin):
         user to the `came_from` URL if they are logged in.
         :return:
         """
-        from .views import user
+        from .views import user, dataset, assets
         blueprints = user.get_blueprints()
-        if check_ckan_version('2.9'):
-            from .views import dataset, assets
-            blueprints.extend(dataset.get_blueprints())
-            blueprints.extend(assets.get_blueprints())
+        blueprints.extend(dataset.get_blueprints())
+        blueprints.extend(assets.get_blueprints())
         return blueprints
 
     # ITemplateHelpers

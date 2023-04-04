@@ -3,6 +3,7 @@
 """
 
 import logging
+
 from ckan.lib.redis import connect_to_redis
 from ckan.model import User, Session
 from ckan.plugins.toolkit import check_ckan_version, config

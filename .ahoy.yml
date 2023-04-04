@@ -137,9 +137,6 @@ commands:
     usage: Run BDD tests.
     cmd: |
       ahoy start-mailmock &
-      if [ "$CKAN_VERSION" = "2.8" ]; then
-        BEHAVE_TAGS="--tags=-ckan29"
-      fi
       sleep 5 &&
       ahoy cli "behave -k ${*:-test/features}" --tags=smoke $BEHAVE_TAGS && \
       ahoy cli "behave -k ${*:-test/features} $BEHAVE_TAGS" || \

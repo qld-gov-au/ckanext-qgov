@@ -21,7 +21,7 @@ Feature: Organization APIs
         Examples: Non-admin users
             | Persona       |
             | Publisher     |
-            | Foodie        |
+            | Walker        |
             | Group Admin   |
 
     @unauthenticated
