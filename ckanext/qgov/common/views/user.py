@@ -1,27 +1,14 @@
 # encoding: utf-8
 
-import six
+from six import text_type as str
 
 from flask import Blueprint
 
 import ckan.lib.helpers as h
-from ckan.plugins.toolkit import _, check_ckan_version, g, request,\
-    redirect_to, url_for
+from ckan.plugins.toolkit import _, g, request, redirect_to, url_for
 from ckan.views.user import login, me, EditView
 
 blueprint = Blueprint(u'user_overrides', __name__)
-
-
-def dashboard_override(offset=0):
-    """
-    Override default CKAN behaviour of throwing 403 Unauthorised exception for /dashboard[/] page and instead
-    redirect the user to the login page.
-    Ref.: ckan/views/dashboard.py > def index(...)
-    :param offset:
-    :return:
-    """
-    from ckan.views.dashboard import index
-    return index(offset) if g.user else redirect_to(url_for(u'user.login'))
 
 
 def logged_in_override():
@@ -32,7 +19,7 @@ def logged_in_override():
     """
     if g.user:
         came_from = request.params.get(u'came_from', None)
-        return redirect_to(six.text_type(came_from)) if came_from and h.url_is_local(came_from) else me()
+        return redirect_to(str(came_from)) if came_from and h.url_is_local(came_from) else me()
     else:
         h.flash_error(_(u'Login failed. Bad username or password.'))
         return login()
@@ -54,16 +41,6 @@ def user_edit_override():
 
 blueprint.add_url_rule(u'/user/logged_in', u'logged_in', logged_in_override)
 blueprint.add_url_rule(u'/user/edit', u'edit', user_edit_override)
-
-# redirect dashboard to login page if not logged in.
-# CKAN 2.9 handles this automatically.
-# CKAN 2.10 breaks it but will hopefully fix it in future,
-#  see https://github.com/ckan/ckan/issues/7507
-
-if not check_ckan_version('2.9'):
-    blueprint.add_url_rule(
-        u'/dashboard/', u'dashboard', dashboard_override,
-        strict_slashes=False, defaults={u'offset': 0})
 
 
 def get_blueprints():
