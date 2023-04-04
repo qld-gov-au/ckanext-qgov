@@ -2,17 +2,12 @@
 Feature: Login Redirection
 
     @dashboard_login
-    Scenario Outline: As an unauthenticated user, when I visit the dashboard URL I see the login page
+    Scenario: As an unauthenticated user, when I visit the dashboard URL I see the login page
         Given "TestOrgMember" as the persona
-        When I visit "<URL>"
+        When I go to the dashboard
         Then I should see the login form
         When I log in directly
         Then I should see "News feed"
-
-        Examples: Dashboard URLs
-        | URL              |
-        | /dashboard       |
-        | /dashboard/      |
 
     @user_edit
     Scenario: As an unauthenticated organisation member, when I visit the user edit URL I see the login page. Upon logging in I am taken to the user edit page

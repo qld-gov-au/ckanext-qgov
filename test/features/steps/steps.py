@@ -155,7 +155,16 @@ def go_to_user_profile(context, user_id):
 
 @step(u'I go to the dashboard')
 def go_to_dashboard(context):
-    when_i_visit_url(context, '/dashboard')
+    context.execute_steps(u"""
+        When I visit "/dashboard/datasets"
+    """)
+
+
+@step(u'I should see my datasets')
+def dashboard_datasets(context):
+    context.execute_steps(u"""
+        Then I should see an element with xpath "//li[contains(@class, 'active') and contains(string(), 'My Datasets')]"
+    """)
 
 
 @step(u'I go to the "{user_id}" user API')

@@ -5,7 +5,8 @@ import six
 from flask import Blueprint
 
 import ckan.lib.helpers as h
-from ckan.plugins.toolkit import _, check_ckan_version, g, request, redirect_to, url_for
+from ckan.plugins.toolkit import _, check_ckan_version, g, request,\
+    redirect_to, url_for
 from ckan.views.user import login, me, EditView
 
 blueprint = Blueprint(u'user_overrides', __name__)
@@ -53,8 +54,13 @@ def user_edit_override():
 
 blueprint.add_url_rule(u'/user/logged_in', u'logged_in', logged_in_override)
 blueprint.add_url_rule(u'/user/edit', u'edit', user_edit_override)
+
+# redirect dashboard to login page if not logged in.
+# CKAN 2.9 handles this automatically.
+# CKAN 2.10 breaks it but will hopefully fix it in future,
+#  see https://github.com/ckan/ckan/issues/7507
+
 if not check_ckan_version('2.9'):
-    # CKAN 2.9+ handles non-logged-in users gracefully
     blueprint.add_url_rule(
         u'/dashboard/', u'dashboard', dashboard_override,
         strict_slashes=False, defaults={u'offset': 0})
