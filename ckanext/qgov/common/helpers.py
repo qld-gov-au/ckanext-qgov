@@ -36,7 +36,11 @@ def format_attribution_date(date_string=None):
 def format_resource_filesize(size):
     """ Show a file size, formatted for humans.
     """
-    return formatters.localised_filesize(int(size))
+    try:
+        return formatters.localised_filesize(int(size))
+    except ValueError:
+        # assume it's already formatted
+        return size
 
 
 def group_id_for(group_name):
