@@ -5,8 +5,8 @@ import logging
 from flask import Blueprint
 
 from ckan import model
-from ckan.plugins.toolkit import g, get_action, redirect_to, url_for,\
-    ObjectNotFound, NotAuthorized
+from ckan.plugins.toolkit import check_ckan_version, g, get_action,\
+    redirect_to, url_for, ObjectNotFound, NotAuthorized
 from ckan.views import dataset, resource
 
 from ckanext.qgov.common.helpers import make_uncached_response
@@ -80,7 +80,8 @@ def resource_read(package_type, id, resource_id):
 # Any core routes that would match an <id> pattern, such as 'new',
 # must be repeated here, or else they will be overridden.
 _dataset.add_url_rule(u'new', view_func=dataset.CreateView.as_view('new'))
-_dataset.add_url_rule(u'changes_multiple', 'changes_multiple', view_func=dataset.changes_multiple)
+if not check_ckan_version('2.10'):
+    _dataset.add_url_rule(u'changes_multiple', 'changes_multiple', view_func=dataset.changes_multiple)
 _dataset.add_url_rule(u'<id>', view_func=dataset_read)
 _dataset.add_url_rule(u'<id>/resource/new', view_func=resource.CreateView.as_view('new_resource'))
 _dataset.add_url_rule(u'<id>/resource/<resource_id>', view_func=resource_read)

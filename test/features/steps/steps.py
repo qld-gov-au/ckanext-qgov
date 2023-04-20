@@ -64,7 +64,7 @@ def attempt_login(context, password):
     """.format(password))
 
 
-@step(u'I should see a login link')
+@step(u'I should see the login form')
 def login_link_visible(context):
     context.execute_steps(u"""
         Then I should see an element with xpath "//h1[contains(string(), 'Login')]"
@@ -92,8 +92,10 @@ def fill_in_field_if_present(context, name, value):
 def add_resource(context, name, url):
     context.execute_steps(u"""
         When I log in
-        And I visit "/dataset/new_resource/test-dataset"
-        And I execute the script "document.getElementById('field-image-url').value='{url}'"
+        And I edit the "test-dataset" dataset
+        And I click the link with text that contains "Resources"
+        And I click the link with text that contains "Add new resource"
+        And I execute the script "$('#resource-edit [name=url]').val('{url}')"
         And I fill in "name" with "{name}"
         And I fill in "description" with "description"
         And I fill in "size" with "1024" if present
@@ -153,7 +155,16 @@ def go_to_user_profile(context, user_id):
 
 @step(u'I go to the dashboard')
 def go_to_dashboard(context):
-    when_i_visit_url(context, '/dashboard')
+    context.execute_steps(u"""
+        When I visit "/dashboard/datasets"
+    """)
+
+
+@step(u'I should see my datasets')
+def dashboard_datasets(context):
+    context.execute_steps(u"""
+        Then I should see an element with xpath "//li[contains(@class, 'active') and contains(string(), 'My Datasets')]"
+    """)
 
 
 @step(u'I go to the "{user_id}" user API')
@@ -196,7 +207,7 @@ def create_dataset_titled(context, title):
         And I fill in "author_email" with "test@me.com"
         And I fill in "de_identified_data" with "NO" if present
         And I press "Add Data"
-        And I execute the script "document.getElementById('field-image-url').value='https://example.com'"
+        And I execute the script "$('#resource-edit [name=url]').val('https://example.com')"
         And I fill in "name" with "Test Resource"
         And I execute the script "document.getElementById('field-format').value='HTML'"
         And I fill in "description" with "Test Resource Description"

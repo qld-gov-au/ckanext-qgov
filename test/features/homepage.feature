@@ -7,7 +7,6 @@ Feature: Homepage
         Given "Unauthenticated" as the persona
         When I go to homepage
 
-    @ckan29
     @homepage
     @unauthenticated
     Scenario: As a member of the public, when I go to the consistent asset URLs, I can see the asset
