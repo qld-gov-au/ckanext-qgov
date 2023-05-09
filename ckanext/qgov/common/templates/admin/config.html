@@ -3,6 +3,7 @@
 {% import 'macros/form.html' as form %}
 
 {% block admin_form %}
+{{ h.csrf_input() if 'csrf_input' in h }}
 
 {{ form.input('ckan.site_title', id='field-ckan-site-title', label=_('Site Title'), value=data['ckan.site_title'], error=error, classes=['control-medium']) }}
 
