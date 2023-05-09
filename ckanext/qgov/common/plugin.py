@@ -31,20 +31,6 @@ IP_ADDRESS = re.compile(r'^({0}[.]){{3}}{0}$'.format(r'[0-9]{1,3}'))
 PRIVATE_IP_ADDRESS = re.compile(r'^((1?0|127)([.]{0}){{3}}|(172[.](1[6-9]|2[0-9]|3[01])|169[.]254)([.]{0}){{2}}|192[.]168([.]{0}){{2}})$'.format(r'[0-9]{1,3}'))
 
 
-def legacy_pager(self, *args, **kwargs):
-    """ Construct a paging object suitable for Bootstrap 2.
-    See https://github.com/ckan/ckan/issues/4895
-    """
-    kwargs.update(
-        format=u"<div class='pagination-wrapper pagination'><ul>"
-        "$link_previous ~2~ $link_next</ul></div>",
-        symbol_previous=u'«', symbol_next=u'»',
-        curpage_attr={'class': 'active'}, link_attr={}
-    )
-    from ckan.lib.helpers import Page
-    return super(Page, self).pager(*args, **kwargs)
-
-
 def valid_url(key, flattened_data, errors, context):
     """ Check whether the value is a valid URL.
 
@@ -150,10 +136,6 @@ class QGOVPlugin(SingletonPlugin):
                     urlm_proxy = urlm_json[hostname].get('proxy', None)
                     urlm.configure_urlm(urlm_url, urlm_proxy)
 
-        if ckan_config.get('ckan.base_templates_folder',
-                           None) == 'templates-bs2':
-            from ckan.lib.helpers import Page
-            Page.pager = legacy_pager
         return ckan_config
 
     # IConfigurable
