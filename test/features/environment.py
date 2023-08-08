@@ -1,7 +1,9 @@
-import os
-from behaving import environment as benv
+# encoding: utf-8
 
-from behaving.web.steps.browser import named_browser
+import os
+
+from behaving import environment as benv
+from splinter.browser import Browser
 
 # Path to the root of the project.
 ROOT_PATH = os.path.realpath(os.path.join(
@@ -26,25 +28,9 @@ PERSONAS = {
         'email': u'',
         'password': u''
     },
-    # This user will not be assigned to any organisations
-    'CKANUser': {
-        'name': u'ckan_user',
-        'email': u'ckan_user@localhost',
-        'password': u'Password123!'
-    },
-    'Organisation Admin': {
-        'name': u'organisation_admin',
-        'email': u'organisation_admin@localhost',
-        'password': u'Password123!'
-    },
     'Group Admin': {
         'name': u'group_admin',
         'email': u'group_admin@localhost',
-        'password': u'Password123!'
-    },
-    'Publisher': {
-        'name': u'editor',
-        'email': u'publisher@localhost',
         'password': u'Password123!'
     },
     'Walker': {
@@ -52,9 +38,10 @@ PERSONAS = {
         'email': u'walker@localhost',
         'password': u'Password123!'
     },
-    'Foodie': {
-        'name': u'foodie',
-        'email': u'foodie@localhost',
+    # This user will not be assigned to any organisations
+    'CKANUser': {
+        'name': u'ckan_user',
+        'email': u'ckan_user@localhost',
         'password': u'Password123!'
     },
     'TestOrgAdmin': {
@@ -86,11 +73,6 @@ def before_all(context):
     # Set base url for all relative links.
     context.base_url = BASE_URL
 
-    # Always use remote web driver.
-    context.remote_webdriver = 1
-    context.default_browser = 'chrome'
-    context.browser_args = {'command_executor': REMOTE_CHROME_URL}
-
     # Set the rest of the settings to default Behaving's settings.
     benv.before_all(context)
 
@@ -110,7 +92,12 @@ def after_feature(context, feature):
 def before_scenario(context, scenario):
     benv.before_scenario(context, scenario)
     # Always use remote browser.
-    named_browser(context, 'remote')
+    remote_browser = Browser(
+        driver_name="remote", browser="chrome",
+        command_executor=REMOTE_CHROME_URL
+    )
+    for persona_name in PERSONAS.keys():
+        context.browsers[persona_name] = remote_browser
     # Set personas.
     context.personas = PERSONAS
 

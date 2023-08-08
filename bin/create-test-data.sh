@@ -2,7 +2,7 @@
 ##
 # Create some example content for extension BDD tests.
 #
-set -e
+set -ex
 
 CKAN_ACTION_URL=${CKAN_SITE_URL}api/action
 CKAN_USER_NAME="${CKAN_USER_NAME:-admin}"
@@ -45,7 +45,8 @@ echo "Creating ${TEST_ORG_TITLE} organisation:"
 
 TEST_ORG=$( \
     curl -LsH "Authorization: ${API_KEY}" \
-    --data '{"name": "'"${TEST_ORG_NAME}"'", "title": "'"${TEST_ORG_TITLE}"'"}' \
+    --data '{"name": "'"${TEST_ORG_NAME}"'", "title": "'"${TEST_ORG_TITLE}"'",
+        "description": "Organisation for testing issues"}' \
     ${CKAN_ACTION_URL}/organization_create
 )
 
@@ -68,9 +69,6 @@ curl -LsH "Authorization: ${API_KEY}" \
 # END.
 #
 
-add_user_if_needed organisation_admin "Organisation Admin" organisation_admin@localhost
-add_user_if_needed editor "Publisher" publisher@localhost
-add_user_if_needed foodie "Foodie" foodie@localhost
 add_user_if_needed group_admin "Group Admin" group_admin@localhost
 add_user_if_needed walker "Walker" walker@localhost
 
@@ -110,26 +108,10 @@ organisation_admin_update=$( \
 )
 echo ${organisation_admin_update}
 
-echo "Updating publisher to have editor privileges in the department-of-health Organisation:"
-publisher_update=$( \
-    curl -LsH "Authorization: ${API_KEY}" \
-    --data "id=department-of-health&username=editor&role=editor" \
-    ${CKAN_ACTION_URL}/organization_member_create
-)
-echo ${publisher_update}
-
-echo "Updating foodie to have admin privileges in the food-standards-agency Organisation:"
-foodie_update=$( \
-    curl -LsH "Authorization: ${API_KEY}" \
-    --data "id=food-standards-agency&username=foodie&role=admin" \
-    ${CKAN_ACTION_URL}/organization_member_create
-)
-echo ${foodie_update}
-
 echo "Creating non-organisation group:"
 group_create=$( \
     curl -LsH "Authorization: ${API_KEY}" \
-    --data "name=silly-walks" \
+    --data '{"name": "silly-walks", "title": "Silly walks", "description": "The Ministry of Silly Walks"}' \
     ${CKAN_ACTION_URL}/group_create
 )
 echo ${group_create}
@@ -137,7 +119,7 @@ echo ${group_create}
 echo "Updating group_admin to have admin privileges in the silly-walks group:"
 group_admin_update=$( \
     curl -LsH "Authorization: ${API_KEY}" \
-    --data "id=silly-walks&username=group_admin&role=admin" \
+    --data '{"id": "silly-walks", "username": "group_admin", "role": "admin"}' \
     ${CKAN_ACTION_URL}/group_member_create
 )
 echo ${group_admin_update}
@@ -145,7 +127,7 @@ echo ${group_admin_update}
 echo "Updating walker to have editor privileges in the silly-walks group:"
 walker_update=$( \
     curl -LsH "Authorization: ${API_KEY}" \
-    --data "id=silly-walks&username=walker&role=editor" \
+    --data '{"id": "silly-walks", "username": "walker", "role": "editor"}' \
     ${CKAN_ACTION_URL}/group_member_create
 )
 echo ${walker_update}

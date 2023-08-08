@@ -14,7 +14,7 @@ from ckan.lib.base import h
 import ckan.lib.navl.dictization_functions as df
 from ckan.lib.navl.validators import unicode_safe
 from ckan.plugins import implements, SingletonPlugin
-from ckan.plugins.toolkit import _, add_template_directory, get_action,\
+from ckan.plugins.toolkit import _, add_template_directory, get_action, \
     get_validator, render
 
 from . import authenticator, auth_functions as auth, helpers, intercepts, urlm
