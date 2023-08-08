@@ -21,7 +21,7 @@ def logged_in_override():
         came_from = request.params.get(u'came_from', None)
         return redirect_to(str(came_from)) if came_from and h.url_is_local(came_from) else me()
     else:
-        h.flash_error(_(u'Login failed. Bad username or password.'))
+        h.flash_error(_(u'Login failed. Bad username or password or reCAPTCHA.'))
         return login()
 
 
