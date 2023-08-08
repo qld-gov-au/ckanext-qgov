@@ -6,7 +6,8 @@ from flask import Blueprint
 
 import ckan.lib.helpers as h
 from ckan.plugins.toolkit import _, g, request, redirect_to, url_for
-from ckan.views.user import login, me, EditView
+import ckan.views.user
+from ckan.views.user import _ as original_gettext, login, me, EditView
 
 blueprint = Blueprint(u'user_overrides', __name__)
 
@@ -39,8 +40,16 @@ def user_edit_override():
     return EditView().dispatch_request()
 
 
+def _gettext_wrapper(key):
+    translation = original_gettext(key)
+    if key == 'Login failed. Bad username or password.':
+        translation = translation.replace('or password.', 'or password or reCAPTCHA.')
+    return translation
+
+
 blueprint.add_url_rule(u'/user/logged_in', u'logged_in', logged_in_override)
 blueprint.add_url_rule(u'/user/edit', u'edit', user_edit_override)
+ckan.views.user._ = _gettext_wrapper
 
 
 def get_blueprints():
