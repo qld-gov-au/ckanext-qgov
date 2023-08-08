@@ -43,8 +43,12 @@ jobs:
         run: bin/build.sh
         timeout-minutes: 15
 
+      - name: Lint
+        run: ahoy lint
+        timeout-minutes: 10
+
       - name: Unit test
-        run: bin/test.sh
+        run: ahoy test-unit
         timeout-minutes: 10
 
       - name: Scenario test
