@@ -20,6 +20,11 @@ CKAN_GIT_VERSION=$CKAN_VERSION
 CKAN_GIT_ORG=ckan
 
 if [ "$CKAN_VERSION" = "2.10" ]; then
+    if [ "$CKAN_TYPE" = "custom" ]; then
+      CKAN_GIT_VERSION=ckan-2.10.0-qgov.1
+      CKAN_GIT_ORG=qld-gov-au
+    fi
+
     PYTHON_VERSION=py3
     PYTHON="${PYTHON}3"
 else
@@ -44,4 +49,4 @@ sed "s|{CKAN_VERSION}|$CKAN_VERSION|g" .docker/Dockerfile-template.ckan \
     | sed "s|{PYTHON}|$PYTHON|g" \
     > .docker/Dockerfile.ckan
 
-ahoy build || (ahoy logs; exit 1)
+ahoy build

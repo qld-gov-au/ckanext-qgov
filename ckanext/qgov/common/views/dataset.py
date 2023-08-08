@@ -5,7 +5,7 @@ import logging
 from flask import Blueprint
 
 from ckan import model
-from ckan.plugins.toolkit import check_ckan_version, g, get_action,\
+from ckan.plugins.toolkit import check_ckan_version, g, get_action, \
     redirect_to, url_for, ObjectNotFound, NotAuthorized
 from ckan.views import dataset, resource
 
