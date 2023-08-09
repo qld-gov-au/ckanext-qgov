@@ -146,10 +146,16 @@ commands:
       ahoy title 'Run scenario tests'
       ahoy cli "rm -f test/screenshots/*"
       ahoy start-mailmock &
-      sleep 5 &&
-      ahoy cli "behave -k ${*:-test/features}" --tags=smoke $BEHAVE_TAGS && \
-      ahoy cli "behave -k ${*:-test/features} $BEHAVE_TAGS" || \
-      [ "${ALLOW_BDD_FAIL:-0}" -eq 1 ]
+      sleep 5
+      if [ "$BEHAVE_TAG" = "" ]; then
+        (ahoy cli "behave -k ${*:-test/features} --tags=smoke" \
+         && ahoy cli "behave -k ${*:-test/features}"
+        ) || [ "${ALLOW_BDD_FAIL:-0}" -eq 1 ]
+      else
+        # run tests with the specified tag
+        ahoy cli "behave -k ${*:-test/features} --tags=$BEHAVE_TAG" \
+          || [ "${ALLOW_BDD_FAIL:-0}" -eq 1 ]
+      fi
       ahoy stop-mailmock
 
   start-mailmock:

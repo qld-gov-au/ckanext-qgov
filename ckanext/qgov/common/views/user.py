@@ -1,28 +1,12 @@
 # encoding: utf-8
 
-from six import text_type as str
-
 from flask import Blueprint
 
-import ckan.lib.helpers as h
-from ckan.plugins.toolkit import _, g, request, redirect_to, url_for
-from ckan.views.user import login, me, EditView
+from ckan.plugins.toolkit import g, redirect_to, url_for
+import ckan.views.user
+from ckan.views.user import _ as original_gettext, EditView
 
 blueprint = Blueprint(u'user_overrides', __name__)
-
-
-def logged_in_override():
-    """
-    Override default CKAN behaviour to only redirect user to `came_from` URL if they are logged in.
-    Ref.: ckan/views/user.py > def logged_in()
-    :return:
-    """
-    if g.user:
-        came_from = request.params.get(u'came_from', None)
-        return redirect_to(str(came_from)) if came_from and h.url_is_local(came_from) else me()
-    else:
-        h.flash_error(_(u'Login failed. Bad username or password or reCAPTCHA.'))
-        return login()
 
 
 def user_edit_override():
@@ -39,8 +23,15 @@ def user_edit_override():
     return EditView().dispatch_request()
 
 
-blueprint.add_url_rule(u'/user/logged_in', u'logged_in', logged_in_override)
+def _gettext_wrapper(key):
+    translation = original_gettext(key)
+    if key == 'Login failed. Bad username or password.':
+        translation = translation.replace('or password.', 'or password or reCAPTCHA.')
+    return translation
+
+
 blueprint.add_url_rule(u'/user/edit', u'edit', user_edit_override)
+ckan.views.user._ = _gettext_wrapper
 
 
 def get_blueprints():

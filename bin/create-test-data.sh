@@ -100,14 +100,6 @@ organisation_create=$( \
 )
 echo ${organisation_create}
 
-echo "Updating organisation_admin to have admin privileges in the department-of-health Organisation:"
-organisation_admin_update=$( \
-    curl -LsH "Authorization: ${API_KEY}" \
-    --data "id=department-of-health&username=organisation_admin&role=admin" \
-    ${CKAN_ACTION_URL}/organization_member_create
-)
-echo ${organisation_admin_update}
-
 echo "Creating non-organisation group:"
 group_create=$( \
     curl -LsH "Authorization: ${API_KEY}" \
