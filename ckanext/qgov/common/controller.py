@@ -17,7 +17,7 @@ import ckan.lib.helpers as h
 from ckan import model
 from ckan.controllers.package import PackageController
 from ckan.lib.render import TemplateNotFound
-from ckan.plugins.toolkit import _, abort, asbool, config, g, get_action,\
+from ckan.plugins.toolkit import _, abort, asbool, config, g, get_action, \
     redirect_to, render, request, url_for, ObjectNotFound, NotAuthorized
 
 LOG = getLogger(__name__)

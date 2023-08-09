@@ -9,10 +9,10 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.x'
       - name: Install requirements
@@ -28,7 +28,7 @@ jobs:
         ckan-version: ["2.10", 2.9, 2.9-py2]
         ckan-type: ['vanilla', 'custom']
 
-    name: Test on CKAN ${{ matrix.ckan-version }} ${{ matrix.ckan-type }}
+    name: CKAN ${{ matrix.ckan-version }} ${{ matrix.ckan-type }}
     runs-on: ubuntu-latest
     container: drevops/ci-builder
     env:
@@ -43,16 +43,18 @@ jobs:
         run: bin/build.sh
         timeout-minutes: 15
 
-      - name: Test
-        run: |
-          ahoy lint
-          ahoy test-unit
+      - name: Lint
+        run: ahoy lint
         timeout-minutes: 10
 
-      - name: Test BDD
+      - name: Unit test
+        run: ahoy test-unit
+        timeout-minutes: 10
+
+      - name: Scenario test
         run: |
-           ahoy install-site
-           ahoy test-bdd
+          ahoy install-site
+          ahoy test-bdd
         timeout-minutes: 30
 
       - name: Retrieve logs

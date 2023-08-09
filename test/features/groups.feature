@@ -19,9 +19,9 @@ Feature: Group APIs
         Then I should see an element with xpath "//*[contains(string(), '"success": false') and contains(string(), 'Authorization Error')]"
 
         Examples: Non-admin users
-            | Persona             |
-            | Organisation Admin  |
-            | Walker              |
+            | Persona       |
+            | TestOrgAdmin  |
+            | Walker        |
 
     @unauthenticated
     Scenario: Group membership is not accessible anonymously
@@ -33,7 +33,7 @@ Feature: Group APIs
     Scenario: Group overview is accessible to everyone
         Given "Unauthenticated" as the persona
         When I go to "/group"
-        Then I should see "silly-walks"
+        Then I should see "Silly walks"
         And I should not see an element with xpath "//a[contains(@href, '?action=read')]"
         And I should see an element with xpath "//a[contains(@href, '/group/silly-walks')]"
 
