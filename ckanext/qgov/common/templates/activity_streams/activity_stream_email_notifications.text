@@ -1,25 +1,23 @@
-{%- set num = activities|length -%}
+{% set num = activities|length %}{{ ngettext("You have {num} new activity on your {site_title} dashboard", "You have {num} new activities on your {site_title} dashboard", num).format(site_title=g.site_title if g else site_title, num=num) }} {{ _('To view your dashboard, click on this link:') }}
 
-{{ ungettext("You have {num} new activity on your {site_title} dashboard", "You have {num} new activities on your {site_title} dashboard", num).format(site_title=g.site_title, num=num) }}:
+{% url_for 'activity.dashboard', _external=True %}
 
 {% for activity in activities -%}
     {%- set data = activity['data'] if activity['data'] else None -%}
     {%- set activity_type = activity['activity_type'] if activity['activity_type'] else None -%}
+    {%- set id = activity['object_id'] -%}
     {%- if data -%}
         {%- if data['package'] -%}
-            {%- set id = data['package']['name'] -%}
-            {%- set action = 'dataset_read' -%}
+            {%- set name = data['package']['title'] -%}
+            {%- set action = 'dataset.read' -%}
         {%- elif data['group'] -%}
-            {%- set id = data['group']['name'] -%}
-            {%- set action = 'organization_read' if data['group']['is_organization'] else 'group_read' -%}
+            {%- set name = data['group']['title'] -%}
+            {%- set action = 'organization.read' if activity_type == 'changed organization' else 'group.read' -%}
         {%- endif -%}
     {%- endif -%}
-    {% if action and id %}{{ h.url_for(action, id=id, _external=True) }}{% if activity_type %} ({{ h.activity_type_nice(activity_type)|capitalize }}){% endif %}{% endif %}
+    {% if action and id %}{{name}} {% if activity_type %}({{ (activity_type|replace('organization', _('organization'))|replace('package', 'dataset')|capitalize).split()|reverse|join(' ') }}){% endif %} {% url_for action, id=id, _external=True %}{% endif %}
 {% endfor %}
-{{ _('To view your dashboard, click on this link:') }}
 
-{{ g.site_url + '/dashboard' }}
+{{ _('You can turn off these email notifications in your {site_title} preferences. To change your preferences, click on this link:').format(site_title=g.site_title if g else site_title) }}
 
-{{ _('You can turn off these email notifications in your {site_title} preferences. To change your preferences, click on this link:').format(site_title=g.site_title) }}
-
-{{ g.site_url + '/user/edit' }}
+{% url_for 'user.edit', _external=True %}
