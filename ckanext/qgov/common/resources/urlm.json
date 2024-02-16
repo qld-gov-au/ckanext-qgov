@@ -35,13 +35,9 @@
     "url" : "https://test.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",
     "proxy" : null
   },
-  "data-local" : {
+  "ckan:5000" : {
     "url" : "https://test.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",
-    "proxy" : "proxy:3128"
-  },
-  "epub-local" : {
-    "url" : "https://test.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",
-    "proxy" : "proxy:3128"
+    "proxy" : null
   },
   "127.0.0.1:5000" : {
     "url" : "https://test.smartservice.qld.gov.au/services/url/translate/v3.json?sourceurl={source}",

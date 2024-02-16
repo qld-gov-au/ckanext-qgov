@@ -1,8 +1,9 @@
 # encoding: utf-8
 
 import pytest
+
 from ckan.model import User
-import ckan.lib.create_test_data as ctd
+from ckan.lib import authenticator as core_authenticator, create_test_data as ctd
 from ckan.plugins.toolkit import check_ckan_version
 
 if check_ckan_version('2.10'):
@@ -15,6 +16,15 @@ else:
         return qgov_authenticator.authenticate(None, identity)
 
 CreateTestData = ctd.CreateTestData
+
+
+class MockGlobal(object):
+
+    def __init__(self):
+        self.recaptcha_publickey = None
+
+
+core_authenticator.g = MockGlobal()
 
 
 @pytest.mark.usefixtures("clean_db")

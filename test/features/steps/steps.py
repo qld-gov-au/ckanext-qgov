@@ -27,7 +27,7 @@ def debug_screenshot(context):
     """
     if context.persona and context.persona.get('debug') == 'True':
         context.execute_steps(u"""
-            Then I take a screenshot
+            When I take a screenshot
         """)
 
 
@@ -59,7 +59,7 @@ def log_in(context):
 @when(u'I expand the browser height')
 def expand_height(context):
     # Work around x=null bug in Selenium set_window_size
-    context.browser.driver.set_window_rect(x=0, y=0, width=1024, height=4096)
+    context.browser.driver.set_window_rect(x=0, y=0, width=1024, height=3072)
 
 
 @when(u'I log in directly')
@@ -73,7 +73,7 @@ def log_in_directly(context):
     assert context.persona, "A persona is required to log in, found [{}] in context. Have you configured the personas in before_scenario?".format(context.persona)
     context.execute_steps(u"""
         When I attempt to log in with password "$password"
-        Then I should see an element with xpath "//a[@title='Log out']"
+        Then I should see an element with xpath "//*[@title='Log out']/i[contains(@class, 'fa-sign-out')]"
     """)
 
 
@@ -120,10 +120,18 @@ def clear_url(context):
 
 @when(u'I confirm the dialog containing "{text}" if present')
 def confirm_dialog_if_present(context, text):
-    if context.browser.is_text_present(text):
-        context.execute_steps(u"""
-            When I press the element with xpath "//button[contains(@class, 'btn-primary') and contains(string(), 'Confirm')]"
-        """)
+    dialog_xpath = "//*[contains(@class, 'modal-dialog') and contains(string(), '{0}')]".format(text)
+    if context.browser.is_element_present_by_xpath(dialog_xpath):
+        parent_xpath = dialog_xpath
+    elif context.browser.is_text_present(text):
+        parent_xpath = "//div[contains(string(), '{0}')]/..".format(text)
+    else:
+        return
+    button_xpath = parent_xpath + "//button[contains(@class, 'btn-primary')]"
+    context.execute_steps(u"""
+        When I take a debugging screenshot
+        And I press the element with xpath "{0}"
+    """.format(button_xpath))
 
 
 @when(u'I confirm dataset deletion')
@@ -157,6 +165,7 @@ def go_to_new_resource_form(context, name):
         context.execute_steps(u"""
             When I press "Resources"
             And I press "Add new resource"
+            And I take a debugging screenshot
         """)
 
 
@@ -166,6 +175,7 @@ def title_random_text(context):
     context.execute_steps(u"""
         When I fill in "title" with "Test Title {0}"
         And I fill in "name" with "test-title-{0}" if present
+        And I set "last_generated_title" to "Test Title {0}"
         And I set "last_generated_name" to "test-title-{0}"
     """.format(uuid.uuid4()))
 
@@ -181,6 +191,7 @@ def go_to_dataset_page(context):
 def go_to_dataset(context, name):
     context.execute_steps(u"""
         When I visit "/dataset/{0}"
+        And I take a debugging screenshot
     """.format(name))
 
 
@@ -201,9 +212,11 @@ def select_licence(context, licence_id):
 
 @when(u'I enter the resource URL "{url}"')
 def enter_resource_url(context, url):
-    context.execute_steps(u"""
-        When I execute the script "$('#resource-edit [name=url]').val('{0}')"
-    """.format(url))
+    if url != "default":
+        context.execute_steps(u"""
+            When I clear the URL field
+            When I execute the script "$('#resource-edit [name=url]').val('{0}')"
+        """.format(url))
 
 
 @when(u'I fill in default dataset fields')
@@ -239,7 +252,7 @@ def fill_in_default_link_resource_fields(context):
 @when(u'I upload "{file_name}" of type "{file_format}" to resource')
 def upload_file_to_resource(context, file_name, file_format):
     context.execute_steps(u"""
-        When I execute the script "button = document.getElementById('resource-upload-button'); if (button) button.click();"
+        When I execute the script "$('#resource-upload-button').trigger(click);"
         And I attach the file "{file_name}" to "upload"
         # Don't quote the injected string since it can have trailing spaces
         And I execute the script "document.getElementById('field-format').value='{file_format}'"
@@ -336,28 +349,21 @@ def _parse_params(param_string):
     return six.iteritems(params)
 
 
-# Enter a JSON schema value
-# This can require JavaScript interaction, and doesn't fit well into
-# a step invocation due to all the double quotes.
-def _enter_manual_schema(context, schema_json):
-    # Click the button to select manual JSON input if it exists
-    context.execute_steps(u"""
-        When I execute the script "$('a.btn[title*=JSON]:contains(JSON)').click();"
-    """)
-    # Call function directly so we can properly quote our parameter
-    forms.fill_in_elem_by_name(context, "schema_json", schema_json)
-
-
 def _create_dataset_from_params(context, params):
     context.execute_steps(u"""
         When I visit "/dataset/new"
         And I fill in default dataset fields
     """)
+    if 'private' not in params:
+        params = params + "::private=False"
     for key, value in _parse_params(params):
         if key == "name":
+            # 'name' doesn't need special input, but we want to remember it
             context.execute_steps(u"""
                 When I set "last_generated_name" to "{0}"
             """.format(value))
+
+        # Don't use elif here, we still want to type 'name' as usual
         if key == "owner_org":
             # Owner org uses UUIDs as its values, so we need to rely on displayed text
             context.execute_steps(u"""
@@ -371,17 +377,6 @@ def _create_dataset_from_params(context, params):
             context.execute_steps(u"""
                 When I select the "{0}" licence
             """.format(value))
-        elif key == "schema_json":
-            if value == "default":
-                value = """
-                    {"fields": [
-                        {"format": "default", "name": "Game Number", "type": "integer"},
-                        {"format": "default", "name": "Game Length", "type": "integer"}
-                    ],
-                    "missingValues": ["Default schema"]
-                    }
-                """
-            _enter_manual_schema(context, value)
         else:
             context.execute_steps(u"""
                 When I fill in "{0}" with "{1}" if present
@@ -410,10 +405,6 @@ def create_dataset_and_resource_from_params(context, params, resource_params):
     """.format(resource_params))
 
 
-def _is_truthy(text):
-    return text and text.lower() in ["true", "t", "yes", "y"]
-
-
 # Creates a resource using default values apart from the ones specified.
 # The browser should already be on the create/edit resource page.
 @when(u'I create a resource with key-value parameters "{resource_params}"')
@@ -424,11 +415,9 @@ def create_resource_from_params(context, resource_params):
     """)
     for key, value in _parse_params(resource_params):
         if key == "url":
-            if value != "default":
-                context.execute_steps(u"""
-                    When I clear the URL field
-                    And I execute the script "$('#resource-edit [name=url]').val('{0}')"
-                """.format(value))
+            context.execute_steps(u"""
+                When I enter the resource URL "{0}"
+            """.format(value))
         elif key == "upload":
             if value == "default":
                 value = "test_game_data.csv"
@@ -441,36 +430,6 @@ def create_resource_from_params(context, resource_params):
             context.execute_steps(u"""
                 When I execute the script "document.getElementById('field-format').value='{0}'"
             """.format(value))
-        elif key in ["align_default_schema"]:
-            action = "check" if _is_truthy(value) else "uncheck"
-            context.execute_steps(u"""
-                When I {0} "{1}"
-            """.format(action, key))
-        elif key == "resource_visible":
-            option = "TRUE" if _is_truthy(value) else "FALSE"
-            context.execute_steps(u"""
-                When I select "{1}" from "{0}"
-            """.format(key, option))
-        elif key in ["governance_acknowledgement", "request_privacy_assessment"]:
-            option = "YES" if _is_truthy(value) else "NO"
-            context.execute_steps(u"""
-                When I select "{1}" from "{0}"
-            """.format(key, option))
-        elif key == "schema":
-            if value == "default":
-                value = """{
-                    "fields": [{
-                        "format": "default",
-                        "name": "Game Number",
-                        "type": "integer"
-                    }, {
-                        "format": "default",
-                        "name": "Game Length",
-                        "type": "integer"
-                    }],
-                    "missingValues": ["Resource schema"]
-                }"""
-            _enter_manual_schema(context, value)
         else:
             context.execute_steps(u"""
                 When I fill in "{0}" with "{1}" if present
@@ -503,7 +462,7 @@ def should_receive_base64_email_containing_texts(context, address, text, text2):
         else:
             import base64
             decoded_payload = six.ensure_text(base64.b64decode(six.ensure_binary(payload_bytes)))
-        print('decoded_payload: ', decoded_payload)
+        print('Searching for', text, ' and ', text2, ' in decoded_payload: ', decoded_payload)
         return text in decoded_payload and (not text2 or text2 in decoded_payload)
 
     assert context.mail.user_messages(address, filter_contents)
@@ -519,7 +478,7 @@ def go_to_admin_config(context):
 @when(u'I log out')
 def log_out(context):
     context.execute_steps(u"""
-        When I visit "/user/_logout"
+        When I press the element with xpath "//*[@title='Log out']"
         Then I should see "Log in"
     """)
 
