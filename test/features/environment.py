@@ -103,4 +103,5 @@ def before_scenario(context, scenario):
 
 
 def after_scenario(context, scenario):
+    os.system("ckan_cli jobs clear")
     benv.after_scenario(context, scenario)
