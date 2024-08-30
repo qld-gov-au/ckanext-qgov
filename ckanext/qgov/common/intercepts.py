@@ -49,6 +49,9 @@ def configure(config):
 
 def set_intercepts():
     """ Monkey-patch to wrap/override core functions with our own.
+    Theoretically, some of these steps may be redundant,
+    but to avoid race conditions (eg 'validators' read a value before we patched)
+    we perform them all.
     """
     validators.user_password_validator = user_password_validator
 
@@ -105,7 +108,7 @@ def user_password_validator(key, data, errors, context):
         errors[('password',)].append(_('Passwords must be strings'))
     elif value == '':
         pass
-    elif not len(value) >= password_min_length:
+    elif len(value) < password_min_length:
         errors[('password',)].append(
             _('Your password must be {min} characters or longer'.format(min=password_min_length))
         )
@@ -183,6 +186,7 @@ def default_update_user_schema():
     user_schema = _apply_schema_validator(
         user_schema, 'fullname',
         validator_name='not_empty', validator=not_empty)
+    user_schema = user_creation_helpers.add_custom_validator_to_user_schema(user_schema)
     return user_schema
 
 
@@ -204,8 +208,6 @@ def user_update(original_action, context, data_dict):
     '''
     Unlock an account when the password is reset.
     '''
-    modified_schema = context.get('schema') or default_user_schema()
-    context['schema'] = user_creation_helpers.add_custom_validator_to_user_schema(modified_schema)
     return_value = original_action(context, data_dict)
     if u'reset_key' in data_dict:
         account_id = ckan.logic.get_or_bust(data_dict, 'id')
