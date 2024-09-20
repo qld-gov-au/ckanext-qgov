@@ -25,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ckan-version: ["2.10", 2.9, 2.9-py2]
+        ckan-version: ["2.10"]
         ckan-type: ['vanilla', 'custom']
 
     name: CKAN ${{ matrix.ckan-version }} ${{ matrix.ckan-type }}
