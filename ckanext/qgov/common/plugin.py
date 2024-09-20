@@ -154,9 +154,11 @@ class QGOVPlugin(SingletonPlugin):
         if hasattr(app, 'errorhandler'):
             @app.errorhandler(404)
             def handle_not_found(e):
-                from flask import redirect, request
+                from flask import redirect, request, get_flashed_messages
                 redirect_url = urlm.get_purl_response(request.base_url)
                 if redirect_url:
+                    # eat the 'page not found' message as it's obsolete
+                    get_flashed_messages()
                     return redirect(redirect_url, 301)
                 else:
                     # copy default error handling
