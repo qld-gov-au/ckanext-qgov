@@ -157,7 +157,6 @@ Feature: User APIs
     Scenario: As a sysadmin, when I go to the sysadmin list, I can promote and demote other sysadmins
         Given "SysAdmin" as the persona
         When I log in
-        And I set "debug" to "True"
         And I click the link to a url that contains "/ckan-admin/"
         And I take a debugging screenshot
         Then I should see an element with xpath "//table//a[string() = 'Administrator' and @href = '/user/admin']"
