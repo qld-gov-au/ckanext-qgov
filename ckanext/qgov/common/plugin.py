@@ -22,9 +22,6 @@ from .stats import Stats
 from .user_creation import validators as user_creation_validators
 from .user_creation.logic.actions import create as user_creation_create_actions
 
-# workaround for https://github.com/ckan/ckan/issues/6678
-from ckan.views import dataset as dataset_view, resource  # noqa: F401
-
 LOG = getLogger(__name__)
 
 IP_ADDRESS = re.compile(r'^({0}[.]){{3}}{0}$'.format(r'[0-9]{1,3}'))
@@ -179,9 +176,8 @@ class QGOVPlugin(SingletonPlugin):
         user to the `came_from` URL if they are logged in.
         :return:
         """
-        from .views import user, dataset, assets
+        from .views import user, assets
         blueprints = user.get_blueprints()
-        blueprints.extend(dataset.get_blueprints())
         blueprints.extend(assets.get_blueprints())
         return blueprints
 
