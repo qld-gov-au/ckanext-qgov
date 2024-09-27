@@ -7,12 +7,13 @@ on:
       - master
 
 jobs:
+  # Quick check so we don't waste minutes if there's a Flake8 error
   lint:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
       - name: Install requirements
@@ -23,20 +24,24 @@ jobs:
   test:
     needs: lint
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         ckan-version: ["2.10"]
         ckan-type: ['vanilla', 'custom']
 
     name: CKAN ${{ matrix.ckan-version }} ${{ matrix.ckan-type }}
     runs-on: ubuntu-latest
-    container: drevops/ci-builder:23.7.0
+    container: drevops/ci-runner:23.12.0
     env:
       CKAN_VERSION: ${{ matrix.ckan-version }}
       CKAN_TYPE: ${{ matrix.ckan-type }}
 
     steps:
-      - uses: actions/checkout@v3
+      # Patch https://github.com/actions/runner/issues/863
+      - name: Preserve $HOME set in the container
+        run: echo HOME=/root >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v4
         timeout-minutes: 2
 
       - name: Build
@@ -58,12 +63,12 @@ jobs:
         timeout-minutes: 30
 
       - name: Retrieve logs
-        if: failure()
+        if: always()
         run: ahoy logs
-        timeout-minutes: 5
+        timeout-minutes: 1
 
       - name: Retrieve screenshots
-        if: failure()
+        if: always()
         run: bin/process-artifacts.sh
         timeout-minutes: 1
 
