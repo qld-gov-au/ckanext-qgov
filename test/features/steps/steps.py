@@ -15,6 +15,7 @@ import base64
 if not hasattr(base64, 'encodestring'):
     base64.encodestring = base64.encodebytes
 
+
 # Monkey-patch Behaving to handle function rename
 from behaving.web.steps import forms
 if not hasattr(forms, 'fill_in_elem_by_name'):
@@ -436,7 +437,7 @@ def create_resource_from_params(context, resource_params):
             """.format(key, value))
     context.execute_steps(u"""
         When I take a debugging screenshot
-        And I press the element with xpath "//form[contains(@class, 'resource-form')]//button[contains(@class, 'btn-primary')]"
+        And I press the element with xpath "//form[contains(@data-module, 'resource-form')]//button[contains(@class, 'btn-primary')]"
         And I take a debugging screenshot
     """)
 
