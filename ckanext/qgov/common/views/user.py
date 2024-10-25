@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 from flask import Blueprint
+from typing import Any
 
 from ckan.plugins.toolkit import g, redirect_to, url_for
 import ckan.views.user
@@ -23,9 +24,9 @@ def user_edit_override():
     return EditView().dispatch_request()
 
 
-def _gettext_wrapper(key):
-    translation = original_gettext(key)
-    if key == 'Login failed. Bad username or password.':
+def _gettext_wrapper(*args: Any, **kwargs: Any):
+    translation = original_gettext(*args, **kwargs)
+    if 'Bad username or password.' in translation:
         translation = translation.replace('or password.', 'or password or reCAPTCHA.')
     return translation
 
