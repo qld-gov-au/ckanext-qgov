@@ -27,6 +27,8 @@ services:
         condition: service_healthy
       solr:
         condition: service_started
+      redis:
+        condition: service_started
     networks:
       - amazeeio-network
       - default
