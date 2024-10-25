@@ -61,7 +61,7 @@ services:
       - default
 
   solr:
-    image: ckan/ckan-solr:${CKAN_VERSION}
+    image: ckan/ckan-solr:${CKAN_VERSION}-solr9
     ports:
       - "8983"
     environment:
