@@ -26,7 +26,9 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        ckan-version: ["2.11", "2.10"]
+        ckan-version: ["2.10"]
+        # Need to wait for 2.11.1 to fix org page
+        #ckan-version: ["2.11", "2.10"]
         ckan-type: ['vanilla', 'custom']
 
     name: CKAN ${{ matrix.ckan-version }} ${{ matrix.ckan-type }}
