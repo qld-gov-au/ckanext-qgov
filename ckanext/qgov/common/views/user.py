@@ -4,8 +4,7 @@ from flask import Blueprint
 from typing import Any
 
 from ckan.plugins.toolkit import g, redirect_to, url_for
-import ckan.views.user
-from ckan.views.user import _ as original_gettext, EditView
+from ckan.views import user as user_view
 
 blueprint = Blueprint(u'user_overrides', __name__)
 
@@ -21,7 +20,7 @@ def user_edit_override():
         return redirect_to(url_for(
             u'user.login',
             came_from=url_for(u'user.edit')))
-    return EditView().dispatch_request()
+    return user_view.EditView().dispatch_request()
 
 
 def _gettext_wrapper(*args: Any, **kwargs: Any):
@@ -32,7 +31,8 @@ def _gettext_wrapper(*args: Any, **kwargs: Any):
 
 
 blueprint.add_url_rule(u'/user/edit', u'edit', user_edit_override)
-ckan.views.user._ = _gettext_wrapper
+original_gettext = user_view._
+user_view._ = _gettext_wrapper
 
 
 def get_blueprints():
