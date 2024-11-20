@@ -4,7 +4,6 @@
 
 from logging import getLogger
 import re
-import six
 
 from ckan.lib.navl.dictization_functions import Missing
 from ckan.lib.navl.validators import ignore_missing, not_empty
@@ -59,7 +58,7 @@ def user_password_validator(key, data, errors, context):
 
     if isinstance(value, Missing):
         pass
-    elif not isinstance(value, six.string_types):
+    elif not isinstance(value, str):
         errors[('password',)].append(_('Passwords must be strings'))
     elif value == '':
         pass

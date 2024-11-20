@@ -2,7 +2,6 @@ import datetime
 import email
 import quopri
 import requests
-import six
 import uuid
 
 from behave import when, then
@@ -14,7 +13,6 @@ from behaving.web.steps import *  # noqa: F401, F403
 import base64
 if not hasattr(base64, 'encodestring'):
     base64.encodestring = base64.encodebytes
-
 
 # Monkey-patch Behaving to handle function rename
 from behaving.web.steps import forms
@@ -350,7 +348,7 @@ def _parse_params(param_string):
     for param in param_string.split("::"):
         entry = param.split("=", 1)
         params[entry[0]] = entry[1] if len(entry) > 1 else ""
-    return six.iteritems(params)
+    return params.items()
 
 
 def _create_dataset_from_params(context, params):
@@ -461,11 +459,7 @@ def should_receive_base64_email_containing_texts(context, address, text, text2):
         payload_bytes = quopri.decodestring(payload)
         if len(payload_bytes) > 0:
             payload_bytes += b'='  # do fix the padding error issue
-        if six.PY2:
-            decoded_payload = payload_bytes.decode('base64')
-        else:
-            import base64
-            decoded_payload = six.ensure_text(base64.b64decode(six.ensure_binary(payload_bytes)))
+        decoded_payload = base64.b64decode(payload_bytes.encode()).decode()
         print('Searching for', text, ' and ', text2, ' in decoded_payload: ', decoded_payload)
         return text in decoded_payload and (not text2 or text2 in decoded_payload)
 

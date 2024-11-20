@@ -3,7 +3,6 @@
 """
 from ckan import model
 from sqlalchemy import and_, func, select, Table
-from six import text_type as str
 
 
 def table(name):
