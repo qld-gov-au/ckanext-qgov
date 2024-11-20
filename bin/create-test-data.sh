@@ -9,7 +9,7 @@ CKAN_USER_NAME="${CKAN_USER_NAME:-admin}"
 CKAN_DISPLAY_NAME="${CKAN_DISPLAY_NAME:-Administrator}"
 CKAN_USER_EMAIL="${CKAN_USER_EMAIL:-admin@localhost}"
 
-. ${APP_DIR}/bin/activate
+. "${APP_DIR}"/bin/activate
 
 add_user_if_needed () {
     echo "Adding user '$2' ($1) with email address [$3]"
@@ -52,7 +52,7 @@ TEST_ORG=$( \
         "description": "Organisation for testing issues"}' organization_create
 )
 
-TEST_ORG_ID=$(echo $TEST_ORG | $PYTHON ${APP_DIR}/bin/extract-id.py)
+TEST_ORG_ID=$(echo $TEST_ORG | $PYTHON "${APP_DIR}"/bin/extract-id.py)
 
 echo "Assigning test users to '${TEST_ORG_TITLE}' organisation (${TEST_ORG_ID}):"
 
@@ -111,4 +111,4 @@ echo "Creating config value for excluded display name words:"
 
 api_call '{"ckanext.data_qld.excluded_display_name_words": "gov"}' config_option_update
 
-. ${APP_DIR}/bin/deactivate
+. "${APP_DIR}"/bin/deactivate
