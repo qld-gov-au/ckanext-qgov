@@ -71,6 +71,7 @@ class QGOVPlugin(SingletonPlugin):
     implements(plugins.IResourceController, inherit=True)
     implements(plugins.IMiddleware, inherit=True)
     implements(plugins.IBlueprint)
+    implements(plugins.ITranslation, inherit=True)
 
     # IConfigurer
 
@@ -258,3 +259,8 @@ class QGOVPlugin(SingletonPlugin):
                 get_action('package_resource_reorder')(context, {'id': package_id, 'order': [resource_id]})
             except Exception as e:
                 LOG.error("Failed to move new resource to first position: %s", e)
+
+    # ITranslation
+
+    def i18n_directory(self):
+        return os.path.join(os.path.dirname(__file__), 'i18n')

@@ -7,6 +7,5 @@ Faker
 flake8==3.8.3
 mock
 pytest-ckan
-six>=1.13.0
 splinter>=0.13.0,<0.17
 

@@ -168,6 +168,6 @@ Feature: User APIs
         Then I should see "Promoted Test Admin to sysadmin"
         And I should see an element with xpath "//table//a[string() = 'Test Admin' and @href = '/user/test_org_admin']"
 
-        When I press the element with xpath "//tr/td/a[@href = '/user/test_org_admin']/../following-sibling::td//button[contains(@title, 'Revoke')]"
+        When I press the element with xpath "//tr/td/a[@href = '/user/test_org_admin']/../following-sibling::td//button[contains(@title, 'Revoke') or contains(@data-bs-title, 'Revoke')]"
         Then I should see "Revoked sysadmin permission from Test Admin"
         And I should not see an element with xpath "//table//a[@href = '/user/test_org_admin']"

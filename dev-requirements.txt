@@ -6,5 +6,3 @@ flake8==6.0.0
 mock
 pytest-ckan
 selenium<4.10
-six>=1.13.0
-

@@ -28,6 +28,12 @@ jobs:
       matrix:
         ckan-version: ["2.10"]
         ckan-type: ['vanilla', 'custom']
+        experimental: [false]
+        include:
+          - ckan-version: '2.11'
+            experimental: true  # Need to wait for 2.11.1 to fix org page
+          - ckan-version: 'master'
+            experimental: true  #master is unstable, good to know if we are compatible or not
 
     name: CKAN ${{ matrix.ckan-version }} ${{ matrix.ckan-type }}
     runs-on: ubuntu-latest
@@ -42,21 +48,26 @@ jobs:
         run: echo HOME=/root >> "$GITHUB_ENV"
 
       - uses: actions/checkout@v4
+        continue-on-error: ${{ matrix.experimental }}
         timeout-minutes: 2
 
       - name: Build
+        continue-on-error: ${{ matrix.experimental }}
         run: bin/build.sh
         timeout-minutes: 15
 
       - name: Lint
+        continue-on-error: ${{ matrix.experimental }}
         run: ahoy lint
         timeout-minutes: 10
 
       - name: Unit test
+        continue-on-error: ${{ matrix.experimental }}
         run: ahoy test-unit
         timeout-minutes: 10
 
       - name: Scenario test
+        continue-on-error: ${{ matrix.experimental }}
         run: |
           ahoy install-site
           ahoy test-bdd
@@ -65,16 +76,26 @@ jobs:
       - name: Retrieve logs
         if: always()
         run: ahoy logs
+        continue-on-error: ${{ matrix.experimental }}
         timeout-minutes: 1
 
-      - name: Retrieve screenshots
+      - name: Retrieve results
         if: always()
         run: bin/process-artifacts.sh
+        continue-on-error: ${{ matrix.experimental }}
         timeout-minutes: 1
 
+      - name: Test Summary
+        uses: test-summary/action@v2
+        continue-on-error: ${{ matrix.experimental }}
+        with:
+          paths: "/tmp/artifacts/junit/*.xml"
+        if: always()
+
       - name: Upload screenshots
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v4
+        continue-on-error: ${{ matrix.experimental }}
         with:
           name: CKAN ${{ matrix.ckan-version }} screenshots
           path: /tmp/artifacts/behave/screenshots
