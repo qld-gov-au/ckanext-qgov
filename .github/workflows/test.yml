@@ -31,7 +31,7 @@ jobs:
         experimental: [false]
         include:
           - ckan-version: '2.11'
-            experimental: true  # Need to wait for 2.11.1 to fix org page
+            experimental: true
           - ckan-version: 'master'
             experimental: true  #master is unstable, good to know if we are compatible or not
 
