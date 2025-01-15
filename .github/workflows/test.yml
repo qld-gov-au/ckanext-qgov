@@ -27,19 +27,23 @@ jobs:
       fail-fast: true
       matrix:
         ckan-version: ["2.10"]
+        solr-version: ["8"]
         ckan-type: ['vanilla', 'custom']
         experimental: [false]
         include:
           - ckan-version: '2.11'
-            experimental: true  # Need to wait for 2.11.1 to fix org page
+            solr-version: "9"
+            experimental: true
           - ckan-version: 'master'
+            solr-version: "9"
             experimental: true  #master is unstable, good to know if we are compatible or not
 
-    name: CKAN ${{ matrix.ckan-version }} ${{ matrix.ckan-type }}
+    name: ${{ matrix.experimental && '**Fail_Ignored** ' || '' }} CKAN ${{ matrix.ckan-version }} ${{ matrix.ckan-type }}
     runs-on: ubuntu-latest
     container: drevops/ci-runner:23.12.0
     env:
       CKAN_VERSION: ${{ matrix.ckan-version }}
+      SOLR_VERSION: ${{ matrix.solr-version }}
       CKAN_TYPE: ${{ matrix.ckan-type }}
 
     steps:
@@ -52,38 +56,38 @@ jobs:
         timeout-minutes: 2
 
       - name: Build
-        continue-on-error: ${{ matrix.experimental }}
         run: bin/build.sh
         timeout-minutes: 15
+        continue-on-error: ${{ matrix.experimental }}
 
       - name: Lint
-        continue-on-error: ${{ matrix.experimental }}
         run: ahoy lint
         timeout-minutes: 10
+        continue-on-error: ${{ matrix.experimental }}
 
       - name: Unit test
-        continue-on-error: ${{ matrix.experimental }}
         run: ahoy test-unit
         timeout-minutes: 10
+        continue-on-error: ${{ matrix.experimental }}
 
       - name: Scenario test
-        continue-on-error: ${{ matrix.experimental }}
         run: |
           ahoy install-site
           ahoy test-bdd
         timeout-minutes: 30
+        continue-on-error: ${{ matrix.experimental }}
 
       - name: Retrieve logs
         if: always()
         run: ahoy logs
-        continue-on-error: ${{ matrix.experimental }}
         timeout-minutes: 1
+        continue-on-error: ${{ matrix.experimental }}
 
       - name: Retrieve results
         if: always()
         run: bin/process-artifacts.sh
-        continue-on-error: ${{ matrix.experimental }}
         timeout-minutes: 1
+        continue-on-error: ${{ matrix.experimental }}
 
       - name: Test Summary
         uses: test-summary/action@v2
@@ -95,8 +99,8 @@ jobs:
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4
-        continue-on-error: ${{ matrix.experimental }}
         with:
           name: CKAN ${{ matrix.ckan-version }} screenshots
           path: /tmp/artifacts/behave/screenshots
         timeout-minutes: 1
+        continue-on-error: ${{ matrix.experimental }}

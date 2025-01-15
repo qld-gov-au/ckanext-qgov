@@ -26,7 +26,7 @@ def user_edit_override():
 def _gettext_wrapper(*args: Any, **kwargs: Any):
     translation = original_gettext(*args, **kwargs)
     if 'Bad username or password.' in translation:
-        translation = translation.replace('or password.', 'or password or reCAPTCHA.')
+        translation = translation.replace('or password.', 'or password or CAPTCHA.')
     return translation
 
 

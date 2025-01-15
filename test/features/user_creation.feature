@@ -23,6 +23,7 @@ Feature: User creation
     Scenario: Non logged-in user register to the site.
         Given "Unauthenticated" as the persona
         When I go to register page
+        And I expand the browser height
         Then I should see an element with xpath "//input[@name='fullname']"
         When I fill in "name" with "publisher_user"
         And I fill in "fullname" with "gov user"

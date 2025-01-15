@@ -7,6 +7,7 @@ RUN ORIGINAL_USER=$(id -un)
 ARG SITE_URL=http://ckan:5000/
 ENV PYTHON_VERSION={PYTHON_VERSION}
 ENV CKAN_VERSION={CKAN_VERSION}
+ENV SOLR_VERSION={SOLR_VERSION}
 ENV CKAN_SITE_URL="${SITE_URL}"
 ENV PYTHON={PYTHON}
 
@@ -21,10 +22,6 @@ USER root
 COPY bin/ckan_cli /usr/bin/
 
 RUN chmod +x "${APP_DIR}"/bin/*.sh /usr/bin/ckan_cli
-
-ENV DOCKERIZE_VERSION=v0.6.1
-RUN wget -O - https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-linux-amd64-${DOCKERIZE_VERSION}.tar.gz \
-        | tar -C /usr/local/bin -xzvf -
 
 RUN which ps || apt-get install -y procps
 

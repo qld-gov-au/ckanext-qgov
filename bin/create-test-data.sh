@@ -19,6 +19,10 @@ add_user_if_needed () {
         password="${4:-Password123!}"
 }
 
+api_call () {
+    wget -O - --header="Authorization: ${API_KEY}" --post-data "$1" ${CKAN_ACTION_URL}/$2
+}
+
 add_user_if_needed "$CKAN_USER_NAME" "$CKAN_DISPLAY_NAME" "$CKAN_USER_EMAIL"
 ckan_cli sysadmin add "${CKAN_USER_NAME}"
 
@@ -43,10 +47,6 @@ add_user_if_needed test_org_member "Test Member" test_org_member@localhost
 
 echo "Creating ${TEST_ORG_TITLE} organisation:"
 
-api_call () {
-    wget -O - --header="Authorization: ${API_KEY}" --post-data "$1" ${CKAN_ACTION_URL}/$2
-}
-
 TEST_ORG=$( \
     api_call '{"name": "'"${TEST_ORG_NAME}"'", "title": "'"${TEST_ORG_TITLE}"'",
         "description": "Organisation for testing issues"}' organization_create
@@ -66,6 +66,13 @@ api_call '{"id": "'"${TEST_ORG_ID}"'", "object": "test_org_member", "object_type
 # END.
 #
 
+# Creating test data hierarchy which creates organisations assigned to datasets
+echo "Creating food-standards-agency organisation:"
+organisation_create=$( \
+    api_call "name=food-standards-agency&title=Food%20Standards%20Agency" organization_create
+)
+echo ${organisation_create}
+
 add_user_if_needed group_admin "Group Admin" group_admin@localhost
 add_user_if_needed walker "Walker" walker@localhost
 
@@ -80,12 +87,6 @@ api_call '{"name": "public-test-dataset", "owner_org": "'"${TEST_ORG_ID}"'",
 echo "Creating department-of-health organisation:"
 organisation_create=$( \
     api_call "name=department-of-health&title=Department%20of%20Health" organization_create
-)
-echo ${organisation_create}
-
-echo "Creating food-standards-agency organisation:"
-organisation_create=$( \
-    api_call "name=food-standards-agency&title=Food%20Standards%20Agency" organization_create
 )
 echo ${organisation_create}
 
