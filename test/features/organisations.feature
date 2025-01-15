@@ -46,6 +46,8 @@ Feature: Organization APIs
         When I view the "food-standards-agency" organisation API "not including" users
         Then I should see an element with xpath "//*[contains(string(), '"success": true') and contains(string(), '"name": "food-standards-agency"')]"
 
+    # 'Add Organisation' button is fixed in our fork
+    @custom
     Scenario: Organisation list is accessible via the dashboard
         Given "SysAdmin" as the persona
         When I log in

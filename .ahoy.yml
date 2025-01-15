@@ -173,8 +173,11 @@ commands:
       sleep 5
       JUNIT_OUTPUT="--junit --junit-directory=test/junit/"
       if [ "$BEHAVE_TAG" = "" ]; then
+        if [ "$CKAN_TYPE" != "custom" ]; then
+          BEHAVE_TAG="--tags=-custom"
+        fi
         (ahoy cli "behave $JUNIT_OUTPUT -k ${*:-test/features} --tags=smoke" \
-         && ahoy cli "behave $JUNIT_OUTPUT -k ${*:-test/features} --tags=-smoke"
+         && ahoy cli "behave $JUNIT_OUTPUT -k ${*:-test/features} $BEHAVE_TAG --tags=-smoke"
         ) || [ "${ALLOW_BDD_FAIL:-0}" -eq 1 ]
       else
         # run tests with the specified tag
