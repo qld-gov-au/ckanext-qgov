@@ -118,6 +118,16 @@ Feature: User APIs
         Then I should see my datasets
         And I should see "Add Dataset"
 
+    Scenario: Dashboard news feed can display organisational changes
+        Given "SysAdmin" as the persona
+        When I log in
+        And I go to organisation page
+        And I press "Test Organisation"
+        And I press "Manage"
+        And I press "Update"
+        And I visit "/dashboard"
+        Then I should see an element with xpath "//li[contains(string(), 'updated the organisation')]/a[contains(string(), 'Test Organisation') and contains(@href, '/organization/')]/..//a[contains(string(), 'Administrator') and @href='/user/admin']"
+
     @email
     Scenario: As a registered user, when I have locked my account with too many failed logins, I can reset my password to unlock it
         Given "CKANUser" as the persona
@@ -142,6 +152,7 @@ Feature: User APIs
     Scenario: Register user password must be 10 characters or longer and contain number, lowercase, capital, and symbol
         Given "Unauthenticated" as the persona
         When I go to register page
+        And I expand the browser height
         And I fill in "name" with "name"
         And I fill in "fullname" with "fullname"
         And I fill in "email" with "email@test.com"

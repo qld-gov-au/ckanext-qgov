@@ -40,7 +40,15 @@ commands:
       echo "Initialising database schema"
       ahoy cli '"${APP_DIR}"/bin/init.sh'
       echo "Waiting for containers to start listening..."
-      ahoy cli "dockerize -wait tcp://ckan:5000 -timeout 1m"
+      for i in `seq 1 60`; do
+        if (ahoy cli "timeout 1 bash -c 'cat < /dev/null > /dev/tcp/ckan/5000'"); then
+          echo "CKAN became ready on attempt $i"
+          break
+        else
+          echo "CKAN not yet ready, retrying (attempt $i)..."
+          sleep 1
+        fi
+      done
       if sh bin/docker-compose.sh logs | grep -q "\[Error\]"; then exit 1; fi
       if sh bin/docker-compose.sh logs | grep -q "Exception"; then exit 1; fi
       docker ps -a --filter name=^/${COMPOSE_PROJECT_NAME}_
@@ -68,7 +76,13 @@ commands:
     usage: Show Docker logs.
     cmd: |
         ahoy title "Output logs"
-        sh bin/docker-compose.sh logs "$@"
+        # Loop through each container and wrap with github log groups
+        services=$(bin/docker-compose.sh ps --services)
+        for service in $services; do
+          echo "::group::$service"
+          sh bin/docker-compose.sh logs "$service"
+          echo "::endgroup::"
+        done
 
   pull:
     usage: Pull latest docker images.
@@ -159,7 +173,6 @@ commands:
       sleep 5
       JUNIT_OUTPUT="--junit --junit-directory=test/junit/"
       if [ "$BEHAVE_TAG" = "" ]; then
-        # no tag specified, probably running locally
         (ahoy cli "behave $JUNIT_OUTPUT -k ${*:-test/features} --tags=smoke" \
          && ahoy cli "behave $JUNIT_OUTPUT -k ${*:-test/features} --tags=-smoke"
         ) || [ "${ALLOW_BDD_FAIL:-0}" -eq 1 ]

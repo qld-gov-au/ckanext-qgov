@@ -1,2 +1,0 @@
-msgid "Login failed. Bad username or password."
-msgstr "Login failed. Bad username or password."

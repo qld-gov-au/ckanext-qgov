@@ -32,12 +32,6 @@ elif [ "$CKAN_VERSION" = "2.10" ]; then
     else
         CKAN_GIT_VERSION=ckan-2.10.5
     fi
-elif [ "$CKAN_VERSION" = "2.9" ]; then
-    if [ "$CKAN_TYPE" = "custom" ]; then
-        CKAN_GIT_VERSION=ckan-2.9.9-qgov.4
-    else
-        CKAN_GIT_VERSION=ckan-2.9.9
-    fi
 fi
 
 sed "s|{CKAN_VERSION}|$CKAN_VERSION|g" .docker/Dockerfile-template.ckan \
