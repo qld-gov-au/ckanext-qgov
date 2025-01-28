@@ -33,6 +33,11 @@ jobs:
         include:
           - ckan-version: '2.11'
             solr-version: "9"
+            ckan-type: 'vanilla'
+            experimental: true
+          - ckan-version: '2.11'
+            solr-version: "9"
+            ckan-type: 'custom'
             experimental: true
           - ckan-version: 'master'
             solr-version: "9"
