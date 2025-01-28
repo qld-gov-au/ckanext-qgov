@@ -105,7 +105,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: CKAN ${{ matrix.ckan-version }} screenshots
+          name: CKAN ${{ matrix.ckan-version }} ${{ matrix.ckan-type }} screenshots
           path: /tmp/artifacts/behave/screenshots
         timeout-minutes: 1
         continue-on-error: ${{ matrix.experimental }}
