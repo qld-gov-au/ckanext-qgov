@@ -104,6 +104,27 @@ def request_reset(context):
     """)
 
 
+@then(u'I should see a search facet for "{title}" truncated to "{truncated_title}"')
+def truncated_facet_visible(context, title, truncated_title):
+    context.execute_steps(u"""
+        Then I should see an element with xpath "//li[contains(@class, 'nav-item')]//a[contains(string(), '{truncated_title}') and contains(string(), '...') and (contains(@title, '{title}') or contains(@data-bs-title, '{title}')]"
+    """.format(title=title, truncated_title=truncated_title))
+
+
+@then(u'I should see an active search facet for "{title}" truncated to "{truncated_title}"')
+def active_truncated_facet_visible(context, title, truncated_title):
+    context.execute_steps(u"""
+        Then I should see an element with xpath "//li[contains(@class, 'nav-item') and contains(@class, 'active')]//a[contains(string(), '{truncated_title}') and contains(string(), '...') and (contains(@title, '{title}') or contains(@data-bs-title, '{title}')]"
+    """.format(title=title, truncated_title=truncated_title))
+
+
+@when(u'I press the search facet pointing to "{title}"')
+def press_search_facet(context, title):
+    context.execute_steps(u"""
+        When I press the element with xpath "//li[contains(@class, 'nav-item')]//a[contains(@title, '{0}') or contains(@data-bs-title, '{0}')]"
+    """.format(title))
+
+
 @when(u'I fill in "{name}" with "{value}" if present')
 def fill_in_field_if_present(context, name, value):
     context.execute_steps(u"""

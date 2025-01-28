@@ -70,10 +70,10 @@ Feature: Organization APIs
         # Search facets should be truncated but preserve full name in a tooltip
         When I create a dataset and resource with key-value parameters "notes=Testing long org name::owner_org=Org name more than" and "name=Test"
         And I press "Org name more than"
-        Then I should see an element with xpath "//li[contains(@class, 'nav-item')]//a[contains(string(), 'Org name more than') and contains(string(), '...') and contains(@title, 'Org name more than 35 characters')]"
-        When I press the element with xpath "//li[contains(@class, 'nav-item')]//a[contains(string(), 'Org name more than') and contains(string(), '...') and contains(@title, 'Org name more than 35 characters')]"
-        Then I should see an element with xpath "//li[contains(@class, 'nav-item') and contains(@class, 'active')]//a[contains(string(), 'Org name more than') and contains(string(), '...') and contains(@title, 'Org name more than 35 characters')]"
+        Then I should see a search facet for "Org name more than 35 characters" truncated to "Org name more than"
+        When I press the search facet pointing to "Org name more than 35 characters"
+        Then I should see an active search facet for "Org name more than 35 characters" truncated to "Org name more than"
         When I go to dataset page
-        Then I should see an element with xpath "//li[contains(@class, 'nav-item')]//a[contains(string(), 'Org name more than') and contains(string(), '...') and contains(@title, 'Org name more than 35 characters')]"
-        When I press the element with xpath "//li[contains(@class, 'nav-item')]//a[contains(string(), 'Org name more than') and contains(string(), '...') and contains(@title, 'Org name more than 35 characters')]"
-        Then I should see an element with xpath "//li[contains(@class, 'nav-item') and contains(@class, 'active')]//a[contains(string(), 'Org name more than') and contains(string(), '...') and contains(@title, 'Org name more than 35 characters')]"
+        Then I should see a search facet for "Org name more than 35 characters" truncated to "Org name more than"
+        When I press the search facet pointing to "Org name more than 35 characters"
+        Then I should see an active search facet for "Org name more than 35 characters" truncated to "Org name more than"
