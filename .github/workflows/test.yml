@@ -38,7 +38,7 @@ jobs:
           - ckan-version: '2.11'
             solr-version: "9"
             ckan-type: 'custom'
-            experimental: true
+            experimental: false
           - ckan-version: 'master'
             solr-version: "9"
             experimental: true  #master is unstable, good to know if we are compatible or not
