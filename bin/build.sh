@@ -26,7 +26,7 @@ fi
 
 if [ "$CKAN_VERSION" = "2.11" ]; then
     if [ "$CKAN_TYPE" = "custom" ]; then
-        CKAN_GIT_VERSION=ckan-2.11.1-qgov.1
+        CKAN_GIT_VERSION=ckan-2.11.1-qgov.2
     else
         CKAN_GIT_VERSION=ckan-2.11.1
     fi
