@@ -107,14 +107,14 @@ def request_reset(context):
 @then(u'I should see a search facet for "{title}" truncated to "{truncated_title}"')
 def truncated_facet_visible(context, title, truncated_title):
     context.execute_steps(u"""
-        Then I should see an element with xpath "//li[contains(@class, 'nav-item')]//a[contains(string(), '{truncated_title}') and contains(string(), '...') and (contains(@title, '{title}') or contains(@data-bs-title, '{title}')]"
+        Then I should see an element with xpath "//li[contains(@class, 'nav-item')]//a[contains(string(), '{truncated_title}') and contains(string(), '...') and (contains(@title, '{title}') or contains(@data-bs-title, '{title}'))]"
     """.format(title=title, truncated_title=truncated_title))
 
 
 @then(u'I should see an active search facet for "{title}" truncated to "{truncated_title}"')
 def active_truncated_facet_visible(context, title, truncated_title):
     context.execute_steps(u"""
-        Then I should see an element with xpath "//li[contains(@class, 'nav-item') and contains(@class, 'active')]//a[contains(string(), '{truncated_title}') and contains(string(), '...') and (contains(@title, '{title}') or contains(@data-bs-title, '{title}')]"
+        Then I should see an element with xpath "//li[contains(@class, 'nav-item') and contains(@class, 'active')]//a[contains(string(), '{truncated_title}') and contains(string(), '...') and (contains(@title, '{title}') or contains(@data-bs-title, '{title}'))]"
     """.format(title=title, truncated_title=truncated_title))
 
 
