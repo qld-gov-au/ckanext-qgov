@@ -3,7 +3,7 @@
 from flask import Blueprint
 from typing import Any
 
-from ckan.plugins.toolkit import g, redirect_to, url_for
+from ckan.plugins.toolkit import config, g, redirect_to, url_for
 from ckan.views import user as user_view
 
 blueprint = Blueprint(u'user_overrides', __name__)
@@ -31,8 +31,9 @@ def _gettext_wrapper(*args: Any, **kwargs: Any):
 
 
 blueprint.add_url_rule(u'/user/edit', u'edit', user_edit_override)
-original_gettext = user_view._
-user_view._ = _gettext_wrapper
+if config.get('ckan.recaptcha.privatekey'):
+    original_gettext = user_view._
+    user_view._ = _gettext_wrapper
 
 
 def get_blueprints():

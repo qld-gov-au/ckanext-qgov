@@ -33,7 +33,12 @@ jobs:
         include:
           - ckan-version: '2.11'
             solr-version: "9"
+            ckan-type: 'vanilla'
             experimental: true
+          - ckan-version: '2.11'
+            solr-version: "9"
+            ckan-type: 'custom'
+            experimental: false
           - ckan-version: 'master'
             solr-version: "9"
             experimental: true  #master is unstable, good to know if we are compatible or not
@@ -100,7 +105,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: CKAN ${{ matrix.ckan-version }} screenshots
+          name: CKAN ${{ matrix.ckan-version }} ${{ matrix.ckan-type }} screenshots
           path: /tmp/artifacts/behave/screenshots
         timeout-minutes: 1
         continue-on-error: ${{ matrix.experimental }}
