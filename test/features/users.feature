@@ -151,8 +151,8 @@ Feature: User APIs
 
     Scenario: Register user password must be 10 characters or longer and contain number, lowercase, capital, and symbol
         Given "Unauthenticated" as the persona
-        When I go to register page
-        And I expand the browser height
+        When I expand the browser height
+        And I go to register page
         And I fill in "name" with "name"
         And I fill in "fullname" with "fullname"
         And I fill in "email" with "email@test.com"
