@@ -1,4 +1,4 @@
-@users
+@groups
 Feature: Group APIs
 
     Scenario Outline: Group membership is accessible to admins of the group

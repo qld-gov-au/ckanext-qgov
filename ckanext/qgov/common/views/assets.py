@@ -14,12 +14,19 @@ blueprint = Blueprint(
 )
 
 
+def _webassets():
+    if hasattr(g, '_webassets'):
+        return g._webassets
+    else:
+        return g.webassets
+
+
 def get_included_bundles():
     global INCLUDED_BUNDLES
     if INCLUDED_BUNDLES is None:
         render(u'page.html')
-        INCLUDED_BUNDLES = g.webassets[u'included'].copy()
-        g.webassets[u'included'].clear()
+        INCLUDED_BUNDLES = _webassets()[u'included'].copy()
+        _webassets()[u'included'].clear()
     return INCLUDED_BUNDLES
 
 
@@ -36,7 +43,7 @@ def any_redirect(extension, name):
         # if name is hyphenated, allow the pieces to be spaced out or combined
         name = '[0-9a-zA-Z_-]*'.join(name.split('-'))
     pattern = '/webassets/[0-9a-zA-Z/_-]*{}[0-9a-zA-Z/_-]*.{}'.format(name, extension)
-    for asset in g.webassets[asset_type]:
+    for asset in _webassets()[asset_type]:
         if re.search(pattern, asset):
             return redirect_to(asset)
     raise ObjectNotFound(u'No assets match: {}.{}'.format(name, extension))

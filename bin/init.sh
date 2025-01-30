@@ -4,7 +4,8 @@
 #
 set -e
 
-. ${APP_DIR}/bin/activate
+. "${APP_DIR}"/bin/activate
 CLICK_ARGS="--yes" ckan_cli db clean
 ckan_cli db init
-
+# apply any plugin migrations
+ckan_cli db upgrade

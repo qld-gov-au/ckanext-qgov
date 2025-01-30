@@ -2,7 +2,6 @@ import datetime
 import email
 import quopri
 import requests
-import six
 import uuid
 
 from behave import when, then
@@ -59,7 +58,7 @@ def log_in(context):
 @when(u'I expand the browser height')
 def expand_height(context):
     # Work around x=null bug in Selenium set_window_size
-    context.browser.driver.set_window_rect(x=0, y=0, width=1024, height=3072)
+    context.browser.driver.set_window_rect(x=0, y=0, width=1366, height=3072)
 
 
 @when(u'I log in directly')
@@ -70,10 +69,11 @@ def log_in_directly(context):
     :return:
     """
 
-    assert context.persona, "A persona is required to log in, found [{}] in context. Have you configured the personas in before_scenario?".format(context.persona)
+    assert context.persona, "A persona is required to log in, found [{}] in context." \
+        " Have you configured the personas in before_scenario?".format(context.persona)
     context.execute_steps(u"""
         When I attempt to log in with password "$password"
-        Then I should see an element with xpath "//*[@title='Log out']/i[contains(@class, 'fa-sign-out')]"
+        Then I should see an element with xpath "//*[@title='Log out' or @data-bs-title='Log out']/i[contains(@class, 'fa-sign-out')]"
     """)
 
 
@@ -104,10 +104,31 @@ def request_reset(context):
     """)
 
 
+@then(u'I should see a search facet for "{title}" truncated to "{truncated_title}"')
+def truncated_facet_visible(context, title, truncated_title):
+    context.execute_steps(u"""
+        Then I should see an element with xpath "//li[contains(@class, 'nav-item')]//a[contains(string(), '{truncated_title}') and contains(string(), '...') and (contains(@title, '{title}') or contains(@data-bs-title, '{title}'))]"
+    """.format(title=title, truncated_title=truncated_title))
+
+
+@then(u'I should see an active search facet for "{title}" truncated to "{truncated_title}"')
+def active_truncated_facet_visible(context, title, truncated_title):
+    context.execute_steps(u"""
+        Then I should see an element with xpath "//li[contains(@class, 'nav-item') and contains(@class, 'active')]//a[contains(string(), '{truncated_title}') and contains(string(), '...') and (contains(@title, '{title}') or contains(@data-bs-title, '{title}'))]"
+    """.format(title=title, truncated_title=truncated_title))
+
+
+@when(u'I press the search facet pointing to "{title}"')
+def press_search_facet(context, title):
+    context.execute_steps(u"""
+        When I press the element with xpath "//li[contains(@class, 'nav-item')]//a[contains(@title, '{0}') or contains(@data-bs-title, '{0}')]"
+    """.format(title))
+
+
 @when(u'I fill in "{name}" with "{value}" if present')
 def fill_in_field_if_present(context, name, value):
     context.execute_steps(u"""
-        When I execute the script "field = $('#field-{0}'); if (!field.length) field = $('#{0}'); if (!field.length) field = $('[name={0}]'); field.val('{1}'); field.keyup();"
+        When I execute the script "field = $('#{0}'); if (!field.length) field = $('[name={0}]'); if (!field.length) field = $('#field-{0}'); field.val('{1}'); field.keyup();"
     """.format(name, value))
 
 
@@ -160,24 +181,44 @@ def go_to_new_resource_form(context, name):
         context.execute_steps(u"""
             When I press "Next:"
         """)
-    else:
+    elif context.browser.is_element_present_by_xpath("//*[contains(string(), 'Add new resource')]"):
         # Existing dataset, browse to the resource form
         context.execute_steps(u"""
-            When I press "Resources"
-            And I press "Add new resource"
+            When I press "Add new resource"
+        """)
+    else:
+        # Existing dataset, browse to the resource form
+        if context.browser.is_element_present_by_xpath(
+                "//a[contains(string(), 'Resources') and contains(@href, '/dataset/resources/')]"):
+            context.execute_steps(u"""
+                When I press "Resources"
+            """)
+        context.execute_steps(u"""
+            When I press "Add new resource"
             And I take a debugging screenshot
         """)
 
 
 @when(u'I fill in title with random text')
 def title_random_text(context):
-    assert context.persona
     context.execute_steps(u"""
-        When I fill in "title" with "Test Title {0}"
-        And I fill in "name" with "test-title-{0}" if present
-        And I set "last_generated_title" to "Test Title {0}"
-        And I set "last_generated_name" to "test-title-{0}"
-    """.format(uuid.uuid4()))
+        When I fill in title with random text starting with "Test Title "
+    """)
+
+
+@when(u'I fill in title with random text starting with "{prefix}"')
+def title_random_text_with_prefix(context, prefix):
+    random_text = str(uuid.uuid4())
+    title = prefix + random_text
+    name = prefix.lower().replace(" ", "-") + random_text
+    assert context.persona
+    context.execute_steps(f"""
+        When I fill in "title" with "{title}"
+        And I fill in "name" with "{name}" if present
+        And I set "last_generated_title" to "{title}"
+        And I set "last_generated_name" to "{name}"
+        And I take a debugging screenshot
+    """)
 
 
 @when(u'I go to dataset page')
@@ -198,8 +239,16 @@ def go_to_dataset(context, name):
 @when(u'I edit the "{name}" dataset')
 def edit_dataset(context, name):
     context.execute_steps(u"""
-        When I visit "/dataset/edit/{0}"
+        When I go to dataset "{0}"
+        And I press the element with xpath "//div[contains(@class, 'action')]//a[contains(@href, '/dataset/edit/')]"
     """.format(name))
+
+
+@when(u'I press the resource edit button')
+def press_edit_resource(context):
+    context.execute_steps(u"""
+        When I press the element with xpath "//div[contains(@class, 'action')]//a[contains(@href, '/resource/') and contains(@href, '/edit')]"
+    """)
 
 
 @when(u'I select the "{licence_id}" licence')
@@ -210,12 +259,21 @@ def select_licence(context, licence_id):
     """.format(licence_id))
 
 
+@when(u'I select the organisation with title "{title}"')
+def select_organisation(context, title):
+    # Organisation requires special interaction due to fancy JavaScript
+    context.execute_steps(u"""
+        When I execute the script "org_uuid=$('#field-organizations').find('option:contains({0})').val(); $('#field-organizations').val(org_uuid).trigger('change')"
+        And I take a debugging screenshot
+    """.format(title))
+
+
 @when(u'I enter the resource URL "{url}"')
 def enter_resource_url(context, url):
     if url != "default":
         context.execute_steps(u"""
             When I clear the URL field
-            When I execute the script "$('#resource-edit [name=url]').val('{0}')"
+            And I execute the script "$('#resource-edit [name=url]').val('{0}')"
         """.format(url))
 
 
@@ -252,7 +310,7 @@ def fill_in_default_link_resource_fields(context):
 @when(u'I upload "{file_name}" of type "{file_format}" to resource')
 def upload_file_to_resource(context, file_name, file_format):
     context.execute_steps(u"""
-        When I execute the script "$('#resource-upload-button').trigger(click);"
+        When I execute the script "$('.resource-upload-field .btn-remove-url').trigger('click'); $('#resource-upload-button').trigger('click');"
         And I attach the file "{file_name}" to "upload"
         # Don't quote the injected string since it can have trailing spaces
         And I execute the script "document.getElementById('field-format').value='{file_format}'"
@@ -346,7 +404,7 @@ def _parse_params(param_string):
     for param in param_string.split("::"):
         entry = param.split("=", 1)
         params[entry[0]] = entry[1] if len(entry) > 1 else ""
-    return six.iteritems(params)
+    return params.items()
 
 
 def _create_dataset_from_params(context, params):
@@ -367,8 +425,8 @@ def _create_dataset_from_params(context, params):
         if key == "owner_org":
             # Owner org uses UUIDs as its values, so we need to rely on displayed text
             context.execute_steps(u"""
-                When I select by text "{1}" from "{0}"
-            """.format(key, value))
+                When I select the organisation with title "{0}"
+            """.format(value))
         elif key in ["update_frequency", "request_privacy_assessment", "private"]:
             context.execute_steps(u"""
                 When I select "{1}" from "{0}"
@@ -436,7 +494,7 @@ def create_resource_from_params(context, resource_params):
             """.format(key, value))
     context.execute_steps(u"""
         When I take a debugging screenshot
-        And I press the element with xpath "//form[contains(@class, 'resource-form')]//button[contains(@class, 'btn-primary')]"
+        And I press the element with xpath "//form[contains(@data-module, 'resource-form')]//button[contains(@class, 'btn-primary')]"
         And I take a debugging screenshot
     """)
 
@@ -457,11 +515,7 @@ def should_receive_base64_email_containing_texts(context, address, text, text2):
         payload_bytes = quopri.decodestring(payload)
         if len(payload_bytes) > 0:
             payload_bytes += b'='  # do fix the padding error issue
-        if six.PY2:
-            decoded_payload = payload_bytes.decode('base64')
-        else:
-            import base64
-            decoded_payload = six.ensure_text(base64.b64decode(six.ensure_binary(payload_bytes)))
+        decoded_payload = base64.b64decode(payload_bytes.encode()).decode()
         print('Searching for', text, ' and ', text2, ' in decoded_payload: ', decoded_payload)
         return text in decoded_payload and (not text2 or text2 in decoded_payload)
 
@@ -478,7 +532,7 @@ def go_to_admin_config(context):
 @when(u'I log out')
 def log_out(context):
     context.execute_steps(u"""
-        When I press the element with xpath "//*[@title='Log out']"
+        When I press the element with xpath "//*[@title='Log out' or @data-bs-title='Log out']"
         Then I should see "Log in"
     """)
 
@@ -510,5 +564,5 @@ def lock_account(context):
     for x in range(11):
         context.execute_steps(u"""
             When I attempt to log in with password "incorrect password"
-            Then I should see "Bad username or password or reCAPTCHA."
+            Then I should see "Bad username or password."
         """)

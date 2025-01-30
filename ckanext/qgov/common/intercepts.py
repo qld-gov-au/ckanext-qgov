@@ -4,7 +4,6 @@
 
 from logging import getLogger
 import re
-import six
 
 from ckan.lib.navl.dictization_functions import Missing
 from ckan.lib.navl.validators import ignore_missing, not_empty
@@ -20,6 +19,8 @@ LOG = getLogger(__name__)
 
 DEFAULT_USER_SCHEMA = schemas.default_user_schema()
 USER_NEW_FORM_SCHEMA = schemas.user_new_form_schema()
+if hasattr(schemas, 'user_perform_reset_form_schema'):
+    USER_PERFORM_RESET_FORM_SCHEMA = schemas.user_perform_reset_form_schema()
 USER_EDIT_FORM_SCHEMA = schemas.user_edit_form_schema()
 DEFAULT_UPDATE_USER_SCHEMA = schemas.default_update_user_schema()
 RESOURCE_SCHEMA = schemas.default_resource_schema()
@@ -47,8 +48,9 @@ def set_intercepts():
     schemas.default_user_schema = default_user_schema
     schemas.user_new_form_schema = user_new_form_schema
     schemas.user_edit_form_schema = user_edit_form_schema
+    if hasattr(schemas, 'user_perform_reset_form_schema'):
+        schemas.user_perform_reset_form_schema = user_perform_reset_form_schema
     schemas.default_update_user_schema = default_update_user_schema
-
     schemas.default_resource_schema = default_resource_schema
 
 
@@ -59,7 +61,7 @@ def user_password_validator(key, data, errors, context):
 
     if isinstance(value, Missing):
         pass
-    elif not isinstance(value, six.string_types):
+    elif not isinstance(value, str):
         errors[('password',)].append(_('Passwords must be strings'))
     elif value == '':
         pass
@@ -116,6 +118,14 @@ def user_new_form_schema():
     user_schema = _apply_schema_validator(
         user_schema, 'fullname',
         validator_name='not_empty', validator=not_empty)
+    return user_schema
+
+
+def user_perform_reset_form_schema():
+    """ Apply our password validator function when resetting a password.
+    """
+    user_schema = USER_PERFORM_RESET_FORM_SCHEMA
+    user_schema = _apply_schema_validator(user_schema, 'password1')
     return user_schema
 
 

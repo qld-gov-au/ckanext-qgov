@@ -68,6 +68,8 @@ setup(
     entry_points="""
     [ckan.plugins]
     qgovext=ckanext.qgov.common.plugin:QGOVPlugin
+    [babel.extractors]
+    ckan = ckan.lib.extract:extract_ckan
     """,
 
     # If you are changing from the default layout of your extension, you may
