@@ -77,7 +77,7 @@ class Stats(object):
         resource = table('resource')
         group = table('group')
         package = table('package')
-        query = select([group.c.title, package.c.title, resource.c.name, resource.c.url, resource.c.created, resource.c.last_modified, resource.c.format, resource.c.webstore_url, resource.c.resource_type]). \
+        query = select([group.c.title, package.c.title, resource.c.name, resource.c.url, resource.c.created, resource.c.last_modified, resource.c.format, resource.c.webstore_url if hasattr(resource.c, 'webstore_url') else None, resource.c.resource_type]). \
             where(and_(resource.c.package_id == package.c.id,
                        resource.c.state == 'active',
                        group.c.id == package.c.owner_org))
