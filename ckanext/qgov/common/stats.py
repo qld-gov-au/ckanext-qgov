@@ -21,7 +21,7 @@ class Stats(object):
         """
         member = table('member')
         package = table('package')
-        query = select([member.c.group_id, func.count(member.c.table_id)]). \
+        query = select(member.c.group_id, func.count(member.c.table_id)). \
             group_by(member.c.group_id). \
             where(and_(member.c.group_id is not None,
                        member.c.table_name == 'package',
@@ -43,7 +43,7 @@ class Stats(object):
         """ Displays the most-used organisations (by default, top 10).
         """
         package = table('package')
-        query = select([package.c.owner_org, func.count(package.c.owner_org)]). \
+        query = select(package.c.owner_org, func.count(package.c.owner_org)). \
             group_by(package.c.owner_org). \
             where(and_(package.c.state == 'active', package.c.private == 'FALSE')). \
             order_by(func.count(package.c.owner_org).desc()). \
@@ -59,7 +59,7 @@ class Stats(object):
         """
         resource = table('resource')
         package = table('package')
-        query = select([func.count(resource.c.id)]). \
+        query = select(func.count(resource.c.id)). \
             where(and_(resource.c.package_id == package.c.id,
                        resource.c.state == 'active',
                        package.c.state == 'active',
@@ -77,7 +77,7 @@ class Stats(object):
         resource = table('resource')
         group = table('group')
         package = table('package')
-        query = select([group.c.title, package.c.title, resource.c.name, resource.c.url, resource.c.created, resource.c.last_modified, resource.c.format, resource.c.webstore_url if hasattr(resource.c, 'webstore_url') else None, resource.c.resource_type]). \
+        query = select(group.c.title, package.c.title, resource.c.name, resource.c.url, resource.c.created, resource.c.last_modified, resource.c.format, resource.c.webstore_url if hasattr(resource.c, 'webstore_url') else None, resource.c.resource_type). \
             where(and_(resource.c.package_id == package.c.id,
                        resource.c.state == 'active',
                        group.c.id == package.c.owner_org))
@@ -91,7 +91,7 @@ class Stats(object):
         """
         resource = table('resource')
         package = table('package')
-        query = select([func.count(resource.c.id)]). \
+        query = select(func.count(resource.c.id)). \
             where(and_(resource.c.state == 'active',
                        package.c.state == 'active',
                        resource.c.package_id == package.c.id,
