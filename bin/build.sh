@@ -27,7 +27,7 @@ SOLR_VERSION=9
 
 if [ "$CKAN_VERSION" = "2.11" ]; then
     if [ "$CKAN_TYPE" = "custom" ]; then
-        CKAN_GIT_VERSION=ckan-2.11.2-qgov.1
+        CKAN_GIT_VERSION=ckan-2.11.2-qgov.2
     else
         CKAN_GIT_VERSION=ckan-2.11.2
     fi

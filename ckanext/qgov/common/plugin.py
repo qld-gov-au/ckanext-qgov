@@ -214,6 +214,7 @@ class QGOVPlugin(SingletonPlugin):
         """Extend actions API
         """
         return {
+            'user_show': intercepts.user_show,
             'user_update': intercepts.user_update,
             'user_create': user_creation_create_actions.user_create,
         }
