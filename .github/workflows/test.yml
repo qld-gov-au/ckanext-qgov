@@ -27,20 +27,16 @@ jobs:
       fail-fast: false
       matrix:
         ckan-version: ['2.10']
-        solr-version: ['8']
         ckan-type: ['vanilla', 'custom']
         experimental: [false]
         include:
           - ckan-version: '2.11'
-            solr-version: '9'
             ckan-type: 'vanilla'
             experimental: true
           - ckan-version: '2.11'
-            solr-version: '9'
             ckan-type: 'custom'
             experimental: false
           - ckan-version: 'master'
-            solr-version: '9'
             experimental: true  # master is unstable, good to know if we are compatible or not
 
     name: ${{ matrix.experimental && '**Fail_Ignored** ' || '' }} CKAN ${{ matrix.ckan-version }} ${{ matrix.ckan-type }}
@@ -48,7 +44,6 @@ jobs:
     container: drevops/ci-runner:23.12.0
     env:
       CKAN_VERSION: ${{ matrix.ckan-version }}
-      SOLR_VERSION: ${{ matrix.solr-version }}
       CKAN_TYPE: ${{ matrix.ckan-type }}
 
     steps:
