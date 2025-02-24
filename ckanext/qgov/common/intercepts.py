@@ -5,12 +5,12 @@
 from logging import getLogger
 import re
 
+from ckan import authz
 from ckan.lib.navl.dictization_functions import Missing
 from ckan.lib.navl.validators import ignore_missing, not_empty
-import ckan.logic.schema as schemas
-from ckan.logic import validators
+from ckan.logic import schema as schemas, validators
 from ckan.plugins.toolkit import _, get_or_bust, get_validator, \
-    chained_action
+    chained_action, side_effect_free
 
 from .authenticator import unlock_account
 from .user_creation import helpers as user_creation_helpers
@@ -166,6 +166,22 @@ def default_resource_schema():
         resource_schema[key] = resource_schema[key][:]
     resource_schema['url'].append(get_validator('valid_url'))
     return resource_schema
+
+
+@chained_action
+@side_effect_free
+def user_show(original_action, context, data_dict):
+    '''
+    Allow organisation admins to view email addresses.
+    '''
+    user = context.get('user')
+    if not user:
+        user_obj = context.get('auth_user_obj')
+        if user_obj:
+            user = user_obj.name
+    if authz.has_user_permission_for_some_org(user, 'admin'):
+        context['keep_email'] = True
+    return original_action(context, data_dict)
 
 
 @chained_action
