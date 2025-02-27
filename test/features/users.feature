@@ -51,23 +51,29 @@ Feature: User APIs
         When I go to the user list API
         Then I should see an element with xpath "//*[contains(string(), '"success": false') and contains(string(), 'Authorization Error')]"
 
-    Scenario Outline: User detail is accessible to admins
+    Scenario Outline: User detail including email is accessible to org admins
         Given "<Persona>" as the persona
         When I log in
         And I go to the "admin" user API
-        Then I should see an element with xpath "//*[contains(string(), '"success": true') and contains(string(), '"name": "admin"')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": true') and contains(string(), '"name": "admin"') and contains(string(), '"email": "admin@localhost"')]"
 
         Examples: Admins
             | Persona       |
             | SysAdmin      |
             | TestOrgAdmin  |
-            | Group Admin   |
+
+    Scenario: User detail without email is accessible to group admins
+        Given "Group Admin" as the persona
+        When I log in
+        And I go to the "admin" user API
+        Then I should see an element with xpath "//*[contains(string(), '"success": true') and contains(string(), '"name": "admin"')]"
+        And I should not see "admin@localhost"
 
     Scenario: User detail for self is accessible to non-admins
         Given "TestOrgMember" as the persona
         When I log in
         And I go to the "test_org_member" user API
-        Then I should see an element with xpath "//*[contains(string(), '"success": true') and contains(string(), '"name": "test_org_member"')]"
+        Then I should see an element with xpath "//*[contains(string(), '"success": true') and contains(string(), '"name": "test_org_member"') and contains(string(), '"email": "test_org_member@localhost"')]"
 
     Scenario: Non-self user detail is not accessible to non-admins
         Given "TestOrgEditor" as the persona
@@ -81,23 +87,31 @@ Feature: User APIs
         When I go to the "test_org_member" user API
         Then I should see an element with xpath "//*[contains(string(), '"success": false') and contains(string(), 'Authorization Error')]"
 
-    Scenario Outline: User profile page is accessible to admins
+    Scenario Outline: User profile page including email is accessible to org admins
         Given "<Persona>" as the persona
         When I log in
         And I go to the "admin" profile page
         Then I should see an element with xpath "//h1[string() = 'Administrator']"
+        And I should see an element with xpath "//dd[string() = 'admin@localhost']"
 
         Examples: Admins
             | Persona       |
             | SysAdmin      |
             | TestOrgAdmin  |
-            | Group Admin   |
+
+    Scenario: User profile page without email is accessible to group admins
+        Given "Group Admin" as the persona
+        When I log in
+        And I go to the "admin" profile page
+        Then I should see an element with xpath "//h1[string() = 'Administrator']"
+        And I should not see "admin@localhost"
 
     Scenario: User profile page for self is accessible to non-admins
         Given "TestOrgMember" as the persona
         When I log in
         And I go to the "test_org_member" profile page
         Then I should see an element with xpath "//h1[string() = 'Test Member']"
+        And I should see an element with xpath "//dd[string() = 'test_org_member@localhost']"
 
     Scenario: Non-self user profile page is not accessible to non-admins
         Given "TestOrgMember" as the persona
