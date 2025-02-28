@@ -1,0 +1,5 @@
+{% ckan_extends %}
+
+{% block user_info %}
+  {% snippet 'user/snippets/info-block.html', user=user, is_myself=is_myself %}
+{% endblock %}
