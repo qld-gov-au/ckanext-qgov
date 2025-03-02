@@ -75,7 +75,7 @@ def random_tags():
 def user_has_admin_access(include_editor_access):
     user = toolkit.current_user or toolkit.g.userobj
     # If user is "None" - they are not logged in.
-    if not user:
+    if not user or user.is_anonymous:
         return False
     if user.sysadmin:
         return True
