@@ -5,5 +5,6 @@
 {% endblock %}
 
 {% block sso_help_register %}
-    Learn more about using a <a href="https://www.qld.gov.au/qdifaq">Digital ID</a>
+    <a href="{{ h.url_for('user.login') }}/oidc-pkce" class="btn btn-secondary">Register via your Digital ID</a></p>
+    <p>Learn more about using a <a href="https://www.qld.gov.au/qdifaq">Digital ID</a>
 {% endblock %}
