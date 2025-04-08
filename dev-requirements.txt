@@ -6,3 +6,5 @@ flake8==6.0.0
 mock
 pytest-ckan
 selenium<4.10
+
+-e git+https://github.com/qld-gov-au/ckanext-oidc-pkce.git@develop#egg=ckanext-oidc-pkce

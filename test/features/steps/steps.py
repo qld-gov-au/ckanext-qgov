@@ -51,7 +51,8 @@ def log_in(context):
         When I go to homepage
         And I expand the browser height
         And I press "Log in"
-        And I log in directly
+        Then I should see an element with xpath "//a[@href='/user/login/oidc-pkce']"
+        When I log in directly
     """)
 
 
