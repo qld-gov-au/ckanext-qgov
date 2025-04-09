@@ -16,6 +16,7 @@ def configure_urlm(app_path, proxy):
     app_path: The path to the URL Management system
     proxy: The proxy, if any, to be used in contacting the URL Management system.
     """
+    global URLM_ENDPOINT, URLM_PROXY
     URLM_ENDPOINT = app_path
     URLM_PROXY = proxy
 
