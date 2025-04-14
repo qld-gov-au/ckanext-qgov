@@ -24,7 +24,6 @@ def configure_urlm(app_path, proxy):
 
 
 def get_purl_response(url):
-    global URLM_ENDPOINT, URLM_PROXY
     LOG.warn("Page [%s] not found; checking URL Management System at %s",
              url, URLM_ENDPOINT)
     purl_request = URLM_ENDPOINT.format(source=url)

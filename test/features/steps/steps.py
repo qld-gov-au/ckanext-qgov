@@ -51,7 +51,8 @@ def log_in(context):
         When I go to homepage
         And I expand the browser height
         And I press "Log in"
-        And I log in directly
+        Then I should see an element with xpath "//a[@href='/user/login/oidc-pkce']"
+        When I log in directly
     """)
 
 
@@ -91,6 +92,8 @@ def attempt_login(context, password):
 def login_link_visible(context):
     context.execute_steps(u"""
         Then I should see an element with xpath "//h1[contains(string(), 'Login')]"
+        And I should see "Sign in with your Digital ID"
+        And I should see "Register via your Digital ID"
     """)
 
 
