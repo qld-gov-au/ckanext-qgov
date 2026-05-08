@@ -176,12 +176,12 @@ commands:
         if [ "$CKAN_TYPE" != "custom" ]; then
           BEHAVE_TAG="--tags=-custom"
         fi
-        (ahoy cli "behave $JUNIT_OUTPUT -k ${*:-test/features} --tags=smoke" \
-         && ahoy cli "behave $JUNIT_OUTPUT -k ${*:-test/features} $BEHAVE_TAG --tags=-smoke"
+        (ahoy cli "behave $JUNIT_OUTPUT --no-skipped ${*:-test/features} --tags=smoke" \
+         && ahoy cli "behave $JUNIT_OUTPUT --no-skipped ${*:-test/features} $BEHAVE_TAG --tags=-smoke"
         ) || [ "${ALLOW_BDD_FAIL:-0}" -eq 1 ]
       else
         # run tests with the specified tag
-        ahoy cli "behave $JUNIT_OUTPUT -k ${*:-test/features} --tags=$BEHAVE_TAG" \
+        ahoy cli "behave $JUNIT_OUTPUT --no-skipped ${*:-test/features} --tags=$BEHAVE_TAG" \
           || [ "${ALLOW_BDD_FAIL:-0}" -eq 1 ]
       fi
       ahoy stop-mailmock
