@@ -12,8 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.x'
       - name: Install requirements
@@ -46,7 +46,7 @@ jobs:
       CKAN_TYPE: ${{ matrix.ckan-type }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         continue-on-error: ${{ matrix.experimental }}
         timeout-minutes: 2
 
