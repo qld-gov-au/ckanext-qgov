@@ -5,7 +5,7 @@ Feature: Dataset APIs
         Given "SysAdmin" as the persona
         When I log in
         And I edit the "test-dataset" dataset
-        Then I should see an element with xpath "//option[@value='cc-by-nc-sa-4']"
+        Then I should see an element with xpath "//option[@value='CC-BY-NC-SA-4.0']"
 
     Scenario: As a publisher, I can view the change history of a dataset
         Given "TestOrgEditor" as the persona
