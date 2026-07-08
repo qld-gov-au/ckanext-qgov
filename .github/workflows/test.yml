@@ -39,21 +39,25 @@ jobs:
           - ckan-version: 'master'
             experimental: true  # master is unstable, good to know if we are compatible or not
 
-    name: ${{ matrix.experimental && '**Fail_Ignored** ' || '' }} CKAN ${{ matrix.ckan-version }} ${{ matrix.ckan-type }}
+    name: ${{ matrix.experimental && '**Fail_Ignored** ' || '' }} Run tests on CKAN ${{ matrix.ckan-version }} ${{ matrix.ckan-type }}
     runs-on: ubuntu-latest
-    container: drevops/ci-runner:23.12.0
     env:
       CKAN_VERSION: ${{ matrix.ckan-version }}
       CKAN_TYPE: ${{ matrix.ckan-type }}
 
     steps:
-      # Patch https://github.com/actions/runner/issues/863
-      - name: Preserve $HOME set in the container
-        run: echo HOME=/root >> "$GITHUB_ENV"
-
       - uses: actions/checkout@v4
         continue-on-error: ${{ matrix.experimental }}
         timeout-minutes: 2
+
+      - name: Install Ahoy and dependencies
+        continue-on-error: ${{ matrix.experimental }}
+        run: |
+          sudo wget https://github.com/ahoy-cli/ahoy/releases/download/v2.5.0/ahoy-bin-linux-amd64 -O /usr/local/bin/ahoy \
+            && sudo chown $USER /usr/local/bin/ahoy \
+            && chmod +x /usr/local/bin/ahoy
+          sudo wget https://github.com/pygmystack/pygmy/releases/download/v0.14.0/pygmy_0.14.0_linux_amd64.tar.gz -O - | tar xvzf - -C /tmp/ \
+            && sudo mv /tmp/pygmy /usr/local/bin/pygmy
 
       - name: Build
         run: bin/build.sh
@@ -90,7 +94,7 @@ jobs:
         continue-on-error: ${{ matrix.experimental }}
 
       - name: Test Summary
-        uses: test-summary/action@v2.4
+        uses: test-summary/action@v2
         continue-on-error: ${{ matrix.experimental }}
         with:
           paths: "/tmp/artifacts/junit/*.xml"
