@@ -48,7 +48,7 @@
     "osd_conformance": "not reviewed",
     "maintainer": "Creative Commons",
     "status": "active",
-    "title": "Attribution-NonCommercial-ShareAlike 4.0",
+    "title": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0",
     "url": "https://creativecommons.org/licenses/by-nc-sa/4.0/"
   },
   {
@@ -56,13 +56,13 @@
     "domain_data": true,
     "domain_software": false,
     "family": "",
-    "id": "CC-BY-NC-ND-4.0",
+    "id": "CC-BY-ND-4.0",
     "od_conformance": "rejected",
     "osd_conformance": "not reviewed",
     "maintainer": "Creative Commons",
     "status": "active",
-    "title": "Attribution-NonCommercial-NoDerivatives 4.0",
-    "url": "https://creativecommons.org/licenses/by-nc-nd/4.0/"
+    "title": "Creative Commons Attribution-NoDerivatives 4.0",
+    "url": "https://creativecommons.org/licenses/by-nd/4.0/"
   },
   {
     "domain_content": true,
@@ -74,7 +74,7 @@
     "osd_conformance": "not reviewed",
     "maintainer": "Creative Commons",
     "status": "active",
-    "title": "Attribution-NonCommercial-NoDerivatives 4.0",
+    "title": "Creative Commons Attribution-NonCommercial-NoDerivatives 4.0",
     "url": "https://creativecommons.org/licenses/by-nc-nd/4.0/"
   },
   {
