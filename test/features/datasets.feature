@@ -7,6 +7,16 @@ Feature: Dataset APIs
         And I edit the "test-dataset" dataset
         Then I should see an element with xpath "//option[@value='CC-BY-NC-SA-4.0']"
 
+    Scenario: As an authenticated user, I can follow and unfollow datasets
+        Given "CKANUser" as the persona
+        When I log in
+        And I go to dataset "public-test-dataset"
+        Then I should see an element with xpath "//a[contains(string(), 'Follow')]"
+        When I press "Follow"
+        Then I should see "Unfollow" within 5 seconds
+        When I press "Unfollow"
+        Then I should see "Follow" within 5 seconds
+
     Scenario: As a publisher, I can view the change history of a dataset
         Given "TestOrgEditor" as the persona
         When I log in

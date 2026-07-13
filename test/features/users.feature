@@ -91,7 +91,7 @@ Feature: User APIs
         Given "<Persona>" as the persona
         When I log in
         And I go to the "admin" profile page
-        Then I should see an element with xpath "//h1[string() = 'Administrator']"
+        Then I should see an element with xpath "//h2[string() = 'Administrator']"
         And I should see an element with xpath "//dd[string() = 'admin@localhost']"
 
         Examples: Admins
@@ -103,14 +103,14 @@ Feature: User APIs
         Given "Group Admin" as the persona
         When I log in
         And I go to the "admin" profile page
-        Then I should see an element with xpath "//h1[string() = 'Administrator']"
+        Then I should see an element with xpath "//h2[string() = 'Administrator']"
         And I should not see "admin@localhost"
 
     Scenario: User profile page for self is accessible to non-admins
         Given "TestOrgMember" as the persona
         When I log in
         And I go to the "test_org_member" profile page
-        Then I should see an element with xpath "//h1[string() = 'Test Member']"
+        Then I should see an element with xpath "//h2[string() = 'Test Member']"
         And I should see an element with xpath "//dd[string() = 'test_org_member@localhost']"
 
     Scenario: Non-self user profile page is not accessible to non-admins
@@ -159,7 +159,7 @@ Feature: User APIs
         And the browser's URL should contain "key="
         When I fill in "password1" with "$password"
         And I fill in "password2" with "$password"
-        And I press the element with xpath "//button[@class='btn btn-primary']"
+        And I submit the main form
         And I log in
         Then I should see "Dashboard"
 

@@ -73,7 +73,7 @@ services:
       - default
 
   chrome:
-    image: selenium/standalone-chrome:3.141.59-oxygen
+    image: selenium/standalone-chrome:131.0-chromedriver-131.0-grid-4.27.0-20241225
     shm_size: '1gb'
     depends_on:
       - ckan
