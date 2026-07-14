@@ -13,7 +13,7 @@ Feature: Resource UI
         | Good link | http://www.qld.gov.au |
         | Good IP address | http://1.2.3.4 |
         | Domain starting with numbers | http://1.2.3.4.example.com |
-        | Domain ending with numbers | http://example.com.1.2.3.4 |
+        | Domain containing numbers | http://example.com.1.2.3.4.foo |
         | Domain ending with private | http://example.com.private |
 
     Scenario: Link resource with missing or invalid protocol should use HTTP
