@@ -27,6 +27,27 @@ LOG = getLogger(__name__)
 IP_ADDRESS = re.compile(r'^({0}[.]){{3}}{0}$'.format(r'[0-9]{1,3}'))
 PRIVATE_IP_ADDRESS = re.compile(r'^((1?0|127)([.]{0}){{3}}|(172[.](1[6-9]|2[0-9]|3[01])|169[.]254)([.]{0}){{2}}|192[.]168([.]{0}){{2}})$'.format(r'[0-9]{1,3}'))
 
+LICENCE_ID_MAPPINGS = {
+    'cc-by': 'CC-BY-3.0',
+    'cc-by-4': 'CC-BY-4.0',
+    'cc-by-nc-4': 'CC-BY-NC-4.0',
+    'cc-by-nc-nd': 'CC-BY-NC-ND-4.0',
+    'cc-by-nc-nd-4': 'CC-BY-NC-ND-4.0',
+    'cc-by-nc-sa-4': 'CC-BY-NC-SA-4.0',
+    'cc-by-nd': 'CC-BY-ND-4.0',
+    'cc-by-nd-4': 'CC-BY-ND-4.0',
+    'cc-by-sa': 'CC-BY-SA-3.0',
+    'cc-by-sa-4': 'CC-BY-SA-4.0',
+    'cc-nc': 'CC-BY-NC-3.0',
+}
+
+
+def update_licence(pkg):
+    # Make licence IDs consistent with opendefinition.org
+    existing_licence = getattr(pkg, 'license_id', None)
+    if existing_licence in LICENCE_ID_MAPPINGS:
+        pkg.license_id = LICENCE_ID_MAPPINGS[existing_licence]
+
 
 def valid_url(key, flattened_data, errors, context):
     """ Check whether the value is a valid URL.
@@ -68,6 +89,7 @@ class QGOVPlugin(SingletonPlugin):
     implements(plugins.IActions, inherit=True)
     implements(plugins.IAuthFunctions, inherit=True)
     implements(plugins.IValidators, inherit=True)
+    implements(plugins.IPackageController, inherit=True)
     implements(plugins.IResourceController, inherit=True)
     implements(plugins.IMiddleware, inherit=True)
     implements(plugins.IBlueprint)
@@ -248,6 +270,14 @@ class QGOVPlugin(SingletonPlugin):
             'data_qld_user_name_validator': user_creation_validators.data_qld_user_name_validator,
             'data_qld_displayed_name_validator': user_creation_validators.data_qld_displayed_name_validator,
         }
+
+    # IPackageController
+
+    def create(self, pkg):
+        update_licence(pkg)
+
+    def edit(self, pkg):
+        update_licence(pkg)
 
     # IResourceController
 

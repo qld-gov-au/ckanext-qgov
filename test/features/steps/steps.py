@@ -258,7 +258,7 @@ def press_edit_resource(context):
 def select_licence(context, licence_id):
     # Licence requires special interaction due to fancy JavaScript
     context.execute_steps(u"""
-        When I execute the script "$('#field-license_id').val('{0}').trigger('change')"
+        When I execute the script "element = document.getElementsByName('license_id')[0]; element.value = '{0}'; element.dispatchEvent(new Event('change'));"
     """.format(licence_id))
 
 
@@ -554,6 +554,13 @@ def reload_page_every_n_until_find(context, xpath, seconds=5, reload_times=5):
             context.browser.reload()
 
     assert False, 'Element with xpath "{}" was not found'.format(xpath)
+
+
+@when(u'I submit the main form')
+def submit_form(context):
+    context.execute_steps("""
+        When I press the element with xpath "//div[@id='content']//button[contains(@class, 'btn-primary')]"
+    """)
 
 
 # ckanext-qgov
