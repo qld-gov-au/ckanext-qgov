@@ -2,7 +2,6 @@
 
 import pytest
 
-from ckan.model import User
 from ckan.lib import authenticator as core_authenticator
 from ckan.tests import factories
 
@@ -21,38 +20,30 @@ core_authenticator.g = MockGlobal()
 class TestUsernamePasswordAuthenticator(object):
 
     def test_authenticate_succeeds_if_login_and_password_are_correct(self):
-        password = "somepass"
+        password = "Default1Password$"
         user = factories.User(password=password)
-        identity = {"login": user.name, "password": password}
+        identity = {"login": user['name'], "password": password}
 
         username = qgov_authenticate(identity)
-        # 2.10
-        if isinstance(username, User):
-            assert username.name == user.name
-        # 2.9.6+
-        elif ",1" in username:
-            assert username == user.id + ",1", username
-        # 2.9.5-
-        else:
-            assert username == user.name, username
+        assert username.name == user['name']
 
     def test_authenticate_fails_if_user_is_deleted(self):
-        password = "somepass"
+        password = "Default1Password$"
         user = factories.User(password=password)
-        identity = {"login": user.name, "password": password}
+        identity = {"login": user['name'], "password": password}
         user.delete()
         assert qgov_authenticate(identity) is None
 
     def test_authenticate_fails_if_user_is_pending(self):
-        password = "somepass"
+        password = "Default1Password$"
         user = factories.User(password=password)
-        identity = {"login": user.name, "password": password}
+        identity = {"login": user['name'], "password": password}
         user.set_pending()
         assert qgov_authenticate(identity) is None
 
     def test_authenticate_fails_if_password_is_wrong(self):
         user = factories.User()
-        identity = {"login": user.name, "password": "wrong-password"}
+        identity = {"login": user['name'], "password": "wrong-password"}
         assert qgov_authenticate(identity) is None
 
     @pytest.mark.parametrize(
