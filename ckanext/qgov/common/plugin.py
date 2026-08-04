@@ -46,6 +46,8 @@ def update_licence(pkg):
     # Make licence IDs consistent with opendefinition.org
     existing_licence = getattr(pkg, 'license_id', None)
     if existing_licence in LICENCE_ID_MAPPINGS:
+        LOG.info("Replacing obsolete licence ID [%s] on package [%s] with current ID [%s]",
+                 existing_licence, pkg.id, LICENCE_ID_MAPPINGS[existing_licence])
         pkg.license_id = LICENCE_ID_MAPPINGS[existing_licence]
 
 
