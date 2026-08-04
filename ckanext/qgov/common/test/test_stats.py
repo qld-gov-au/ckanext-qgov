@@ -7,17 +7,24 @@ from datetime import datetime
 import pytest
 
 from ckan.tests import factories
+from ckan.plugins.toolkit import check_ckan_version
 
 from ckanext.qgov.common.stats import Stats
 
 
 @pytest.fixture()
-def org():
+def migrate_db_for_plugins(migrate_db_for):
+    if check_ckan_version('2.11'):
+        migrate_db_for('activity')
+
+
+@pytest.fixture()
+def org(migrate_db_for_plugins):
     return factories.Organization()
 
 
 @pytest.fixture()
-def group():
+def group(migrate_db_for_plugins):
     return factories.Group()
 
 
