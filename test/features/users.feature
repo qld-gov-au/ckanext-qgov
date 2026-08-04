@@ -159,7 +159,7 @@ Feature: User APIs
         And the browser's URL should contain "key="
         When I fill in "password1" with "$password"
         And I fill in "password2" with "$password"
-        And I press the element with xpath "//button[@class='btn btn-primary']"
+        And I submit the main form
         And I log in
         Then I should see "Dashboard"
 
