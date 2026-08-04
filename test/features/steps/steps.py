@@ -275,7 +275,7 @@ def press_edit_resource(context):
 def select_licence(context, licence_id):
     # Licence requires special interaction due to fancy JavaScript
     context.execute_steps(u"""
-        When I execute the script "$('#field-license_id').val('{0}').trigger('change')"
+        When I execute the script "element = document.getElementsByName('license_id')[0]; element.value = '{0}'; element.dispatchEvent(new Event('change'));"
     """.format(licence_id))
 
 

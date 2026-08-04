@@ -6,6 +6,15 @@ Feature: Dataset APIs
         When I log in
         And I edit the "test-dataset" dataset
         Then I should see an element with xpath "//option[@value='CC-BY-NC-SA-4.0']"
+        And I should see an element with xpath "//option[@value='cc-by-4']"
+        When I select the "cc-by-4" licence
+        And I take a debugging screenshot
+        And I submit the main form
+        Then I should see "Creative Commons Attribution 4.0"
+        And I should not see "Transitional"
+        When I visit "/api/action/package_show?id=test-dataset"
+        Then I should see "CC-BY-4.0"
+        And I should not see "cc-by"
 
     Scenario: As an authenticated user, I can follow and unfollow datasets
         Given "CKANUser" as the persona
