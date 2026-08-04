@@ -23,7 +23,7 @@ COPY bin/ckan_cli /usr/bin/
 
 RUN chmod +x "${APP_DIR}"/bin/*.sh /usr/bin/ckan_cli
 
-RUN which ps || apt-get install -y procps
+RUN (which ps && which wget) || (apt-get update && apt-get install -y procps wget)
 RUN pip install uv
 
 # Install CKAN.
@@ -33,7 +33,8 @@ RUN cd $SRC_DIR/ckan \
     && git remote set-url origin 'https://github.com/{CKAN_GIT_ORG}/ckan.git' \
     && git fetch \
     && git reset --hard && git clean -f \
-    && git checkout '{CKAN_GIT_VERSION}'
+    && git checkout '{CKAN_GIT_VERSION}' \
+    && if (git symbolic-ref -q HEAD); then git pull; fi
 
 USER "$ORIGINAL_USER"
 

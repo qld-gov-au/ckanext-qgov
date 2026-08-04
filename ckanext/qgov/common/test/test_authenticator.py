@@ -2,20 +2,11 @@
 
 import pytest
 
-from ckan.model import User
-from ckan.lib import authenticator as core_authenticator, create_test_data as ctd
-from ckan.plugins.toolkit import check_ckan_version
+from ckan import model
+from ckan.lib import authenticator as core_authenticator
+from ckan.tests import factories
 
-if check_ckan_version('2.10'):
-    from ckanext.qgov.common.authenticator import qgov_authenticate
-else:
-    from ckanext.qgov.common.authenticator import QGOVAuthenticator
-    qgov_authenticator = QGOVAuthenticator()
-
-    def qgov_authenticate(identity):
-        return qgov_authenticator.authenticate(None, identity)
-
-CreateTestData = ctd.CreateTestData
+from ckanext.qgov.common.authenticator import qgov_authenticate
 
 
 class MockGlobal(object):
@@ -27,42 +18,33 @@ class MockGlobal(object):
 core_authenticator.g = MockGlobal()
 
 
-@pytest.mark.usefixtures("clean_db")
 class TestUsernamePasswordAuthenticator(object):
 
     def test_authenticate_succeeds_if_login_and_password_are_correct(self):
-        password = "somepass"
-        user = CreateTestData.create_user("a_user", **{"password": password})
-        identity = {"login": user.name, "password": password}
+        password = "Default1Password$"
+        user = factories.User(password=password)
+        identity = {"login": user['name'], "password": password}
 
         username = qgov_authenticate(identity)
-        # 2.10
-        if isinstance(username, User):
-            assert username.name == user.name
-        # 2.9.6+
-        elif ",1" in username:
-            assert username == user.id + ",1", username
-        # 2.9.5-
-        else:
-            assert username == user.name, username
+        assert username.name == user['name']
 
     def test_authenticate_fails_if_user_is_deleted(self):
-        password = "somepass"
-        user = CreateTestData.create_user("a_user", **{"password": password})
-        identity = {"login": user.name, "password": password}
-        user.delete()
+        password = "Default1Password$"
+        user = factories.User(password=password)
+        identity = {"login": user['name'], "password": password}
+        model.User.get(user['id']).delete()
         assert qgov_authenticate(identity) is None
 
     def test_authenticate_fails_if_user_is_pending(self):
-        password = "somepass"
-        user = CreateTestData.create_user("a_user", **{"password": password})
-        identity = {"login": user.name, "password": password}
-        user.set_pending()
+        password = "Default1Password$"
+        user = factories.User(password=password)
+        identity = {"login": user['name'], "password": password}
+        model.User.get(user['id']).set_pending()
         assert qgov_authenticate(identity) is None
 
     def test_authenticate_fails_if_password_is_wrong(self):
-        user = CreateTestData.create_user("a_user")
-        identity = {"login": user.name, "password": "wrong-password"}
+        user = factories.User()
+        identity = {"login": user['name'], "password": "wrong-password"}
         assert qgov_authenticate(identity) is None
 
     @pytest.mark.parametrize(

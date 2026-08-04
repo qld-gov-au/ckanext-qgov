@@ -16,6 +16,16 @@ Feature: Dataset APIs
         Then I should see "CC-BY-4.0"
         And I should not see "cc-by"
 
+    Scenario: As an authenticated user, I can follow and unfollow datasets
+        Given "CKANUser" as the persona
+        When I log in
+        And I go to dataset "public-test-dataset"
+        Then I should see an element with xpath "//a[contains(string(), 'Follow')]"
+        When I press "Follow"
+        Then I should see "Unfollow" within 5 seconds
+        When I press "Unfollow"
+        Then I should see "Follow" within 5 seconds
+
     Scenario: As a publisher, I can view the change history of a dataset
         Given "TestOrgEditor" as the persona
         When I log in
