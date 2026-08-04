@@ -67,7 +67,6 @@ ckan.plugins = qgovext <OTHER_PLUGINS>
 - Make sure that you have latest versions of all required software installed:
   - [Docker](https://www.docker.com/)
   - [Pygmy](https://pygmy.readthedocs.io/)
-  - [Ahoy](https://github.com/ahoy-cli/ahoy)
 
 - Build the test container for your preferred CKAN version: '2.8', '2.9-py2', or '2.9'.
 ```

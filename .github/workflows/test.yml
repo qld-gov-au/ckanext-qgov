@@ -12,8 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: '3.x'
       - name: Install requirements
@@ -43,55 +43,44 @@ jobs:
       CKAN_TYPE: ${{ matrix.ckan-type }}
 
     steps:
-      - uses: actions/checkout@v7
-        continue-on-error: ${{ matrix.experimental }}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         timeout-minutes: 2
-
-      - name: Install Ahoy and dependencies
         continue-on-error: ${{ matrix.experimental }}
-        run: |
-          sudo wget https://github.com/ahoy-cli/ahoy/releases/download/v2.5.0/ahoy-bin-linux-amd64 -O /usr/local/bin/ahoy \
-            && sudo chown $USER /usr/local/bin/ahoy \
-            && chmod +x /usr/local/bin/ahoy
-          sudo wget https://github.com/pygmystack/pygmy/releases/download/v0.14.0/pygmy_0.14.0_linux_amd64.tar.gz -O - | tar xvzf - -C /tmp/ \
-            && sudo mv /tmp/pygmy /usr/local/bin/pygmy
 
       - name: Build
-        run: bin/build.sh
+        run: ./build.sh
         timeout-minutes: 15
         continue-on-error: ${{ matrix.experimental }}
 
       - name: Lint
-        run: ahoy lint
-        timeout-minutes: 10
+        run: ./build.sh lint
+        timeout-minutes: 1
         continue-on-error: ${{ matrix.experimental }}
 
       - name: Unit test
-        run: ahoy test-unit
+        run: ./build.sh test_unit
         timeout-minutes: 10
         continue-on-error: ${{ matrix.experimental }}
 
       - name: Scenario test
-        run: |
-          ahoy install-site
-          ahoy test-bdd
+        run: ./build.sh test_bdd
         timeout-minutes: 30
         continue-on-error: ${{ matrix.experimental }}
 
       - name: Retrieve logs
         if: always()
-        run: ahoy logs
+        run: ./build.sh logs
         timeout-minutes: 1
         continue-on-error: ${{ matrix.experimental }}
 
       - name: Retrieve results
         if: always()
-        run: bin/process-artifacts.sh
+        run: ./build.sh process_artifacts
         timeout-minutes: 1
         continue-on-error: ${{ matrix.experimental }}
 
       - name: Test Summary
-        uses: test-summary/action@v2
+        uses: test-summary/action@37b508cfee6d4d080eedd00b5bb240a6a784a6a5  # v2.6
         continue-on-error: ${{ matrix.experimental }}
         with:
           paths: "/tmp/artifacts/junit/*.xml"
@@ -99,7 +88,7 @@ jobs:
 
       - name: Upload screenshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: CKAN ${{ matrix.ckan-version }} ${{ matrix.ckan-type }} screenshots
           path: /tmp/artifacts/behave/screenshots
