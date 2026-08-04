@@ -2,6 +2,7 @@
 
 import pytest
 
+from ckan import model
 from ckan.lib import authenticator as core_authenticator
 from ckan.tests import factories
 
@@ -31,14 +32,14 @@ class TestUsernamePasswordAuthenticator(object):
         password = "Default1Password$"
         user = factories.User(password=password)
         identity = {"login": user['name'], "password": password}
-        user.delete()
+        model.User.get(user['id']).delete()
         assert qgov_authenticate(identity) is None
 
     def test_authenticate_fails_if_user_is_pending(self):
         password = "Default1Password$"
         user = factories.User(password=password)
         identity = {"login": user['name'], "password": password}
-        user.set_pending()
+        model.User.get(user['id']).set_pending()
         assert qgov_authenticate(identity) is None
 
     def test_authenticate_fails_if_password_is_wrong(self):
