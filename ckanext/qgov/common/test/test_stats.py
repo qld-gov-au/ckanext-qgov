@@ -31,7 +31,7 @@ def resource(dataset):
     return factories.Resource(package_id=dataset['id'])
 
 
-@pytest.mark.usefixtures("with_plugins")
+@pytest.mark.usefixtures("with_plugins", "clean_db")
 class TestStats():
     """ Test our URL validation.
     """
