@@ -7,24 +7,17 @@ from datetime import datetime
 import pytest
 
 from ckan.tests import factories
-from ckan.plugins.toolkit import check_ckan_version
 
 from ckanext.qgov.common.stats import Stats
 
 
 @pytest.fixture()
-def migrate_db_for_plugins(migrate_db_for):
-    if check_ckan_version('2.11'):
-        migrate_db_for('activity')
-
-
-@pytest.fixture()
-def org(migrate_db_for_plugins):
+def org():
     return factories.Organization()
 
 
 @pytest.fixture()
-def group(migrate_db_for_plugins):
+def group():
     return factories.Group()
 
 
@@ -38,7 +31,7 @@ def resource(dataset):
     return factories.Resource(package_id=dataset['id'])
 
 
-@pytest.mark.usefixtures("with_plugins", "clean_db")
+@pytest.mark.usefixtures("with_plugins")
 class TestStats():
     """ Test our URL validation.
     """
