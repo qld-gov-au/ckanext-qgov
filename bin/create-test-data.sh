@@ -33,6 +33,17 @@ if [ "$API_KEY" = "None" ]; then
 fi
 
 ##
+# BEGIN: Add sysadmin config values.
+#
+echo "Creating config value for excluded display name words:"
+
+api_call '{"ckanext.data_qld.excluded_display_name_words": "gov"}' config_option_update
+
+##
+# END.
+#
+
+##
 # BEGIN: Create a test organisation with test users for admin, editor and member
 #
 TEST_ORG_NAME=test-organisation
@@ -107,9 +118,5 @@ walker_update=$( \
     api_call '{"id": "silly-walks", "username": "walker", "role": "editor"}' group_member_create
 )
 echo ${walker_update}
-
-echo "Creating config value for excluded display name words:"
-
-api_call '{"ckanext.data_qld.excluded_display_name_words": "gov"}' config_option_update
 
 . "${APP_DIR}"/bin/deactivate

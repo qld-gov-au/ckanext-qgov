@@ -1,5 +1,4 @@
 # Ignore files for distribution archives.
-/.ahoy.yml           export-ignore
 /.docker             export-ignore
 /.env                export-ignore
 /.gitatributes       export-ignore
