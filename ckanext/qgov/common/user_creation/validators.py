@@ -4,9 +4,14 @@ from ckan import model
 from ckan.plugins.toolkit import config, g, Invalid
 
 
-def _get_user():
+def _get_user(context):
     """ Retrieve the current user object.
     """
+    if 'userobj' in context:
+        return context.get('userobj')
+    if 'user' in context:
+        return model.User.get(context.get('user'))
+
     # 'g' is not a regular data structure so we can't use 'hasattr'
     if 'userobj' in dir(g):
         user = g.userobj
@@ -20,7 +25,7 @@ def _get_user():
 def data_qld_user_name_validator(key, data, errors, context):
     if context and context.get('reset_password', False):
         return
-    user = _get_user()
+    user = _get_user(context)
     if user is None:
         is_sysadmin = False
         old_username = None
@@ -36,7 +41,7 @@ def data_qld_user_name_validator(key, data, errors, context):
 def data_qld_displayed_name_validator(key, data, errors, context):
     if context and context.get('reset_password', False):
         return
-    user = _get_user()
+    user = _get_user(context)
     if user is None:
         is_sysadmin = False
         old_name = None

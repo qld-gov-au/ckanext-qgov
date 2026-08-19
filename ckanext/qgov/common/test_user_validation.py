@@ -28,60 +28,60 @@ class MockUser(object):
 
 
 def mock_objects(username='', displayed_name='', sysadmin=False):
-    validators._get_user = lambda: MockUser(sysadmin, username, displayed_name)
     validators.config = {'ckanext.data_qld.excluded_display_name_words': 'gov'}
+    return MockUser(sysadmin, username, displayed_name)
 
 
 class TestUserValidation(unittest.TestCase):
     """ Test our user validation rules.
     """
 
-    def _assert_valid(self, username, fullname, context=None):
+    def _assert_valid(self, username, fullname, context):
         data_dict = {'username': username, 'fullname': fullname}
         validators.data_qld_user_name_validator(key='username', data=data_dict, errors=None, context=context)
         validators.data_qld_displayed_name_validator(key='fullname', data=data_dict, errors=None, context=context)
 
-    def _assert_not_valid_username(self, username):
+    def _assert_not_valid_username(self, username, context):
         self.assertRaises(
             toolkit.Invalid, validators.data_qld_user_name_validator,
-            'username', {'username': username, 'fullname': NON_PUBLISHER_DISPLAY_NAME}, None, None)
+            'username', {'username': username, 'fullname': NON_PUBLISHER_DISPLAY_NAME}, None, context)
 
-    def _assert_not_valid_display_name(self, fullname):
+    def _assert_not_valid_display_name(self, fullname, context):
         self.assertRaises(
             toolkit.Invalid, validators.data_qld_displayed_name_validator,
-            'fullname', {'username': NON_PUBLISHER_USERNAME, 'fullname': fullname}, None, None)
+            'fullname', {'username': NON_PUBLISHER_USERNAME, 'fullname': fullname}, None, context)
 
     def test_can_register_user(self):
         """ Test that a user can be created/updated.
         """
-        mock_objects()
-        self._assert_valid(NON_PUBLISHER_USERNAME, NON_PUBLISHER_DISPLAY_NAME)
+        user = mock_objects()
+        self._assert_valid(NON_PUBLISHER_USERNAME, NON_PUBLISHER_DISPLAY_NAME, {'userobj': user})
 
     def test_cannot_set_publisher_name(self):
         """ Test that usernames may not contain 'publisher' by default.
         """
-        mock_objects()
-        self._assert_not_valid_username(PUBLISHER_USERNAME)
-        self._assert_not_valid_display_name(PUBLISHER_DISPLAY_NAME)
+        user = mock_objects()
+        self._assert_not_valid_username(PUBLISHER_USERNAME, {'userobj': user})
+        self._assert_not_valid_display_name(PUBLISHER_DISPLAY_NAME, {'userobj': user})
 
     def test_sysadmin_can_set_publisher_name(self):
         """ Test that sysadmins can update usernames to contain 'publisher'.
         """
-        mock_objects(sysadmin=True)
-        self._assert_valid(PUBLISHER_USERNAME, PUBLISHER_DISPLAY_NAME)
+        user = mock_objects(sysadmin=True)
+        self._assert_valid(PUBLISHER_USERNAME, PUBLISHER_DISPLAY_NAME, {'userobj': user})
 
     def test_publisher_can_retain_name(self):
         """ Test that publishers can update their profiles
         without changing their usernames.
         """
-        mock_objects(username=PUBLISHER_USERNAME, displayed_name=PUBLISHER_DISPLAY_NAME)
-        self._assert_valid(PUBLISHER_USERNAME, PUBLISHER_DISPLAY_NAME)
+        user = mock_objects(username=PUBLISHER_USERNAME, displayed_name=PUBLISHER_DISPLAY_NAME)
+        self._assert_valid(PUBLISHER_USERNAME, PUBLISHER_DISPLAY_NAME, {'userobj': user})
 
     def test_publisher_can_reset_password(self):
         """ Test that publishers can reset their passwords.
         """
-        mock_objects()
-        self._assert_valid(PUBLISHER_USERNAME, PUBLISHER_DISPLAY_NAME, context={'reset_password': True})
+        user = mock_objects()
+        self._assert_valid(PUBLISHER_USERNAME, PUBLISHER_DISPLAY_NAME, context={'reset_password': True, 'userobj': user})
 
 
 if __name__ == '__main__':
