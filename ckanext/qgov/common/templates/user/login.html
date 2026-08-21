@@ -1,10 +1,56 @@
 {% ckan_extends %}
 
+{% block form %}
+  <div class="mb-4">
+    <div class="alert alert-warning" role="alert" aria-label="Warning alert">
+      <h2 class="alert-heading">MFA Coming Soon</h2>
+      <p>Multi-Factor Authentication (MFA) will soon be required to access this portal from 1 September 2026. Please ensure your profile details are current.</p>
+    </div>
+  </div>
+  {{ super() }}
+{% endblock %}
+
 {% block sso_form %}
-    <p><a href="{{ h.url_for('user.login') }}/oidc-pkce" class="btn btn-primary"><i class="fa fa-sign-in"></i> Sign in with your Digital ID</a></p>
+  <h2>Use single sign-on (SSO)</h2>
+  <p>If you have a digital ID or if you work with a statutory authority or an agency.</p>
+  <p>
+    <a href="{{ h.url_for('user.login') }}/oidc-pkce" class="btn btn-primary"><i class="fa fa-sign-in"></i> Log in with single sign-on</a>
+    <a href="{{ h.url_for('user.login') }}/oidc-pkce" class="btn btn-secondary">Register with Digital ID</a>
+  </p>
+  <p><a href="https://www.qld.gov.au/qdifaq">Learn more about using Digital ID</a></p>
+  <p>If you're an employee and having trouble logging in with SSO, contact your IT administrator.</p>
+  <div class="w-100 text-center border-bottom pb-3 my-3">
+    <span>{{ _('or') }}</span>
+  </div>
 {% endblock %}
 
 {% block sso_help_register %}
-    <a href="{{ h.url_for('user.login') }}/oidc-pkce" class="btn btn-secondary">Register via your Digital ID</a></p>
-    <p>Learn more about using a <a href="https://www.qld.gov.au/qdifaq">Digital ID</a>
+{% endblock %}
+
+{% block secondary_content %}
+  <section class="module module-narrow module-shallow">
+    <a class="btn btn-default" href="#" aria-current="true"><b>{{ _('Log in to your account') }}</b></a>
+  </section>
+
+  {% if h.check_access('user_create') %}
+  {% block help_register %}
+  <section class="module module-narrow module-shallow">
+    {% block help_register_inner %}
+        {% block help_register_button %}
+          <a class="btn btn-default" href="{{ h.url_for('user.register') }}">{{ _('Register for an account') }}</a>
+        {% endblock %}
+    {% endblock %}
+  </section>
+  {% endblock %}
+  {% endif %}
+
+  {% block help_forgotten %}
+  <section class="module module-narrow module-shallow">
+    {% block help_forgotten_inner %}
+        {% block help_forgotten_button %}
+        <a class="btn btn-default" href="{{ h.url_for('user.request_reset') }}">{{ _('Reset your password') }}</a>
+        {% endblock %}
+    {% endblock %}
+  </section>
+  {% endblock %}
 {% endblock %}
