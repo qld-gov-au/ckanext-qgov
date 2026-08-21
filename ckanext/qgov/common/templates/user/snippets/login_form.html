@@ -13,7 +13,10 @@
   {% endblock %}
 
   {% block passkey_separator %}
-    {{ super() }}
+    {# 'or' in the middle of a horizontal line #}
+    <div class="d-flex">
+      <hr class="w-100"> <span class="mx-3">{{ _('or') }}</span> <hr class="w-100">
+    </div>
   {% endblock %}
 {% endblock %}
 
@@ -47,7 +50,18 @@
   {{ super() }}
 {% endblock %}
 
-{% block create_account_button %}
-  {# Change button text. #}
-  <a class="btn btn-secondary" href="{{ h.url_for('user.register') }}">{{ _('Register for an account') }}</a>
+{% block login_form_actions %}
+  <div class="d-grid gap-3 d-md-block">
+  {% block login_form_actions_inner %}
+    {% block login_button %}
+      {{ super() }}
+    {% endblock %}
+    {% if h.check_access('user_create') %}
+      {% block create_account_button %}
+        {# Change button text. #}
+        <a class="btn btn-secondary" href="{{ h.url_for('user.register') }}">{{ _('Register for an account') }}</a>
+      {% endblock %}
+    {% endif %}
+  {% endblock %}
+  </div>
 {% endblock %}
