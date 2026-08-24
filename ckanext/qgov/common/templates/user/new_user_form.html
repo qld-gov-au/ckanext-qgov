@@ -1,4 +1,4 @@
-{% import "macros/form.html" as form %}
+{% ckan_extends %}
 
 {% block form %}
 <form id="user-register-form" action="" method="post" enctype="multipart/form-data">
@@ -29,19 +29,18 @@
   {% endblock %}
 
   {% block extra_fields %}
+    {{ super() }}
   {% endblock %}
 
   {% block captcha %}
-    {% if g.recaptcha_publickey %}
-      {% snippet "user/snippets/recaptcha.html", public_key=g.recaptcha_publickey %}
-    {% endif %}
+    {{ super() }}
   {% endblock %}
 
   {{ form.required_message() }}
 
   <div class="form-actions d-grid gap-3 d-md-block">
     {% block form_actions %}
-    <button class="btn btn-primary" type="submit" name="save">{{ _("Create Account") }}</button>
+    {{ super() }}
     <a class="btn btn-secondary" href="{{ h.url_for('user.login') }}">{{ _('I already have an account') }}</a>
     {% endblock %}
   </div>
