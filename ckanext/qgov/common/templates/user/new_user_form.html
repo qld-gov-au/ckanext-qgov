@@ -2,7 +2,7 @@
 
 {% block form %}
 <form id="user-register-form" action="" method="post" enctype="multipart/form-data">
-  {{ h.csrf_input() }}
+  {{ h.csrf_input() if 'csrf_input' in h }}
   {{ form.errors(error_summary) }}
 
   {% block core_fields %}
