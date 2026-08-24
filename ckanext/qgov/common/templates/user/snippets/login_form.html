@@ -1,0 +1,67 @@
+{% ckan_extends %}
+
+{% block passkey_block %}
+  {# Add our heading, change button text, drop centre-alignment. #}
+  <h2>Use a passkey</h2>
+  <p>If you have connected a passkey to your account.</p>
+
+  {% block passkey_button %}
+  <button type="button" class="btn btn-primary btn-block"
+      data-module="auth-passkey-login">
+      {{ _('Log in with a passkey') }}
+  </button>
+  {% endblock %}
+
+  {% block passkey_separator %}
+    {# 'or' in the middle of a horizontal line #}
+    <div class="d-flex">
+      <hr class="w-100"> <span class="mx-3">{{ _('or') }}</span> <hr class="w-100">
+    </div>
+  {% endblock %}
+{% endblock %}
+
+{% block login_default_fields %}
+  {# Add stars for mandatory fields,
+    and 'form-control' class to make fields full-width. #}
+  {{ form.input('login', label=_("Username or Email"), id='field-login', value="", error=username_error, classes=["control-medium"], attrs={"autocomplete": "off", "class": "form-control"}, is_required=true) }}
+
+  {{ form.input('password', label=_("Password"), id='field-password', type="password", value="", error=password_error, classes=["control-medium"], attrs={"autocomplete": "off", "class": "form-control"}, is_required=true) }}
+{% endblock %}
+
+{% block login_forgot %}
+  {# Change button text #}
+  <a class="float-end" href="{{ h.url_for('user.request_reset') }}">{{ _('Reset your password') }}</a>
+{% endblock %}
+
+{% block login_remember %}
+  {# Move input above label and give it the appropriate formatting class. #}
+  <div class="form-group">
+  <div class="controls">
+      <input id="field-remember" class="form-check-input" type="checkbox" name="remember" value="63072000" checked />
+      <label class="checkbox" for="{{ id or name }}">{{ _("Remember me") }}</label>
+  </div>
+  </div>
+{% endblock %}
+
+{% block login_form_header %}
+  {# Add our heading. #}
+  <h2>Use your username and password</h2>
+  <p>If you don't use SSO or already have an existing account using your email. Required fields are marked with an asterisk <span title="{{ _('This field is required') }}" class="control-required">*</span></p>
+  {{ super() }}
+{% endblock %}
+
+{% block login_form_actions %}
+  <div class="d-grid gap-3 d-md-block">
+  {% block login_form_actions_inner %}
+    {% block login_button %}
+      {{ super() }}
+    {% endblock %}
+    {% if h.check_access('user_create') %}
+      {% block create_account_button %}
+        {# Change button text. #}
+        <a class="btn btn-secondary" href="{{ h.url_for('user.register') }}">{{ _('Register for an account') }}</a>
+      {% endblock %}
+    {% endif %}
+  {% endblock %}
+  </div>
+{% endblock %}
