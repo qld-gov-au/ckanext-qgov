@@ -10,6 +10,7 @@
       data-module="auth-passkey-login">
       {{ _('Log in with a passkey') }}
   </button>
+  <p><a href="https://www.cyber.gov.au/protect-yourself/secure-your-accounts/passkeys">Learn more about passkeys</a></p>
   {% endblock %}
 
   {% block passkey_separator %}
@@ -51,6 +52,7 @@
 {% endblock %}
 
 {% block login_form_actions %}
+  <p>By logging into this site, you agree to the <a href="https://www.qld.gov.au/legal/acceptable-use">terms and conditions</a> of using this site.</p>
   <div class="d-grid gap-3 d-md-block">
   {% block login_form_actions_inner %}
     {% block login_button %}
