@@ -5,6 +5,7 @@ Feature: Login Redirection
     Scenario: As an unauthenticated user, when I visit the dashboard URL I see the login page
         Given "TestOrgMember" as the persona
         When I go to the dashboard
+        And I expand the browser height
         Then I should see the login form
         When I log in directly
         Then I should see "News feed"

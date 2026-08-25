@@ -1,0 +1,46 @@
+{% ckan_extends %}
+
+{% block form %}
+  <p>Enter your email address or username into the box and we will send you an email with a link to enter a new password.</p>
+  <form action="" method="post">
+    {{ h.csrf_input() if 'csrf_input' in h }}
+    <div class="form-group">
+      <label for="field-username">{{ _('Email or username') }}</label>
+      <input id="field-username" class="control-medium form-control" name="user" value="" type="text" />
+    </div>
+
+    {% if g.recaptcha_publickey %}
+      {% snippet "user/snippets/recaptcha.html", public_key=g.recaptcha_publickey %}
+    {% endif %}
+
+    <div class="form-actions d-grid gap-3 d-md-block">
+      {% block form_button %}
+        {{ super() }}
+        <a class="btn btn-secondary" href="{{ h.url_for('user.login') }}">{{ _("Cancel") }}</a>
+      {% endblock %}
+    </div>
+  </form>
+{% endblock %}
+
+{% block secondary_content %}
+  <nav class="qld-side-navigation" aria-label="Side Navigation">
+    <button class="accordion-button d-lg-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sideNavCollapse" aria-expanded="false" aria-controls="sideNavCollapse">
+      In this section
+    </button>
+    <div class="nav-wrapper d-lg-block collapse" id="sideNavCollapse" style="">
+      <h2 class="nav-title"><a class="nav-link">My Account</a></h2>
+
+      <ul class="nav" aria-label="section navigation">
+        <li class="nav-item">
+          <a class="nav-link" href="{{ h.url_for('user.login') }}">{{ _('Log in to your account') }}</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ h.url_for('user.register') }}">{{ _('Register for an account') }}</a>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" href="#">{{ _('Reset your password') }}</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+{% endblock %}
