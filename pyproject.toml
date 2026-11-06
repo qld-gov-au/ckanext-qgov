@@ -15,6 +15,7 @@ classifiers = [
 keywords = ["CKAN"]
 
 dependencies = [
+    "beautifulsoup4==4.9.1",
     "ckanext-oidc-pkce>=0.4.2"
 ]
 
@@ -34,7 +35,6 @@ Homepage = "https://github.com/qld-gov-au/ckanext-qgov"
 
 [project.optional-dependencies]
 dev = [
-    "beautifulsoup4==4.9.1",
     "behaving==3.3.*",
     "Appium-Python-Client==2.10.1",
     "ckanapi>=4.7",
