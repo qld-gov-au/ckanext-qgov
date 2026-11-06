@@ -15,7 +15,7 @@ classifiers = [
 keywords = ["CKAN"]
 
 dependencies = [
-    "beautifulsoup4==4.9.1",
+    "beautifulsoup4==4.15.0",
     "ckanext-oidc-pkce>=0.4.2"
 ]
 
