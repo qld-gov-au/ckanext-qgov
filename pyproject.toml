@@ -1,0 +1,81 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ckanext-qgov"
+version = "7.4.6"
+description = "Customises CKAN behavior for Queensland Government portals"
+requires-python = ">=3.7"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Programming Language :: Python :: 3",
+]
+keywords = ["CKAN"]
+
+dependencies = [
+    "beautifulsoup4==4.9.1",
+    "ckanext-oidc-pkce>=0.4.2"
+]
+
+authors = [
+    {name = "Queensland Online", email = "qol.development@smartservice.qld.gov.au"},
+]
+
+[project.license]
+text = "AGPL"
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.urls]
+Homepage = "https://github.com/qld-gov-au/ckanext-qgov"
+
+[project.optional-dependencies]
+dev = [
+    "behaving==3.3.*",
+    "Appium-Python-Client==2.10.1",
+    "ckanapi>=4.7",
+    "factory-boy",
+    "flake8==7.3.*",
+    "mock",
+    "pytest-ckan",
+    "selenium<4.10"
+]
+
+[project.entry-points."ckan.plugins"]
+qgovext = "ckanext.qgov.common.plugin:QGOVPlugin"
+
+[project.entry-points."babel.extractors"]
+ckan = "ckan.lib.extract:extract_ckan"
+
+[tool.setuptools]
+include-package-data = true
+zip-safe = false
+
+[tool.setuptools.packages.find]
+exclude = ["ez_setup", "examples", "tests*"]
+
+[tool.babel.extract_messages]
+keywords = ["translate", "isPlural"]
+add_comments = ["TRANSLATORS:"]
+output_file = "ckanext/qgov/common/i18n/ckanext-qgov.pot"
+width = 80
+
+[tool.babel.init_catalog]
+domain = "ckanext-qgov"
+input_file = "ckanext/qgov/common/i18n/ckanext-qgov.pot"
+output_dir = "ckanext/qgov/common/i18n"
+
+[tool.babel.update_catalog]
+domain = "ckanext-qgov"
+input_file = "ckanext/qgov/common/i18n/ckanext-qgov.pot"
+output_dir = "ckanext/qgov/common/i18n"
+previous = true
+
+[tool.babel.compile_catalog]
+domain = "ckanext-qgov"
+directory = "ckanext/qgov/common/i18n"
+statistics = true
