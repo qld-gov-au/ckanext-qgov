@@ -39,7 +39,7 @@ dev = [
     "Appium-Python-Client==2.10.1",
     "ckanapi>=4.7",
     "factory-boy",
-    "flake8==7.3.*",
+    "flake8>=7.3,<7.5",
     "mock",
     "pytest-ckan",
     "selenium<4.10"
