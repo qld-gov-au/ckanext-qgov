@@ -31,13 +31,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ckan-version: ['2.11']
+        ckan-version: ['2.12', '2.11']
         ckan-type: ['vanilla', 'custom']
         experimental: [false]
         include:
-          - ckan-version: '2.12'
-            ckan-type: 'vanilla'
-            experimental: false
           - ckan-version: 'master'
             experimental: true  # master is unstable, good to know if we are compatible or not
 
