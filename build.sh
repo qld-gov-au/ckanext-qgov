@@ -11,18 +11,31 @@ export CKAN_VERSION=${CKAN_VERSION:-2.11}
 PYTHON=python3
 PYTHON_VERSION=py3
 CKAN_GIT_VERSION=${CKAN_VERSION}
-CKAN_GIT_ORG=qld-gov-au
+if [ "$CKAN_TYPE" = "custom" ]; then
+    CKAN_GIT_ORG=qld-gov-au
+else
+    CKAN_GIT_ORG=ckan
+fi
 SOLR_VERSION=9
 if [ "$CKAN_VERSION" = "2.12" ]; then
-    CKAN_GIT_ORG=ckan
-    CKAN_GIT_VERSION=dev-v2.12
+    if [ "$CKAN_TYPE" = "custom" ]; then
+        CKAN_GIT_VERSION=ckan-2.12.1+qgov.1
+    else
+        CKAN_GIT_VERSION=ckan-2.12.1
+    fi
 elif [ "$CKAN_VERSION" = "2.11" ]; then
-    CKAN_GIT_VERSION=ckan-2.11.5-qgov.2
+    if [ "$CKAN_TYPE" = "custom" ]; then
+        CKAN_GIT_VERSION=2.11.7+qgov.1
+    else
+        CKAN_GIT_VERSION=ckan-2.11.7
+    fi
 elif [ "$CKAN_VERSION" = "2.10" ]; then
-    CKAN_GIT_VERSION=ckan-2.10.7-qgov.2
     SOLR_VERSION=8
-elif [ "$CKAN_VERSION" = "master" ]; then
-    CKAN_GIT_ORG=ckan
+    if [ "$CKAN_TYPE" = "custom" ]; then
+        CKAN_GIT_VERSION=ckan-2.10.7-qgov.2
+    else
+        CKAN_GIT_VERSION=ckan-2.10.10
+    fi
 fi
 export SOLR_VERSION
 
