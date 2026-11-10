@@ -42,7 +42,7 @@ dev = [
     "flake8==7.3.*",
     "mock",
     "pytest-ckan",
-    "selenium<4.10"
+    "selenium<4.53"
 ]
 
 [project.entry-points."ckan.plugins"]
