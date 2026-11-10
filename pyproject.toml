@@ -36,7 +36,7 @@ Homepage = "https://github.com/qld-gov-au/ckanext-qgov"
 [project.optional-dependencies]
 dev = [
     "behaving==3.3.*",
-    "Appium-Python-Client==2.10.1",
+    "Appium-Python-Client==6.1.5",
     "ckanapi>=4.7",
     "factory-boy",
     "flake8>=7.3,<7.5",
