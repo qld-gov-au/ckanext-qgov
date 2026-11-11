@@ -1,0 +1,49 @@
+{% ckan_extends %}
+
+{% block form %}
+<form id="user-register-form" action="" method="post" enctype="multipart/form-data">
+  {{ h.csrf_input() if 'csrf_input' in h }}
+  {{ form.errors(error_summary) }}
+
+  {% block core_fields %}
+    {% block required_core_fields %}
+      {{ form.input("name", id="field-username", label=_("Username"), placeholder=_("username"), value=data.name, error=errors.name, classes=["control-medium"], is_required=True) }}
+      {{ form.input("fullname", id="field-fullname", label=_("Displayed name"), placeholder=_("Joe Bloggs"), value=data.fullname, error=errors.fullname, classes=["control-medium"], is_required=True) }}
+      {{ form.input("email", id="field-email", label=_("Email"), type="email", placeholder=_("joe@example.com"), value=data.email, error=errors.email, classes=["control-medium"], is_required=True) }}
+      {{ form.input("password1", id="field-password", label=_("Password"), type="password", placeholder="••••••••", value=data.password1, error=errors.password1, classes=["control-medium"], is_required=True) }}
+      {{ form.input("password2", id="field-confirm-password", label=_("Confirm"), type="password", placeholder="••••••••", value=data.password2, error=errors.password2, classes=["control-medium"], is_required=True) }}
+    {% endblock %}
+
+    {% block optional_core_fields %}
+      {# Move input above label and give it the appropriate formatting class. #}
+      <div class="form-group">
+        <div class="controls">
+          <input type="checkbox" class="form-check-input"
+            id="field-activity_streams_email_notifications" name="activity_streams_email_notifications"
+            value="True" checked />
+          <label class="checkbox" for="field-activity_streams_email_notifications">{{ _("Subscribe to notification emails") }}</label>
+        </div>
+        {{ form.info("If checked, you will receive notification emails, e.g. when you have new activities on your dashboard.") }}
+      </div>
+    {% endblock %}
+  {% endblock %}
+
+  {% block extra_fields %}
+    {{ super() }}
+  {% endblock %}
+
+  {% block captcha %}
+    {{ super() }}
+  {% endblock %}
+
+  {{ form.required_message() }}
+
+  <p>By logging into this site, you agree to the <a href="https://www.qld.gov.au/legal/acceptable-use">terms and conditions</a> of using this site.</p>
+  <div class="form-actions d-grid gap-3 d-md-block">
+    {% block form_actions %}
+    {{ super() }}
+    <a class="btn btn-secondary" href="{{ h.url_for('user.login') }}">{{ _('I already have an account') }}</a>
+    {% endblock %}
+  </div>
+</form>
+{% endblock %}
