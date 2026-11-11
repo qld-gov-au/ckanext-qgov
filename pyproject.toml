@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ckanext-qgov"
-version = "7.4.6"
+version = "7.4.7"
 description = "Customises CKAN behavior for Queensland Government portals"
 requires-python = ">=3.7"
 classifiers = [
