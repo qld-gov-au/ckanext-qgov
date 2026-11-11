@@ -15,7 +15,7 @@ classifiers = [
 keywords = ["CKAN"]
 
 dependencies = [
-    "beautifulsoup4==4.9.1",
+    "beautifulsoup4>=4.9.1",
     "ckanext-oidc-pkce>=0.4.2"
 ]
 
@@ -36,13 +36,13 @@ Homepage = "https://github.com/qld-gov-au/ckanext-qgov"
 [project.optional-dependencies]
 dev = [
     "behaving==3.3.*",
-    "Appium-Python-Client==2.10.1",
+    "Appium-Python-Client==6.1.5",
     "ckanapi>=4.7",
     "factory-boy",
-    "flake8==7.3.*",
+    "flake8>=7.3,<7.5",
     "mock",
     "pytest-ckan",
-    "selenium<4.10"
+    "selenium<4.53"
 ]
 
 [project.entry-points."ckan.plugins"]
