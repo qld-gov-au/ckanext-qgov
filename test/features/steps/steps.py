@@ -50,7 +50,7 @@ def log_in(context):
     context.execute_steps(u"""
         When I go to homepage
         And I expand the browser height
-        And I press "Log in"
+        And I press the element with xpath "//a[(contains(string(), 'Login') or contains(string(), 'Log in')) and contains(@href, '/login')]"
         Then I should see an element with xpath "//a[@href='/user/login/oidc-pkce']"
         When I log in directly
     """)
